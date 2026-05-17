@@ -1,0 +1,56 @@
+---
+description: Monetisation — apply when working on payments, billing, fees
+---
+
+# Monetisation rules — locked
+
+## The contract
+
+- **Tenants are charged £0 platform fees, ever.**
+- Tenants pay face-value rent only. Any fee from GoCardless / TrueLayer / Stripe is **absorbed by landlord or platform**.
+- Landlords pay a single subscription via Stripe Billing.
+- No rent take-rate. No tenant-side card surcharges. No premium tenant features.
+- Rental Passport, rent dashboard, payments, messaging, tickets, and document access are **all free for tenants**.
+
+## What this means in code
+
+- No code path may charge a tenant for using a Tenantly feature.
+- Rent payment flows quote face-value rent. The fee comes off the landlord's subscription invoice or the platform's books.
+- "Premium" pricing tiers are **landlord-side only**. Tenant features never gate by tier.
+- Subscription tier is an attribute of `org_subscriptions` (org-scoped), not user-scoped.
+
+## Stripe
+
+- One Stripe Customer per org.
+- Tiers (Free, Starter, Pro, Portfolio) defined as Stripe Products + Prices.
+- Webhooks update `org_subscriptions`.
+- Tier capability matrix in `core/billing/capabilities.ts`. Used by both UI and server.
+
+## GoCardless / TrueLayer
+
+- Fee absorption logic in `core/billing/fee-absorption.ts`.
+- Default: fee included in the landlord's monthly subscription invoice (added line item).
+- For platform-absorbed cases (e.g., < 5 rooms), the platform pays.
+
+## Tier enforcement
+
+`tierGate(orgId, capability)` central helper. Server enforces; UI displays upsells (never blocking tenant features).
+
+## Don't
+
+- Don't add a "tenant pro" tier.
+- Don't propose ads, marketplace fees on rent, or tenant-side data licensing.
+- Don't charge tenants for Rental Passport export.
+- Don't surcharge for late rent reminders.
+
+This decision is locked in `docs/03-architecture/adr/0006-tenants-free-forever-monetisation.md`. It is the single most important product principle.
+
+## When in doubt
+
+If a feature seems to require charging a tenant, either:
+
+1. The feature is in scope and we eat the cost ourselves (and document why).
+2. The feature is in scope as a landlord-paid feature.
+3. The feature is out of scope.
+
+Never option 4: "tenant pays".

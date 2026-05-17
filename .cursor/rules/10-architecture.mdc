@@ -1,0 +1,49 @@
+---
+description: Architecture overview — always loaded
+alwaysApply: true
+---
+
+# Architecture
+
+## Stack (latest stable)
+
+- **Web**: Next.js 15 App Router, React 19, TypeScript 5 strict, Tailwind v4, shadcn/ui, TanStack Query v5, Zustand v5, React Hook Form v7, Zod v4.
+- **Backend**: Supabase (Postgres 17 + Auth + Storage + Realtime + RLS) + Next.js Route Handlers on Vercel + Inngest for background jobs.
+- **Payments**: Stripe Billing (landlord subs), GoCardless (tenant DD), TrueLayer (Open Banking — v1.1).
+- **Other 3rd-party**: Resend (email), Twilio (SMS, v1.1), DocuSeal (e-sign, self-hosted), PostHog, Sentry, Axiom.
+
+See `docs/03-architecture/tech-stack.md` for full details with target versions and rationale.
+
+## Service responsibilities
+
+- **Server Components** — page shells, initial data, auth-gated layouts.
+- **Client Components** — interactive widgets, forms, real-time subscriptions, mutations.
+- **Route Handlers** — multi-step server logic, secrets handling, webhook ingestion, integrations.
+- **Inngest** — async / scheduled / fan-out work (compliance scans, monthly rent run, email digests).
+- **Supabase RLS** — primary authorisation; never bypass with service role except in webhooks/Inngest/admin tooling.
+
+## Decision guide
+
+| Need | Where |
+|---|---|
+| Read user's own data | Direct Supabase from RSC/Client (RLS enforces) |
+| Mutate user's own data, single table | Direct Supabase mutation |
+| Multi-step or 3rd-party call | Route Handler (Zod-validated) |
+| Webhook | `/api/webhooks/<provider>` Route Handler |
+| Scheduled / async | Inngest function |
+| Heavy compute | Supabase Edge Function |
+
+## Don't
+
+- Direct DB access from client when business logic / 3rd-party calls are involved — go through a Route Handler.
+- Service role key in any client bundle.
+- Skip RLS, ever.
+- Re-implement features that exist in `core/` or `features/`.
+
+## Do
+
+- Compose features as `features/<domain>/`: queries, mutations, components, schemas.
+- Use TanStack Query for server state; Zustand for UI state; RHF + Zod for forms.
+- Co-locate tests with features.
+
+See `docs/05-backend/architecture.md` for the backend decision matrix and `docs/04-frontend/architecture.md` for frontend layering.

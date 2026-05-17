@@ -1,0 +1,46 @@
+---
+description: Docs sync — keep code and docs in lockstep
+alwaysApply: true
+---
+
+# Docs sync
+
+Tenantly is documentation-driven. Code and docs ship in the same change.
+
+## Rule
+
+If your change touches any of the following, update the matching doc in the **same PR**:
+
+| What changed | Doc to update |
+|---|---|
+| DB schema (table/column/enum) | `docs/06-database/entities.md` + write a migration |
+| RLS policy | `docs/05-backend/rls-patterns.md` + `docs/06-database/multi-tenancy.md` |
+| Env var | `docs/09-operations/environment-variables.md` |
+| Webhook integration | `docs/05-backend/webhooks-and-integrations.md` |
+| Background job | `docs/05-backend/background-jobs.md` |
+| Pricing tier / capability | `docs/01-business/pricing-and-subscriptions.md` + `core/billing/capabilities.ts` |
+| Architecture decision | new ADR in `docs/03-architecture/adr/` |
+| User flow | matching file in `docs/07-flows/` |
+| Tech stack version bump (major) | `docs/03-architecture/tech-stack.md` |
+| Any new feature | `docs/02-product/features.md` (move from "later" → "shipped") |
+
+## Format
+
+- ADRs use the standard format (Status / Context / Decision / Consequences).
+- Flow docs use Mermaid sequence diagrams.
+- Schema docs include SQL.
+- Always link related docs at the bottom.
+
+## Don't
+
+- Don't write code that contradicts a doc without first updating the doc.
+- Don't merge a "TODO: docs" PR. Either include them or split the PR.
+- Don't duplicate content across docs — link instead.
+
+## When the doc is wrong
+
+Fix it. That's also a defect. The doc is the contract.
+
+## When in doubt
+
+Search `docs/` first. If the answer isn't there, write it down — that knowledge is now in the agent's context too.

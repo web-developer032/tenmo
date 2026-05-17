@@ -1,0 +1,70 @@
+---
+description: Unified user model — derived roles
+alwaysApply: true
+---
+
+# Domain model — unified user, derived roles
+
+## The rule
+
+Roles are **derived** from relationships. A user can be a landlord and a tenant simultaneously. Never represent role as a column on a user.
+
+| Role | Source of truth |
+|---|---|
+| Landlord | At least one row in `org_memberships` with role in (`owner`, `agent`, `staff`) |
+| Tenant | At least one row in `tenancies` where `tenant_user_id = auth.uid()` (active or recent) |
+| Both | Both of the above |
+| Admin | Row in `admin_users` |
+
+## What this means in practice
+
+- Never add `users.role` or `profiles.role`. Reject any PR that does.
+- UI does not gate by `user.type`. UI gates by **active context** + RLS.
+- Active context lives in the URL: `/landlord/{slug}/...` vs `/tenant/...` vs `/admin/...`.
+- `useActiveContext()` derives from URL. Zustand mirrors it.
+- `profiles.last_active_context` persists default for next visit.
+
+## RLS
+
+Policies use `auth.uid()` directly. They evaluate "can this user see this row in any role". The active-context UI is a filter, not a security boundary.
+
+Helper functions in Postgres:
+
+- `is_org_member(org_id)` — any role.
+- `has_org_role(org_id, roles[])` — specific roles.
+- `is_tenant_of_tenancy(tenancy_id)`.
+- `is_admin()`.
+
+## Switching contexts
+
+- A switcher component in the header (GitHub-style) lists workspaces.
+- Selecting one navigates the URL.
+- TanStack Query cache evicts unrelated keys.
+- All queries are keyed with `orgId` (landlord) or scoped to `tenant_user_id = me` (tenant).
+
+## Role semantics in the UI
+
+- "Landlord workspace" = one specific org.
+- "Tenant workspace" = aggregate view of all the user's tenancies.
+- "Admin workspace" = `/admin` only (`admin_users`).
+
+## Onboarding
+
+After signup, ask: "I'm a landlord", "I'm a tenant", or "Both". This *only* sets the initial flow:
+
+- Landlord → onboarding wizard → first org.
+- Tenant → onboarding skip → "Waiting for invite from your landlord".
+- Both → landlord wizard, then prompt to add tenant invite.
+
+A user can add the other role any time later from Settings.
+
+## Invitations
+
+- Tenant invite carries an email + token. If the email matches an existing user, the tenancy attaches to that user. If not, signup → tenancy attaches via the token.
+- Org invites work similarly.
+
+## Keep this in mind
+
+Whenever you write a permission check, ask: "Am I checking the user, or the user **in this context**?" Almost always the answer is "in this context, via membership/tenancy/admin lookup".
+
+See `docs/03-architecture/adr/0005-unified-user-model-and-role-switching.md` and `docs/07-flows/14-role-switching.md`.

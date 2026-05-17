@@ -1,0 +1,54 @@
+---
+description: Security — always loaded
+alwaysApply: true
+---
+
+# Security
+
+## Non-negotiables
+
+- **Never log PII**: emails, full names, addresses, NI numbers, payment details. Pino redacts; Sentry scrubs.
+- **Never put secrets in client bundle**: `NEXT_PUBLIC_*` only for safe values; everything else server-only.
+- **Always verify webhook signatures** before processing. Read raw body first.
+- **RLS on every domain table**. CI fails if an INSERT migration omits RLS.
+- **Validate every input**: Zod on Route Handlers; client-side too.
+- **Cookies**: `Secure + HttpOnly + SameSite=Lax`.
+- **CSRF**: same-origin checks + custom header on mutating fetches.
+- **CSP**: strict, defined in `next.config.ts`.
+
+## OWASP Top 10 reminders
+
+A01 Access — RLS + layout-level membership re-check + tests.
+A02 Crypto — TLS, encrypted at rest, password hashing handled by Supabase.
+A03 Injection — parameterised queries via Supabase JS, Zod validation.
+A04 Insecure design — read flow doc + threat model first.
+A05 Misconfig — security headers, private storage buckets by default.
+A06 Vulnerable deps — Renovate + `pnpm audit` in CI.
+A07 Auth — Supabase Auth, MFA optional MVP.
+A08 Integrity — webhook sig + audit log.
+A09 Logging — Sentry + Axiom + alerts.
+A10 SSRF — no user-supplied URLs fetched server-side without allowlist.
+
+See `docs/10-security/owasp-checklist.md`.
+
+## PII fields
+
+These columns + buckets contain PII / sensitive data:
+
+- `profiles.contact_email`, `contact_phone`, `address`, `full_name`.
+- `auth.users.email`.
+- `compliance_documents` storage paths (esp. RTR identity docs).
+- `messages.body`.
+- `tickets.description`.
+
+Never log these. Mask in error messages. Scrub before sending to Sentry.
+
+## Secret handling
+
+- Production secrets only in Vercel / GitHub Environments / Supabase secrets store.
+- Never in code, commits, Slack, screenshots.
+- Rotate quarterly per `docs/10-security/secrets-management.md`.
+
+## When you see something suspicious
+
+Stop, ask. A slightly-wrong security control beats a broken one.

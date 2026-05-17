@@ -1,0 +1,95 @@
+---
+description: Route Handler conventions for src/app/api/**
+globs: src/app/api/**/*.ts
+alwaysApply: false
+---
+
+# Route Handler conventions
+
+## Default skeleton
+
+Use the `handler()` wrapper for all Route Handlers — it gives consistent error envelope, request ID, logging, and Zod parsing:
+
+```ts
+import { handler } from '@/lib/handler';
+import { z } from 'zod';
+
+const Body = z.object({
+  name: z.string().min(1),
+  // ...
+});
+
+export const POST = handler(async ({ req, supabase, user }) => {
+  const body = Body.parse(await req.json());
+  const { data, error } = await supabase.from('orgs').insert({ ...body }).select().single();
+  if (error) throw new DbError(error);
+  return Response.json({ data }, { status: 201 });
+});
+```
+
+## Error envelope
+
+All errors → JSON `{ error: { code, message, details, requestId } }`.
+
+Use typed errors:
+
+- `ValidationError` (400)
+- `UnauthorizedError` (401)
+- `ForbiddenError` (403)
+- `NotFoundError` (404)
+- `ConflictError` (409)
+- `RateLimitError` (429)
+- `DbError`, `IntegrationError`, `InternalError` (5xx)
+
+See `docs/05-backend/error-handling.md`.
+
+## Auth
+
+- Auth is handled via Supabase Auth cookies (`@supabase/ssr`).
+- Inside `handler()`, `user` is the authenticated user or `null`.
+- Use `requireAuth()` if route is protected.
+- For org-scoped routes, accept `orgId` in URL or body, then verify membership via `assertOrgMember(user.id, orgId)`.
+- For tenant-scoped routes, verify ownership via `assertTenantOf(user.id, tenancyId)`.
+
+RLS enforces underlying access; the explicit assertion provides clearer error responses.
+
+## Validation
+
+- Always parse with Zod (request body, params, query).
+- Schemas live in `src/core/schemas/` (portable).
+- Reuse the same schema for client form validation.
+
+## Idempotency
+
+- Mutating endpoints accept `Idempotency-Key` header.
+- Stored in `idempotency_keys` table (24h TTL).
+- Replay returns the original response.
+
+## Rate limiting
+
+- Use `@upstash/ratelimit` with Upstash Redis.
+- Limits per endpoint group defined in `docs/05-backend/rate-limiting.md`.
+- Apply via `withRateLimit()` middleware in `handler()`.
+
+## Webhooks
+
+- Path: `/api/webhooks/<provider>/route.ts`.
+- Read **raw body** before any JSON parsing.
+- Verify HMAC signature first.
+- Persist event to `webhook_events` table.
+- Return 200 quickly (handle work async via Inngest).
+
+See `docs/05-backend/webhooks-and-integrations.md`.
+
+## Logging
+
+- Use Pino logger from `src/lib/logger.ts`.
+- Log structured JSON: `{ requestId, userId, orgId, route, ... }`.
+- Never log secrets, tokens, raw card data, or full PII.
+
+## Don't
+
+- Don't return arbitrary data shapes — always `{ data }` or `{ error }`.
+- Don't use service role key without an explicit reason (webhook, admin tool).
+- Don't write business logic that contradicts `docs/07-flows/`.
+- Don't bypass Zod with `as` casts.

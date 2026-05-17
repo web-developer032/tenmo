@@ -1,0 +1,89 @@
+---
+description: UK compliance — apply when working on tenancy, deposit, certs, RTR, notices
+---
+
+# UK compliance domain rules
+
+When touching tenancy, deposit, compliance certs, Right to Rent, or notices:
+
+## HMO licensing
+
+- A property with **5+ unrelated occupants from 2+ households** requires a mandatory HMO licence in England.
+- Council additional/selective licensing covers smaller HMOs in some areas.
+- Licence has an expiry; track via `compliance_items.type='hmo_licence'`.
+- Operating unlicensed = unlimited fine + Rent Repayment Order (up to 12 months rent back).
+
+See `docs/08-uk-compliance/hmo-licensing.md`.
+
+## Right to Rent
+
+- Mandatory in England for all adult occupants of a tenancy.
+- Three valid methods: manual document, share code, IDSP.
+- Time-limited rights need follow-up checks; track expiry.
+- Stored as `compliance_items.type='right_to_rent'` with `tenancy_id`.
+- Required before tenancy can activate.
+- Failure to perform → up to £20,000 civil penalty per illegal occupant.
+
+See `docs/08-uk-compliance/right-to-rent.md`.
+
+## Deposit protection
+
+- Max deposit = 5 weeks rent (annual rent < £50k) or 6 weeks (≥ £50k).
+- Must be protected with DPS / MyDeposits / TDS within **30 days**.
+- Prescribed Information must be given to tenant within 30 days.
+- Failure = 1×–3× deposit penalty.
+
+Track via `tenancies.deposit_scheme`, `deposit_reference`, `deposit_protected_at`, `prescribed_information_sent_at`.
+
+See `docs/08-uk-compliance/deposit-protection.md`.
+
+## Safety certificates
+
+| Cert | Frequency |
+|---|---|
+| Gas Safety (CP12) | Annual |
+| EICR | 5 years |
+| EPC | 10 years (target C+ from 2028) |
+| PAT | Recommended annual |
+| Fire Risk Assessment | Annual (HMOs) |
+| Legionella | Initial + on changes |
+| Smoke alarm | Working at start of tenancy |
+| CO alarm | In every room with combustion appliance |
+
+Each gets a `compliance_items` row with `expires_at`. 60d / 30d / 7d / overdue reminders fire automatically.
+
+See `docs/08-uk-compliance/safety-certificates.md`.
+
+## Renters' Rights Bill
+
+- **No Section 21** — never expose this option in any notice form.
+- **Periodic tenancies by default** (`is_periodic=true`).
+- **Rent increases**: max 1/year, 2-month notice via Section 13.
+- **Tenant pets**: right to request; landlord cannot unreasonably refuse.
+- **No DSS / no children** discrimination is illegal.
+
+Encoded in `core/validation/tenancy.ts` and `core/utils/tenancy-rules.ts`. Server-side validation rejects illegal combinations.
+
+See `docs/08-uk-compliance/renters-rights-bill.md`.
+
+## Tax / MTD
+
+- MTD ITSA mandatory: April 2026 for >£50k, April 2027 for >£30k landlord income.
+- Capture income (`rent_payments`) and expenses (`expenses`) in pence.
+- Provide quarterly + annual exports keyed to HMRC categories.
+
+See `docs/08-uk-compliance/tax-and-mtd.md`.
+
+## GDPR
+
+- Identity docs (RTR) auto-delete 1 year post tenancy end.
+- Tax data retained 7 years.
+- Tenancy records retained 7 years.
+- Audit log retained 2 years.
+- All retention runs via Inngest cron.
+
+See `docs/08-uk-compliance/gdpr-and-ico.md` + `docs/10-security/data-protection-gdpr.md`.
+
+## When in doubt
+
+The corresponding doc in `docs/08-uk-compliance/` is the source of truth. Don't infer rules from memory — UK property law is precise.

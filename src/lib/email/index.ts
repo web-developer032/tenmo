@@ -1,0 +1,17 @@
+export type { EmailMessage, SendEmailResult } from './client';
+export { sendEmail } from './client';
+export type { RenderedEmail } from './templates/_base';
+export type { ComplianceReminderEmailInput } from './templates/compliance-reminder';
+export { renderComplianceReminderEmail } from './templates/compliance-reminder';
+export type { RentChargeIssuedEmailInput } from './templates/rent-charge-issued';
+export { renderRentChargeIssuedEmail } from './templates/rent-charge-issued';
+export type { RentPaymentRecordedEmailInput } from './templates/rent-payment-recorded';
+export { renderRentPaymentRecordedEmail } from './templates/rent-payment-recorded';
+export type { TenancyInviteEmailInput } from './templates/tenancy-invite';
+export { renderTenancyInviteEmail } from './templates/tenancy-invite';
+export type { TicketCreatedEmailInput } from './templates/ticket-created';
+export { renderTicketCreatedEmail } from './templates/ticket-created';
+export type { TicketMessageReceivedEmailInput } from './templates/ticket-message-received';
+export { renderTicketMessageReceivedEmail } from './templates/ticket-message-received';
+export type { TicketStatusChangedEmailInput } from './templates/ticket-status-changed';
+export { renderTicketStatusChangedEmail } from './templates/ticket-status-changed';

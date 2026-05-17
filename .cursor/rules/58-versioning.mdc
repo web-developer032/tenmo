@@ -1,0 +1,45 @@
+---
+description: Versioning policy — latest stable, exact pins
+alwaysApply: true
+---
+
+# Versioning policy
+
+## The rule
+
+- Always use the **latest stable** version of every dependency.
+- Pin **exact** versions in `package.json` (no `^`, `~`, or ranges).
+- Renovate Bot auto-PRs minor + patch bumps; majors are reviewed manually.
+
+## Before adding a new dependency
+
+1. Run `npm view <pkg> version` to confirm latest stable.
+2. Check it's actively maintained (last release < 12 months) and used widely (≥ 50k weekly downloads or backed by a known org).
+3. Verify it's compatible with the rest of our stack (Node 22, React 19, ESM-first preferred).
+4. If adding to `core/`, verify it's pure JS (no Node-only deps, no DOM-only deps).
+5. Add an exact version to `package.json` like `"foo": "1.2.3"`.
+6. Document why in the PR description (and update the relevant doc page).
+
+## On a major upgrade
+
+- Read the changelog.
+- Confirm Renovate / Dependabot doesn't auto-merge it.
+- Run full test suite locally.
+- Test E2E happy paths.
+- Update related code as needed.
+
+## When checking versions in conversation
+
+If you're not sure what the latest stable is, **search the web** before recommending a version. Don't rely on memory.
+
+## Locked versions in code
+
+The detailed list of intended versions lives in `docs/03-architecture/tech-stack.md`. That doc is updated when a major upgrade lands.
+
+## Don't
+
+- Don't pin to outdated majors "because that's what we used somewhere else."
+- Don't use `latest` tag in `package.json`.
+- Don't use beta / RC versions in production deps without an ADR.
+
+See `docs/03-architecture/adr/0007-latest-stable-versioning-policy.md`.

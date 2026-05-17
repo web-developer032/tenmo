@@ -1,0 +1,73 @@
+---
+description: Frontend conventions for src/**
+globs: src/**/*.ts,src/**/*.tsx
+alwaysApply: false
+---
+
+# Frontend conventions
+
+## Structure
+
+- Pages live in `src/app/`. Each route segment uses Next.js conventions (`page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx`).
+- Reusable UI primitives are in `src/components/ui/` (shadcn/ui) and `src/components/ds/` (Tenantly DS).
+- Feature modules live under `src/features/<domain>/` with `components/`, `hooks/`, `actions/` (server actions), and `schemas.ts`.
+- Web-only helpers (next/navigation wrappers, browser-only utils) live in `src/lib/`.
+
+## Server vs Client components
+
+- Default to **Server Components**.
+- Add `'use client'` only when you need: hooks (`useState`, `useEffect`, etc.), event handlers, browser APIs, or third-party client-only libs.
+- Never read secrets in a client component. Read on the server, pass minimal data down.
+
+## Data fetching
+
+- Server Components: fetch directly via Supabase server helper or Route Handler call.
+- Client Components: TanStack Query hooks from `src/core/queries/`.
+- Mutations: TanStack Query `useMutation` invalidating relevant query keys.
+- Realtime: subscribe via Supabase Realtime channels; integrate with Query cache via `setQueryData`.
+
+## Forms
+
+- React Hook Form + Zod resolver.
+- Zod schemas live in `src/core/schemas/<entity>.ts` (portable).
+- Submit handlers call mutation hooks; never raw fetch.
+
+## Styling
+
+- Tailwind v4 with project tokens (`oklch(...)` CSS variables in `src/styles/globals.css`).
+- shadcn/ui primitives + Tenantly DS layer for higher-level patterns (PageHeader, DataTable, StatusBadge, BottomSheet).
+- No inline styles unless dynamic.
+- Mobile-first; use `md:` / `lg:` for breakpoints.
+
+## State
+
+- **Server state** → TanStack Query.
+- **UI state (modals, drawers, transient selections)** → Zustand stores in `src/core/stores/` (must remain portable).
+- **Form state** → React Hook Form.
+- **Active context** → `useActiveContext()` hook reading the URL.
+
+## Routing & layouts
+
+- Use route groups: `(landlord)`, `(tenant)`, `(admin)`, `(auth)`, `(public)`.
+- URL prefix is the source of truth for active context — `/landlord/{slug}/...`, `/tenant/...`, `/admin/...`.
+- Layout-level membership checks via Server Component layout files.
+
+## Performance
+
+- Lazy-load non-critical features with `dynamic()`.
+- Use `next/image` for all images.
+- Use `next/font/google` with variable fonts.
+- Stay within bundle budgets defined in `docs/04-frontend/performance.md`.
+
+## Imports
+
+- Use path aliases: `@/components/...`, `@/features/...`, `@/core/...`, `@/lib/...`.
+- Don't import from `core/` into `app/` and back into `core/` (no circular).
+
+## What NOT to do
+
+- Don't put platform-specific code in `core/` (separate rule enforces this).
+- Don't create new shadcn components by hand — use the CLI.
+- Don't roll your own data fetching when a TanStack hook already exists.
+- Don't reinvent compliance / RRB rules — they live in `core/utils/` and `core/constants/`.
+- Don't add Tailwind classes inside `core/`.

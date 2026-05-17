@@ -1,0 +1,83 @@
+---
+description: Portable core/ rules — strict
+globs: src/core/**/*.ts,src/core/**/*.tsx
+alwaysApply: false
+---
+
+# Portable `src/core/` — strict rules
+
+This folder is the **portable contract** with the future Expo/React Native app. Code here must run unchanged in Node, Next.js Server Components, Client Components, and React Native.
+
+## Banned
+
+- `next/*` (any).
+- `react-dom`, `react-dom/client`.
+- DOM globals: `window`, `document`, `localStorage`, `sessionStorage`, `navigator`, `location`, `history`.
+- Tailwind CSS class strings.
+- JSX (no `.tsx` markup; hooks/utilities only).
+- DOM types: `HTMLElement`, `MouseEvent`, `Document`, `Window`, etc.
+- Direct `fetch(` calls — go through `core/api/http.ts` wrapper.
+- Imports from `app/`, `components/`, `features/`, or `lib/`.
+
+## Allowed dependencies
+
+- `react`, `@tanstack/react-query`, `zustand`, `zod`, `@supabase/supabase-js`, `date-fns`, `nanoid`, `lodash-es`, plus internal `core/*` imports.
+
+## Allowed file types
+
+- `.ts` only. `.tsx` (with JSX) is banned in `core/`.
+
+## Adapter pattern
+
+For anything platform-specific:
+
+1. Define an interface in `core/adapters/<thing>.ts`.
+2. Export a setter (`setStorage`, `setNetwork`, etc.).
+3. Web bootstrapper provides web impl in `src/lib/bootstrap.ts`.
+4. Mobile bootstrapper provides RN impl.
+
+## Folder shape
+
+- `core/api/` — fetch wrappers + endpoint functions.
+- `core/schemas/` — Zod schemas, one file per entity.
+- `core/types/` — derived types (`z.infer<>`) + supabase-generated.
+- `core/queries/` — TanStack Query hooks.
+- `core/stores/` — Zustand stores.
+- `core/utils/` — pure functions.
+- `core/constants/` — enums, compliance rules.
+- `core/billing/` — capability matrix.
+- `core/adapters/` — platform-specific contracts.
+- `core/config/env.ts` — Zod-validated env.
+
+## Zod-first
+
+Define schemas first; types derived from them. Use the same schema for forms, API parsing, and tests.
+
+## What goes IN core
+
+- Pure business logic (compliance status calc, RRB rules, tenancy state machine).
+- Validation (Zod schemas).
+- API client wrappers.
+- Query hooks (TanStack).
+- Stores (Zustand).
+- Constants / enums.
+
+## What goes OUT of core
+
+- UI components (use `src/components/`, `src/features/`).
+- Tailwind class strings.
+- `next/navigation` calls (use `src/lib/navigation.ts`).
+- Server Actions (`'use server'` lives in `app/`).
+
+## Adding a new dependency
+
+1. Verify it's pure JS (works in Node + RN).
+2. Add it to the "allowed" list in `docs/11-mobile-readiness/portable-modules.md`.
+3. Pin exact version.
+4. Test by running `pnpm test --project core` (Node environment).
+
+## ESLint enforces this
+
+If your code triggers `no-restricted-imports`, `no-restricted-globals`, `no-restricted-syntax`, or boundary rules — don't bypass with `eslint-disable`. Refactor instead.
+
+See `docs/11-mobile-readiness/eslint-boundary-rules.md` for the full ESLint config.

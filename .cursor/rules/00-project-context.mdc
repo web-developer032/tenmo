@@ -1,0 +1,40 @@
+---
+description: Tenantly project context — always loaded
+alwaysApply: true
+---
+
+# Tenantly — Project Context
+
+Tenantly is a UK-first HMO management platform. Built fresh on the Renters' Rights Bill rules. Treats **rooms** (not just properties) as first-class. Automates UK compliance and gives tenants a portable Rental Passport.
+
+## Non-negotiables
+
+- **Tenants free forever** — no platform fees, no surcharges. Landlords pay subscription only.
+- **Latest stable versions**, pinned exactly in package.json.
+- **Roles are derived** from `org_memberships` and `tenancies`. Never add a `role` column to users/profiles.
+- **Every domain table has `org_id` + RLS**. Default deny.
+- **`frontend/src/core/` is portable** — no `next/*`, `react-dom`, `window`, `document`, Tailwind, or JSX.
+- **Update docs in the same change** as code.
+- **Webhooks always verify signatures.**
+- **No PII in logs.**
+- **Forward-only migrations.**
+
+## Where to find things
+
+- Vision / problem / personas: `docs/00-overview/`, `docs/02-product/personas.md`.
+- Features list (MoSCoW): `docs/02-product/features.md`.
+- MVP scope: `docs/02-product/mvp-scope.md`.
+- Architecture: `docs/03-architecture/system-architecture.md`.
+- Tech stack: `docs/03-architecture/tech-stack.md`.
+- ADRs: `docs/03-architecture/adr/`.
+- Frontend conventions: `docs/04-frontend/`.
+- Backend conventions: `docs/05-backend/`.
+- Database: `docs/06-database/`.
+- Flows (read these first when implementing): `docs/07-flows/`.
+- UK compliance: `docs/08-uk-compliance/`.
+- Ops: `docs/09-operations/`.
+- Security: `docs/10-security/`.
+
+## When in doubt
+
+Read the matching flow doc in `docs/07-flows/`, then the matching entity in `docs/06-database/entities.md`. If the answer isn't there, ask the user.

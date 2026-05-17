@@ -1,0 +1,58 @@
+---
+description: Testing standards
+globs: src/**/*.test.ts,src/**/*.test.tsx,e2e/**/*.spec.ts
+alwaysApply: false
+---
+
+# Testing standards
+
+## What we use
+
+- **Unit / component**: Vitest + Testing Library + jsdom.
+- **Integration (API)**: Vitest + supertest-like wrapper around Route Handlers.
+- **E2E**: Playwright against Vercel preview + Supabase preview branch.
+- **Mocks**: MSW v2 for outgoing HTTP, Supabase local for DB.
+
+## Coverage targets
+
+- `core/` → 90%+ (it's the most reused, most testable layer).
+- `features/` → 70%+.
+- `app/` (route shells) → smoke tested via E2E.
+- Compliance rules / Renters' Rights Bill / fee absorption → 100%.
+
+## Test pyramid
+
+- Lots of fast unit tests for `core/utils/` and `core/validation/`.
+- Component tests for forms and complex interactive widgets.
+- Few but reliable E2E tests for critical paths (signup, onboarding, rent collection happy path, compliance reminder firing).
+
+## Conventions
+
+- Co-locate: `Component.tsx` + `Component.test.tsx`.
+- Use `data-testid` only when role/text selection isn't possible.
+- Prefer `render(<Component {...defaults} />)` factories.
+- Reset Supabase + Inngest state between E2E tests.
+- Don't share state between tests.
+- Don't use `any` in test code.
+
+## Snapshot tests
+
+- Avoid for components (brittle).
+- Allowed for: API response shapes, generated SQL, generated migrations.
+
+## When fixing a bug
+
+1. Write a failing test first that reproduces the bug.
+2. Fix the code.
+3. Confirm test passes.
+4. Add a regression note to the test file's top comment if non-obvious.
+
+## What you should NOT do
+
+- Don't `vi.mock()` something just to silence a problem — fix the cause.
+- Don't write tests that rely on timing (`setTimeout`); use `waitFor`.
+- Don't test internal implementation details (private functions).
+- Don't skip tests with `.skip` and merge — either fix or delete.
+- Don't write integration tests that hit production APIs.
+
+See `docs/02-product/mvp-scope.md` for the "definition of done" testing requirements.
