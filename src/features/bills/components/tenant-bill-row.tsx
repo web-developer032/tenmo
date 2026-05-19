@@ -21,18 +21,18 @@ export function TenantBillRow({
 }) {
   const isInfo = allocation_method === 'included_in_rent';
   return (
-    <div className="flex items-center justify-between border-b border-border/50 py-2 last:border-b-0">
+    <div className="flex items-center justify-between border-b border-border-soft py-2 last:border-b-0">
       <div className="min-w-0">
-        <div className="font-medium text-foreground/90">{BILL_TYPE_LABEL[type]}</div>
-        <div className="text-xs text-muted-foreground">
+        <div className="font-semibold text-ink">{BILL_TYPE_LABEL[type]}</div>
+        <div className="text-xs text-ink-light">
           {period_start} → {period_end}
         </div>
       </div>
       <div className="text-right">
         {isInfo ? (
-          <span className="text-xs text-emerald-700 dark:text-emerald-300">Included in rent</span>
+          <span className="text-xs font-semibold text-forest-600">Included in rent</span>
         ) : (
-          <span className="font-medium tabular-nums">{formatMoney(amount_pence)}</span>
+          <span className="font-semibold tabular-nums text-ink">{formatMoney(amount_pence)}</span>
         )}
       </div>
     </div>

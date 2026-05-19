@@ -45,6 +45,8 @@ export * from './utils/dates';
 export {
   addMoney,
   formatMoney,
+  formatMoneyShort,
+  formatMoneyWhole,
   type Money,
   mulMoney,
   pence as penceMoney,

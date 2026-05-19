@@ -10,9 +10,9 @@ export type StatCardProps = {
 };
 
 const toneStyles = {
-  default: 'bg-primary/10 text-primary',
-  warning: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  danger: 'bg-red-500/10 text-red-600 dark:text-red-400',
+  default: 'bg-foam text-forest-600',
+  warning: 'bg-amber-bg text-amber',
+  danger: 'bg-alert-bg text-alert',
 } as const;
 
 export function StatCard({ label, value, hint, icon: Icon, tone = 'default' }: StatCardProps) {

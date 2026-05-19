@@ -1,101 +1,197 @@
 import Link from 'next/link';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { AvRow } from '@/components/ds/av-row';
+import { PageHeader } from '@/components/ds/page-header';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { AdminListQuery } from '@/core/schemas/admin';
-import { AdminNav } from '@/features/admin/components/admin-nav';
+import { formatMoney } from '@/core/utils/money';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
-import { StatusBadge, TierBadge } from '@/features/admin/components/subscription-badges';
-import { loadAdminOrgs } from '@/features/admin/loaders';
+import { AdminFilterRow } from '@/features/admin/components/ds/admin-filter-row';
+import { FilterSelect } from '@/features/admin/components/filter-select';
+import { InviteLandlordDialog } from '@/features/admin/components/invite-landlord-dialog';
+import { LandlordSuspendButton } from '@/features/admin/components/landlord-suspend-button';
+import { loadAdminLandlords } from '@/features/admin/loaders';
 
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: Promise<{ q?: string; page?: string; per_page?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    tier?: string;
+    status?: string;
+    sort?: string;
+    page?: string;
+    per_page?: string;
+  }>;
 }
 
 /**
- * /admin/orgs — paginated org list with subscription badges.
+ * /admin/orgs — Landlords list.
+ *
+ * Powered by the `admin_org_summary` view: shows owner, plan,
+ * properties, tenants, MRR, joined date and status with row-level
+ * Impersonate / Suspend / Reinstate actions.
  */
-export default async function AdminOrgsPage({ searchParams }: PageProps) {
+export default async function AdminLandlordsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const params = AdminListQuery.parse({
     q: sp.q,
     page: sp.page,
     per_page: sp.per_page,
   });
-  const result = await loadAdminOrgs({
+  const tier = sp.tier ?? 'all';
+  const status = sp.status ?? 'all';
+  const sort = (sp.sort as 'newest' | 'mrr' | 'properties' | 'name') ?? 'newest';
+
+  const result = await loadAdminLandlords({
     q: params.q ?? null,
+    tier: tier === 'all' ? null : tier,
+    status: status === 'all' ? null : status,
+    sort,
     page: params.page,
     perPage: params.per_page,
   });
 
-  return (
-    <div className="mx-auto w-full max-w-screen-2xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Organisations</h1>
-        <p className="text-sm text-muted-foreground">
-          {result.total.toLocaleString('en-GB')} total org
-          {result.total === 1 ? '' : 's'}.
-        </p>
-      </header>
+  const trialCount = result.rows.filter((r) => r.status === 'trialing').length;
 
-      <AdminNav />
+  return (
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Landlords' }]}
+        title="Landlords"
+        description={
+          <>
+            {result.total.toLocaleString('en-GB')} landlord
+            {result.total === 1 ? '' : 's'}
+            {trialCount > 0 ? ` · ${trialCount} on trial in this view` : ''}.
+          </>
+        }
+        actions={
+          <>
+            <InviteLandlordDialog />
+            <Button size="sm" variant="ghost" disabled>
+              Export CSV
+            </Button>
+          </>
+        }
+      />
 
       <Card>
-        <CardHeader className="flex flex-row items-center gap-3">
-          <AdminSearchInput
-            basePath="/admin/orgs"
-            initialValue={params.q ?? ''}
-            placeholder="Search by name, slug or contact email…"
-          />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="text-left text-muted-foreground text-xs uppercase">
+        <CardContent className="space-y-4 p-4 lg:p-5">
+          <AdminFilterRow>
+            <div className="min-w-0 flex-1 sm:max-w-xs">
+              <AdminSearchInput
+                basePath="/admin/orgs"
+                initialValue={params.q ?? ''}
+                placeholder="Search by name, email or company…"
+              />
+            </div>
+            <FilterSelect
+              name="tier"
+              value={tier}
+              basePath="/admin/orgs"
+              preserve={['q', 'status', 'sort']}
+            >
+              <option value="all">All plans</option>
+              <option value="starter">Starter</option>
+              <option value="pro">Pro</option>
+              <option value="portfolio">Growth / Portfolio</option>
+              <option value="trial">On trial</option>
+            </FilterSelect>
+            <FilterSelect
+              name="status"
+              value={status}
+              basePath="/admin/orgs"
+              preserve={['q', 'tier', 'sort']}
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="trialing">Trial</option>
+              <option value="past_due">Payment failed</option>
+              <option value="canceled">Suspended</option>
+            </FilterSelect>
+            <FilterSelect
+              name="sort"
+              value={sort}
+              basePath="/admin/orgs"
+              preserve={['q', 'tier', 'status']}
+            >
+              <option value="newest">Sort: Newest</option>
+              <option value="mrr">Sort: MRR ↓</option>
+              <option value="properties">Sort: Properties ↓</option>
+              <option value="name">Sort: Name A–Z</option>
+            </FilterSelect>
+          </AdminFilterRow>
+
+          <div className="hidden overflow-x-auto lg:block">
+            <table className="w-full text-[13px]">
+              <thead className="bg-bg-page text-left text-[11px] font-bold uppercase tracking-wider text-ink-light">
                 <tr>
-                  <th className="px-3 py-2">Name</th>
-                  <th className="px-3 py-2">Slug</th>
-                  <th className="px-3 py-2">Tier</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Created</th>
-                  <th className="px-3 py-2" />
+                  <th className="px-3 py-2.5 font-bold">Landlord</th>
+                  <th className="px-3 py-2.5 font-bold">Plan</th>
+                  <th className="px-3 py-2.5 font-bold">Properties</th>
+                  <th className="px-3 py-2.5 font-bold">Tenants</th>
+                  <th className="px-3 py-2.5 font-bold">MRR</th>
+                  <th className="px-3 py-2.5 font-bold">Joined</th>
+                  <th className="px-3 py-2.5 font-bold">Status</th>
+                  <th className="px-3 py-2.5 font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {result.rows.length === 0 ? (
                   <tr>
-                    <td className="px-3 py-6 text-center text-muted-foreground text-sm" colSpan={6}>
-                      No organisations match this search.
+                    <td className="px-3 py-6 text-center text-[13px] text-ink-light" colSpan={8}>
+                      No landlords match this filter.
                     </td>
                   </tr>
                 ) : (
                   result.rows.map((o) => (
-                    <tr key={o.id} className="border-b text-sm last:border-b-0 hover:bg-muted/40">
-                      <td className="px-3 py-2">
-                        <Link href={`/admin/orgs/${o.id}`} className="font-medium hover:underline">
-                          {o.name}
-                        </Link>
+                    <tr
+                      key={o.org_id}
+                      className="border-b border-border-soft transition-colors last:border-b-0 hover:bg-foam/60"
+                    >
+                      <td className="px-3 py-3">
+                        <AvRow
+                          size="sm"
+                          name={o.owner_name ?? o.name}
+                          sub={
+                            <span>
+                              {o.name}
+                              {o.owner_email ? ` · ${o.owner_email}` : ''}
+                            </span>
+                          }
+                        />
                       </td>
-                      <td className="px-3 py-2 font-mono text-muted-foreground text-xs">
-                        {o.slug}
+                      <td className="px-3 py-3">
+                        <TierPill tier={o.tier} mrrPence={o.mrr_pence} />
                       </td>
-                      <td className="px-3 py-2">
-                        <TierBadge tier={o.override_tier ?? o.tier} override={!!o.override_tier} />
+                      <td className="px-3 py-3 text-ink">{o.property_count}</td>
+                      <td className="px-3 py-3 text-ink">{o.active_tenancy_count}</td>
+                      <td className="px-3 py-3 text-ink">
+                        {o.mrr_pence > 0 ? formatMoney(o.mrr_pence) : '—'}
                       </td>
-                      <td className="px-3 py-2">
-                        <StatusBadge status={o.status} />
+                      <td className="px-3 py-3 text-[12px] text-ink-light">
+                        {formatJoined(o.created_at)}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {new Date(o.created_at).toLocaleDateString('en-GB')}
+                      <td className="px-3 py-3">
+                        <StatusPill status={o.status} />
                       </td>
-                      <td className="px-3 py-2 text-right">
-                        <Link
-                          href={`/admin/orgs/${o.id}`}
-                          className="text-primary text-xs hover:underline"
-                        >
-                          View →
-                        </Link>
+                      <td className="px-3 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/admin/orgs/${o.org_id}`}
+                            className="rounded-button border border-border-soft bg-white px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-foam hover:text-forest-700"
+                          >
+                            Open
+                          </Link>
+                          <LandlordSuspendButton
+                            orgId={o.org_id}
+                            isSuspended={o.status === 'canceled'}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -104,12 +200,48 @@ export default async function AdminOrgsPage({ searchParams }: PageProps) {
             </table>
           </div>
 
+          {/* Mobile card stack */}
+          <div className="flex flex-col gap-2 lg:hidden">
+            {result.rows.length === 0 ? (
+              <p className="text-[13px] text-ink-light">No landlords match this filter.</p>
+            ) : (
+              result.rows.map((o) => (
+                <Link
+                  key={o.org_id}
+                  href={`/admin/orgs/${o.org_id}`}
+                  className="rounded-card border border-border-soft bg-white p-3.5 transition-colors hover:bg-foam/60"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <AvRow
+                      size="sm"
+                      name={o.owner_name ?? o.name}
+                      sub={
+                        <span>
+                          {o.name} · {o.property_count} prop · {o.active_tenancy_count} tenants
+                        </span>
+                      }
+                    />
+                    <div className="text-right">
+                      <TierPill tier={o.tier} mrrPence={o.mrr_pence} />
+                      <div className="mt-1">
+                        <StatusPill status={o.status} />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+
           <AdminPagination
             basePath="/admin/orgs"
             page={result.page}
             totalPages={result.total_pages}
             preservedParams={{
               q: params.q,
+              tier: tier === 'all' ? undefined : tier,
+              status: status === 'all' ? undefined : status,
+              sort: sort === 'newest' ? undefined : sort,
               per_page: params.per_page === 25 ? undefined : String(params.per_page),
             }}
           />
@@ -117,4 +249,38 @@ export default async function AdminOrgsPage({ searchParams }: PageProps) {
       </Card>
     </div>
   );
+}
+
+function TierPill({ tier, mrrPence }: { tier: string | null; mrrPence: number }) {
+  if (!tier || tier === 'free') return <Badge variant="neutral">Free</Badge>;
+  // 'portfolio' tier is sold as both "Growth" (~£59/mo) and "Enterprise"
+  // (custom pricing). Differentiate visually by MRR.
+  if (tier === 'portfolio') {
+    if (mrrPence >= 10_000) {
+      return <Badge variant="purple">Enterprise</Badge>;
+    }
+    return <Badge variant="success">Growth</Badge>;
+  }
+  const label = SUBSCRIPTION_PLANS[tier as keyof typeof SUBSCRIPTION_PLANS]?.name ?? tier;
+  if (tier === 'pro') return <Badge variant="success">{label}</Badge>;
+  return <Badge variant="neutral">{label}</Badge>;
+}
+
+function StatusPill({ status }: { status: string | null }) {
+  if (!status) return null;
+  if (status === 'active') return <Badge variant="active">Active</Badge>;
+  if (status === 'trialing') return <Badge variant="warning">Trial</Badge>;
+  if (status === 'past_due' || status === 'unpaid') return <Badge variant="overdue">Failed</Badge>;
+  if (status === 'canceled') return <Badge variant="urgent">Suspended</Badge>;
+  return <Badge variant="neutral">{status}</Badge>;
+}
+
+function formatJoined(iso: string): string {
+  const then = new Date(iso).getTime();
+  const days = Math.round((Date.now() - then) / 86_400_000);
+  if (days < 1) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 30) return `${days}d ago`;
+  if (days < 365) return `${Math.round(days / 30)}mo ago`;
+  return new Date(iso).toLocaleDateString('en-GB');
 }

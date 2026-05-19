@@ -2,6 +2,7 @@ import { DoorOpen, Users } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatMoney } from '@/core/utils/money';
 import { ListingActions } from '@/features/listings/components/listing-actions';
@@ -22,16 +23,16 @@ export default async function LandlordListingsPage({ params }: { params: Promise
   const rows = await loadLandlordListings(org.id);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Listings</h1>
-          <p className="text-sm text-muted-foreground">
-            Publish a room to /listings, review applicants, accept the right tenant. Free on every
-            tier — listings are how Tenantly grows.
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Listings' },
+        ]}
+        title="Listings"
+        description="Publish a room to /listings, review applicants, accept the right tenant. Free on every tier — listings are how Tenantly grows."
+      />
 
       {rows.length === 0 ? (
         <EmptyState
@@ -49,31 +50,29 @@ export default async function LandlordListingsPage({ params }: { params: Promise
             return (
               <li key={row.id}>
                 <Card>
-                  <CardHeader>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="space-y-1">
-                        <CardTitle className="text-base">
-                          {row.name}{' '}
-                          <span className="text-sm font-normal text-muted-foreground">
-                            · {row.property_name}
-                          </span>
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground">
-                          {rent}
-                          {row.has_ensuite ? ' · Ensuite' : ''}
-                          {row.property_city ? ` · ${row.property_city}` : ''}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <ListingStatusBadge status={row.listing_status} />
-                        <Link
-                          href={`/landlord/${slug}/listings/${row.id}/applications`}
-                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs hover:bg-muted"
-                        >
-                          <Users className="h-3 w-3" />
-                          {row.pending_application_count} pending
-                        </Link>
-                      </div>
+                  <CardHeader className="flex-col items-stretch gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <CardTitle>
+                        {row.name}{' '}
+                        <span className="text-[12.5px] font-medium text-ink-light">
+                          · {row.property_name}
+                        </span>
+                      </CardTitle>
+                      <p className="text-[12px] text-ink-light">
+                        {rent}
+                        {row.has_ensuite ? ' · Ensuite' : ''}
+                        {row.property_city ? ` · ${row.property_city}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <ListingStatusBadge status={row.listing_status} />
+                      <Link
+                        href={`/landlord/${slug}/listings/${row.id}/applications`}
+                        className="inline-flex items-center gap-1 rounded-full border border-border-soft bg-white px-2.5 py-1 text-[11px] font-semibold text-ink-mid transition-colors hover:border-forest-200 hover:text-forest-600"
+                      >
+                        <Users className="h-3 w-3" />
+                        {row.pending_application_count} pending
+                      </Link>
                     </div>
                   </CardHeader>
                   <CardContent>

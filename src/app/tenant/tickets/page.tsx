@@ -2,8 +2,10 @@ import { Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
+import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { TICKET_OPEN_STATUSES, type TicketStatus } from '@/core/constants/tickets';
 import { TicketCard } from '@/features/tickets/components/ticket-card';
 import {
@@ -49,20 +51,19 @@ export default async function TenantTicketsPage() {
   const canRaise = tenancies.length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Maintenance</h1>
-          <p className="text-sm text-muted-foreground">
-            Tell your landlord about issues, share photos, and track progress in one place.
-          </p>
-        </div>
-        {canRaise ? (
-          <Button asChild>
-            <Link href="/tenant/tickets/new">Raise an issue</Link>
-          </Button>
-        ) : null}
-      </header>
+    <div className="mx-auto w-full max-w-5xl space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[{ label: 'Tenant', href: '/tenant' }, { label: 'Maintenance' }]}
+        title="Maintenance"
+        description="Tell your landlord about issues, share photos, and track progress in one place."
+        actions={
+          canRaise ? (
+            <Button asChild>
+              <Link href="/tenant/tickets/new">Raise an issue</Link>
+            </Button>
+          ) : null
+        }
+      />
 
       {tickets.length === 0 ? (
         <EmptyState
@@ -77,27 +78,24 @@ export default async function TenantTicketsPage() {
         />
       ) : (
         <div className="space-y-6">
-          <section
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-            aria-label="Maintenance summary"
-          >
+          <ResponsiveGrid preset="kpi" aria-label="Maintenance summary">
             <SummaryCell label="Open" value={stats.openCount} />
             <SummaryCell
               label="Critical open"
               value={stats.criticalOpen}
-              tone={stats.criticalOpen > 0 ? 'text-red-700 dark:text-red-300' : ''}
+              tone={stats.criticalOpen > 0 ? 'text-alert' : ''}
             />
             <SummaryCell label="Awaiting you" value={stats.awaitingTenant} />
             <SummaryCell label="Resolved (7d)" value={stats.resolvedThisWeek} />
-          </section>
+          </ResponsiveGrid>
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
               Open ({open.length})
             </h2>
             {open.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                <CardContent className="py-8 text-center text-[13px] text-ink-light">
                   Nothing open right now.
                 </CardContent>
               </Card>
@@ -114,7 +112,7 @@ export default async function TenantTicketsPage() {
 
           {history.length > 0 ? (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
                 History ({history.length})
               </h2>
               <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -135,11 +133,9 @@ export default async function TenantTicketsPage() {
 function SummaryCell({ label, value, tone = '' }: { label: string; value: number; tone?: string }) {
   return (
     <Card>
-      <CardHeader className="pb-1">
-        <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className={`text-2xl font-semibold ${tone}`}>{value}</p>
+      <CardContent className="space-y-1">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-light">{label}</p>
+        <p className={`font-sans text-[26px] font-extrabold text-ink ${tone}`}>{value}</p>
       </CardContent>
     </Card>
   );

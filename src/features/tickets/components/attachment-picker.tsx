@@ -152,7 +152,7 @@ export function AttachmentPicker({
           ))}
         </ul>
       ) : null}
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="text-xs text-alert">{error}</p> : null}
     </div>
   );
 }

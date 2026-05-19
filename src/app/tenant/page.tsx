@@ -2,6 +2,7 @@ import { BookUser, Building2, CalendarClock, Home, Inbox, Mail } from 'lucide-re
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,13 +36,13 @@ function pickFirst<T>(value: unknown): T | null {
 type StatusMeta = { label: string; tone: string };
 
 const STATUS_LABEL: Record<string, StatusMeta> = {
-  pending_invite: { label: 'Awaiting your accept', tone: 'bg-amber-500/10 text-amber-700' },
-  awaiting_signature: { label: 'Sign your tenancy', tone: 'bg-amber-500/10 text-amber-700' },
-  awaiting_deposit: { label: 'Awaiting deposit', tone: 'bg-amber-500/10 text-amber-700' },
-  active: { label: 'Active', tone: 'bg-emerald-500/10 text-emerald-700' },
+  pending_invite: { label: 'Awaiting your accept', tone: 'bg-amber-bg text-amber' },
+  awaiting_signature: { label: 'Sign your tenancy', tone: 'bg-amber-bg text-amber' },
+  awaiting_deposit: { label: 'Awaiting deposit', tone: 'bg-amber-bg text-amber' },
+  active: { label: 'Active', tone: 'bg-forest-100 text-forest-700' },
 };
 
-const FALLBACK_STATUS: StatusMeta = { label: 'Active', tone: 'bg-emerald-500/10 text-emerald-700' };
+const FALLBACK_STATUS: StatusMeta = { label: 'Active', tone: 'bg-forest-100 text-forest-700' };
 
 export default async function TenantDashboardPage() {
   const supabase = await createClient();
@@ -162,20 +163,22 @@ export default async function TenantDashboardPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Your home</h1>
-        <p className="text-sm text-muted-foreground">
-          Tenantly is <span className="font-medium text-foreground">free for you, forever</span>.
-          Track your rent, deposit and maintenance — all in one place.
-        </p>
-      </header>
+    <div className="mx-auto w-full max-w-5xl space-y-5 lg:space-y-6">
+      <PageHeader
+        title="Your home"
+        description={
+          <>
+            Tenantly is <span className="font-semibold text-ink">free for you, forever</span>. Track
+            your rent, deposit and maintenance — all in one place.
+          </>
+        }
+      />
 
-      <Card className="border-teal-200 bg-teal-50/40 dark:bg-teal-500/5">
-        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+      <Card className="overflow-hidden border-forest-200 bg-gradient-to-br from-forest-100/60 via-white to-white">
+        <CardHeader className="items-start">
           <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BookUser className="h-4 w-4 text-teal-700 dark:text-teal-300" />
+            <CardTitle className="flex items-center gap-2">
+              <BookUser className="h-4 w-4 text-forest-600" />
               Your Rental Passport
             </CardTitle>
             <CardDescription>
@@ -190,10 +193,10 @@ export default async function TenantDashboardPage() {
       </Card>
 
       {invites.length > 0 ? (
-        <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-500/5">
+        <Card className="border-amber-bg bg-amber-bg/40">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Inbox className="h-4 w-4 text-amber-600" />
+            <CardTitle className="flex items-center gap-2">
+              <Inbox className="h-4 w-4 text-amber" />
               {invites.length === 1
                 ? 'You have an invite waiting'
                 : `${invites.length} invites waiting`}
@@ -213,16 +216,14 @@ export default async function TenantDashboardPage() {
               return (
                 <div
                   key={iv.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-background p-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-button border border-border-soft bg-white p-3"
                 >
                   <div className="min-w-0">
-                    <div className="truncate font-medium">
+                    <div className="truncate font-semibold text-ink">
                       {property?.name ?? 'Property'}
-                      {room?.name ? (
-                        <span className="text-muted-foreground"> — {room.name}</span>
-                      ) : null}
+                      {room?.name ? <span className="text-ink-light"> — {room.name}</span> : null}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[12px] text-ink-light">
                       {org?.name ?? 'Landlord'} · move-in {iv.start_date} ·{' '}
                       {formatMoney(iv.rent_pence)} {iv.rent_frequency === 'weekly' ? 'pw' : 'pcm'}
                     </div>
@@ -259,13 +260,11 @@ export default async function TenantDashboardPage() {
             return (
               <li key={t.id}>
                 <Card>
-                  <CardHeader className="space-y-1">
-                    <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-                      <Home className="h-4 w-4 text-muted-foreground" />
+                  <CardHeader className="flex-col items-stretch gap-1 sm:flex-row sm:items-center">
+                    <CardTitle className="flex flex-wrap items-center gap-2">
+                      <Home className="h-4 w-4 text-forest-600" />
                       {property?.name ?? 'Your home'}
-                      {room?.name ? (
-                        <span className="text-muted-foreground">— {room.name}</span>
-                      ) : null}
+                      {room?.name ? <span className="text-ink-light">— {room.name}</span> : null}
                       <Badge className={status.tone}>{status.label}</Badge>
                     </CardTitle>
                     {property?.address ? (
@@ -277,33 +276,39 @@ export default async function TenantDashboardPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">Rent</div>
-                        <div className="mt-1 text-lg font-semibold">
+                      <div className="rounded-card border border-border-soft bg-white p-3">
+                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
+                          Rent
+                        </div>
+                        <div className="mt-1 font-sans text-[18px] font-extrabold text-ink">
                           {formatMoney(t.rent_pence)}
-                          <span className="ml-1 text-xs font-normal text-muted-foreground">
+                          <span className="ml-1 text-[11px] font-medium text-ink-light">
                             {t.rent_frequency === 'weekly' ? 'pw' : 'pcm'}
                           </span>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Due day {t.rent_due_day}
-                        </div>
+                        <div className="text-[11.5px] text-ink-light">Due day {t.rent_due_day}</div>
                       </div>
-                      <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">Deposit</div>
-                        <div className="mt-1 text-lg font-semibold">
+                      <div className="rounded-card border border-border-soft bg-white p-3">
+                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
+                          Deposit
+                        </div>
+                        <div className="mt-1 font-sans text-[18px] font-extrabold text-ink">
                           {formatMoney(t.deposit_pence)}
                         </div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[11.5px] text-ink-light">
                           {t.deposit_protected_at
                             ? `Protected · ${t.deposit_scheme?.toUpperCase() ?? ''}`
                             : 'Awaiting protection'}
                         </div>
                       </div>
-                      <div className="rounded-md border p-3">
-                        <div className="text-xs text-muted-foreground">Tenancy</div>
-                        <div className="mt-1 text-sm font-medium">{t.start_date}</div>
-                        <div className="text-xs text-muted-foreground">
+                      <div className="rounded-card border border-border-soft bg-white p-3">
+                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
+                          Tenancy
+                        </div>
+                        <div className="mt-1 text-[14px] font-semibold text-ink">
+                          {t.start_date}
+                        </div>
+                        <div className="text-[11.5px] text-ink-light">
                           {t.end_date ? `to ${t.end_date}` : 'Periodic — no end date'}
                         </div>
                       </div>
@@ -335,15 +340,18 @@ export default async function TenantDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-forest-600" />
             Coming soon
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
+        <CardContent className="text-[13px] text-ink-light">
           Pay rent in-app, manage your deposit and view your{' '}
           <Building2 className="-mt-0.5 inline h-3.5 w-3.5" /> Rental Passport.{' '}
-          <Link href="/account" className="font-medium text-primary hover:underline">
+          <Link
+            href="/account"
+            className="font-semibold text-forest-600 underline-offset-4 hover:underline"
+          >
             Update your profile
           </Link>{' '}
           to be ready when these land.

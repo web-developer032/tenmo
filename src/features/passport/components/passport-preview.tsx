@@ -48,10 +48,10 @@ function IdentitySection({ passport }: { passport: PassportData }) {
 function RtrSection({ passport }: { passport: PassportData }) {
   const tone =
     passport.right_to_rent.status === 'verified'
-      ? 'text-emerald-700 dark:text-emerald-300'
+      ? 'text-forest-600'
       : passport.right_to_rent.status === 'expired'
-        ? 'text-destructive'
-        : 'text-muted-foreground';
+        ? 'text-alert'
+        : 'text-ink-light';
   return (
     <Card>
       <CardHeader>

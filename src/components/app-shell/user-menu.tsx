@@ -4,7 +4,6 @@ import { LogOut, Settings, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,12 +35,18 @@ export function UserMenu({ email, fullName, avatarUrl }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account menu">
-          <Avatar className="h-8 w-8">
+        <button
+          type="button"
+          aria-label="Account menu"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full ring-offset-background transition-colors hover:ring-2 hover:ring-forest-600/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/30"
+        >
+          <Avatar className="h-9 w-9">
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={fullName ?? email} /> : null}
-            <AvatarFallback>{initials || 'U'}</AvatarFallback>
+            <AvatarFallback className="bg-foam font-sans text-[12px] font-bold text-forest-700">
+              {initials || 'U'}
+            </AvatarFallback>
           </Avatar>
-        </Button>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">

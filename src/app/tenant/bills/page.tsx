@@ -1,6 +1,7 @@
 import { ArrowLeft, Receipt } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { PageHeader } from '@/components/ds/page-header';
 import { Button } from '@/components/ui/button';
 import { TenantBillsCard } from '@/features/bills/components/tenant-bills-card';
 import { loadBillsForTenancy, type TenantBillRow } from '@/features/bills/loaders';
@@ -43,20 +44,27 @@ export default async function TenantBillsPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <Button asChild variant="ghost" size="sm">
-        <Link href="/tenant">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to your home
-        </Link>
-      </Button>
-
-      <header className="flex items-center gap-2">
-        <Receipt className="h-5 w-5 text-muted-foreground" />
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Your shared bills</h1>
-      </header>
+    <div className="mx-auto w-full max-w-4xl space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[{ label: 'Tenant', href: '/tenant' }, { label: 'Bills' }]}
+        title={
+          <span className="inline-flex items-center gap-2">
+            <Receipt className="h-5 w-5 text-forest-600" />
+            Your shared bills
+          </span>
+        }
+        description="Utility splits paid forward by your landlord and recharged here. Everything is itemised so you can see exactly what you owe."
+        actions={
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/tenant">
+              <ArrowLeft className="h-4 w-4" /> Back to your home
+            </Link>
+          </Button>
+        }
+      />
 
       {list.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[13px] text-ink-light">
           You have no active tenancies, so there are no bills to show.
         </p>
       ) : (
@@ -65,7 +73,7 @@ export default async function TenantBillsPage() {
           const room = pickFirst<{ name: string }>(t.rooms);
           return (
             <section key={t.id} className="space-y-2">
-              <h2 className="text-sm font-medium text-muted-foreground">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
                 {property?.name ?? 'Property'}
                 {room?.name ? ` — ${room.name}` : ''}
               </h2>

@@ -37,7 +37,13 @@ function getQueryClient(): QueryClient {
 export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      forcedTheme="light"
+      enableSystem={false}
+      disableTransitionOnChange
+    >
       <QueryClientProvider client={queryClient}>
         {/* PostHog uses useSearchParams inside the page-view emitter, which
          * Next requires to live under a Suspense boundary. */}

@@ -90,11 +90,7 @@ export default async function TenantRentLedgerPage({ params }: { params: Promise
         <Stat
           label={detail.arrearsPence > 0 ? 'Outstanding' : 'Up to date'}
           value={formatMoney(detail.arrearsPence)}
-          tone={
-            detail.arrearsPence > 0
-              ? 'text-red-700 dark:text-red-300'
-              : 'text-emerald-700 dark:text-emerald-300'
-          }
+          tone={detail.arrearsPence > 0 ? 'text-alert' : 'text-forest-600'}
         />
         <Stat label="Open charges" value={String(grouped.overdue.length + grouped.due.length)} />
         <Stat
@@ -108,7 +104,7 @@ export default async function TenantRentLedgerPage({ params }: { params: Promise
         <Section
           title="Overdue"
           subtitle="Past their due date — please pay these as soon as possible."
-          tone="border-red-500/30"
+          tone="border-alert/30"
         >
           {grouped.overdue.map((c) => (
             <ChargeRow key={c.id} charge={c} />
@@ -120,7 +116,7 @@ export default async function TenantRentLedgerPage({ params }: { params: Promise
         <Section
           title="Due now"
           subtitle="Currently due. Pay using the method your landlord has set up."
-          tone="border-amber-500/30"
+          tone="border-amber/30"
         >
           {grouped.due.map((c) => (
             <ChargeRow key={c.id} charge={c} />

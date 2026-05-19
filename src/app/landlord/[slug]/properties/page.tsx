@@ -1,7 +1,9 @@
-import { Building2, Plus } from 'lucide-react';
+import { Building2, MapPin, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
+import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,20 +27,23 @@ export default async function PropertiesListPage({ params }: { params: Promise<P
   const list = properties ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Properties</h1>
-          <p className="text-sm text-muted-foreground">
-            Buildings under management. Add rooms to start tracking tenancies and compliance.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href={`/landlord/${slug}/properties/new`}>
-            <Plus className="mr-1 h-4 w-4" /> Add property
-          </Link>
-        </Button>
-      </header>
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Properties' },
+        ]}
+        title="Properties"
+        description="Buildings under management. Add rooms to start tracking tenancies and compliance."
+        actions={
+          <Button asChild>
+            <Link href={`/landlord/${slug}/properties/new`}>
+              <Plus className="h-4 w-4" /> Add property
+            </Link>
+          </Button>
+        }
+      />
 
       {list.length === 0 ? (
         <EmptyState
@@ -48,35 +53,37 @@ export default async function PropertiesListPage({ params }: { params: Promise<P
           cta={{ label: 'Add property', href: `/landlord/${slug}/properties/new` }}
         />
       ) : (
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ResponsiveGrid preset="cards-3">
           {list.map((p) => {
             const addr = p.address as { line1: string; city: string; postcode: string };
             return (
-              <li key={p.id}>
-                <Link href={`/landlord/${slug}/properties/${p.id}`} className="block">
-                  <Card className="h-full transition-colors hover:border-primary/50">
-                    <CardHeader>
-                      <CardTitle className="flex items-start justify-between gap-2 text-base">
-                        <span>{p.name}</span>
-                        {p.is_hmo ? <Badge variant="secondary">HMO</Badge> : null}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-1 text-sm text-muted-foreground">
-                      <div>{addr.line1}</div>
-                      <div>
+              <Link key={p.id} href={`/landlord/${slug}/properties/${p.id}`} className="block">
+                <Card className="h-full transition-colors hover:border-forest-200 hover:bg-foam/40">
+                  <CardHeader>
+                    <CardTitle className="text-[14px]">{p.name}</CardTitle>
+                    {p.is_hmo ? <Badge variant="active">HMO</Badge> : null}
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-start gap-1.5 text-[12.5px] text-ink-mid">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-light" />
+                      <span>
+                        {addr.line1}
+                        <br />
                         {addr.city} · {addr.postcode}
-                      </div>
-                      <div className="pt-2 text-xs">
-                        {p.total_rooms ?? 0} {p.total_rooms === 1 ? 'room' : 'rooms'} ·{' '}
-                        {p.type.replace('_', ' ')}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </li>
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border-soft pt-2 text-[12px] text-ink-light">
+                      <span className="font-medium text-ink-mid">
+                        {p.total_rooms ?? 0} {p.total_rooms === 1 ? 'room' : 'rooms'}
+                      </span>
+                      <span>{p.type.replace('_', ' ')}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
-        </ul>
+        </ResponsiveGrid>
       )}
     </div>
   );

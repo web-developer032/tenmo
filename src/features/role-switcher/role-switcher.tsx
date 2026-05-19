@@ -49,10 +49,14 @@ export function RoleSwitcher({ availability }: { availability: RoleAvailability 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Icon className="h-4 w-4" />
-          <span className="max-w-[160px] truncate">{label}</span>
-          <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+        <Button
+          variant="secondary"
+          size="sm"
+          className="hidden gap-1.5 rounded-pill px-3 md:inline-flex"
+        >
+          <Icon className="h-3.5 w-3.5" />
+          <span className="max-w-[140px] truncate text-[12px]">{label}</span>
+          <ChevronsUpDown className="h-3 w-3 text-forest-600/70" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">

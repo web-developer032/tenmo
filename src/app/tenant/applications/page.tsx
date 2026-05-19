@@ -2,6 +2,7 @@ import { ArrowLeft, Search } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { isRoomFilledRejection } from '@/core/schemas/application';
@@ -29,20 +30,19 @@ export default async function TenantApplicationsPage({
   const result = await listMyApplicationsWithClient(supabase, user.id, page);
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <Button asChild variant="ghost" size="sm">
-        <Link href="/tenant">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to your home
-        </Link>
-      </Button>
-
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">My applications</h1>
-        <p className="text-sm text-muted-foreground">
-          Track every room you've applied for. Tenancies are free for tenants — Tenantly will never
-          charge you a fee.
-        </p>
-      </header>
+    <div className="mx-auto w-full max-w-3xl space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[{ label: 'Tenant', href: '/tenant' }, { label: 'My applications' }]}
+        title="My applications"
+        description="Track every room you've applied for. Tenancies are free for tenants — Tenantly will never charge you a fee."
+        actions={
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/tenant">
+              <ArrowLeft className="h-4 w-4" /> Back to your home
+            </Link>
+          </Button>
+        }
+      />
 
       {result.rows.length === 0 ? (
         <EmptyState
@@ -60,49 +60,50 @@ export default async function TenantApplicationsPage({
             return (
               <li key={row.id}>
                 <Card>
-                  <CardHeader>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <CardTitle className="text-base">
-                          <Link href={`/listings/${row.room_id}`} className="hover:underline">
-                            {row.room_name}
-                          </Link>{' '}
-                          <span className="text-sm font-normal text-muted-foreground">
-                            · {row.property_name}
-                          </span>
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground">
-                          {row.org_name}
-                          {row.property_city ? ` · ${row.property_city}` : ''}
-                          {rent ? ` · ${rent}` : ''}
-                        </p>
-                      </div>
-                      <ApplicationStatusBadge status={row.status} />
+                  <CardHeader className="flex-col items-stretch gap-1 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <CardTitle>
+                        <Link
+                          href={`/listings/${row.room_id}`}
+                          className="text-ink hover:text-forest-600 hover:underline"
+                        >
+                          {row.room_name}
+                        </Link>{' '}
+                        <span className="text-[12.5px] font-medium text-ink-light">
+                          · {row.property_name}
+                        </span>
+                      </CardTitle>
+                      <p className="text-[12px] text-ink-light">
+                        {row.org_name}
+                        {row.property_city ? ` · ${row.property_city}` : ''}
+                        {rent ? ` · ${rent}` : ''}
+                      </p>
                     </div>
+                    <ApplicationStatusBadge status={row.status} />
                   </CardHeader>
                   <CardContent className="space-y-3 text-sm">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[12px] text-ink-light">
                       Applied {new Date(row.applied_at).toLocaleDateString('en-GB')}
                       {row.decided_at
                         ? ` · Decided ${new Date(row.decided_at).toLocaleDateString('en-GB')}`
                         : ''}
                     </p>
                     {row.message ? (
-                      <p className="whitespace-pre-line rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                      <p className="whitespace-pre-line rounded-button border border-border-soft bg-foam/30 p-3 text-[12px] text-ink-mid">
                         {row.message}
                       </p>
                     ) : null}
                     {row.status === 'rejected' && row.decline_reason ? (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-[12px] text-ink-light">
                         {isRoomFilledRejection(row)
                           ? 'The landlord chose another applicant — keep browsing similar rooms.'
                           : `Landlord said: ${row.decline_reason}`}
                       </p>
                     ) : null}
                     {row.status === 'accepted' && row.resulting_tenancy_id ? (
-                      <p className="text-xs text-success">
+                      <p className="text-[12px] font-medium text-forest-700">
                         Accepted! Check your email for the tenancy invite, or{' '}
-                        <Link href="/" className="underline">
+                        <Link href="/" className="font-semibold underline-offset-4 hover:underline">
                           open your invites
                         </Link>
                         .

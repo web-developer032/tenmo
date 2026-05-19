@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { PageHeader } from '@/components/ds/page-header';
 import { BillingView } from '@/features/billing/components/billing-view';
 import { loadBillingFeed } from '@/features/billing/loaders';
 import { resolveOrgBySlug } from '@/features/orgs/resolve';
@@ -33,13 +34,21 @@ export default async function BillingPage({
     status === 'success' ? 'success' : status === 'cancelled' ? 'cancelled' : null;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">
-      <header className="mb-8 space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Billing</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your subscription, payment method, and invoices for <strong>{org.name}</strong>.
-        </p>
-      </header>
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Billing' },
+        ]}
+        title="Billing"
+        description={
+          <>
+            Manage your subscription, payment method, and invoices for{' '}
+            <strong className="text-ink">{org.name}</strong>.
+          </>
+        }
+      />
 
       <BillingView
         orgId={org.id}

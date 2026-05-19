@@ -115,7 +115,7 @@ export function InviteForm({
                 </FormDescription>
                 {emailExists === false ? (
                   <p
-                    className="mt-1 inline-flex items-start gap-2 rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300"
+                    className="mt-1 inline-flex items-start gap-2 rounded-button bg-amber-bg px-3 py-2 text-xs text-amber"
                     role="status"
                   >
                     <Info className="mt-0.5 h-3 w-3 shrink-0" />

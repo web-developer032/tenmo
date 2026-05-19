@@ -46,7 +46,7 @@ export function PropertyComplianceSection({
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div>
           <CardTitle className="flex items-center gap-2 text-base">
-            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+            <ShieldCheck className="h-4 w-4 text-forest-500" />
             Compliance
           </CardTitle>
           <CardDescription>

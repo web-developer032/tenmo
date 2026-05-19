@@ -15,11 +15,11 @@ import { createClient } from '@/lib/supabase/server';
 type Params = { slug: string; propertyId: string };
 
 const STATUS_TONE: Record<string, string> = {
-  available: 'bg-muted text-muted-foreground',
-  occupied: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  reserved: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  maintenance: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  archived: 'bg-muted text-muted-foreground',
+  available: 'bg-sand text-ink-mid',
+  occupied: 'bg-foam text-forest-700',
+  reserved: 'bg-amber-bg text-amber',
+  maintenance: 'bg-blue-bg text-blue',
+  archived: 'bg-sand text-ink-mid',
 };
 
 export default async function PropertyDetailPage({ params }: { params: Promise<Params> }) {
@@ -70,9 +70,7 @@ export default async function PropertyDetailPage({ params }: { params: Promise<P
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{property.name}</h1>
             {property.is_hmo ? <Badge variant="secondary">HMO</Badge> : null}
             {property.hmo_licence_required ? (
-              <Badge className="bg-amber-500/10 text-amber-700 hover:bg-amber-500/15">
-                Licence required
-              </Badge>
+              <Badge variant="warning">Licence required</Badge>
             ) : null}
           </div>
           <p className="text-sm text-muted-foreground">

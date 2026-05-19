@@ -24,7 +24,7 @@ export function TenancyActivationChecklist({ input }: { input: ActivationInputs 
   ];
 
   return (
-    <Card className={decision.canActivate ? 'border-emerald-500/40' : undefined}>
+    <Card className={decision.canActivate ? 'border-forest-200' : undefined}>
       <CardHeader>
         <CardTitle className="text-base">
           {decision.canActivate ? 'Ready to activate' : 'Activation checklist'}
@@ -45,13 +45,11 @@ export function TenancyActivationChecklist({ input }: { input: ActivationInputs 
               data-testid={`activation-blocker-${item.code}`}
             >
               {done ? (
-                <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 text-forest-500" />
               ) : (
-                <Circle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                <Circle className="mt-0.5 h-4 w-4 text-ink-light" />
               )}
-              <span className={done ? 'text-foreground' : 'text-muted-foreground'}>
-                {item.label}
-              </span>
+              <span className={done ? 'text-ink' : 'text-ink-light'}>{item.label}</span>
             </div>
           );
         })}

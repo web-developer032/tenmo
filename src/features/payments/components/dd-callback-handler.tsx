@@ -75,15 +75,15 @@ export function DdCallbackHandler({
 
   if (status === 'error') {
     return (
-      <Card className="border-red-500/40">
+      <Card className="border-alert/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-4 w-4 text-alert" />
             Couldn&apos;t finish setup
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <p className="text-sm text-ink-light">{error}</p>
           <Button asChild variant="outline">
             <Link href={`/tenant/rent/${tenancyId}`}>Back to rent</Link>
           </Button>
@@ -93,15 +93,15 @@ export function DdCallbackHandler({
   }
 
   return (
-    <Card className="border-emerald-500/40">
+    <Card className="border-forest-200">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+          <CheckCircle2 className="h-4 w-4 text-forest-500" />
           Direct Debit set up
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-ink-light">
           Your bank is processing the new Direct Debit. We&apos;ll let you know once it&apos;s live
           — usually within 2–3 working days.
         </p>

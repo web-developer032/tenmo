@@ -54,7 +54,7 @@ export function AstStatusCard({
   // We have an envelope. Branch on its status.
   if (envelope?.status === 'completed') {
     return (
-      <Card className="border-emerald-500/40">
+      <Card className="border-forest-200">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <CheckCircle2 className="h-4 w-4" />
@@ -81,7 +81,7 @@ export function AstStatusCard({
 
   if (envelope && (envelope.status === 'declined' || envelope.status === 'expired')) {
     return (
-      <Card className="border-amber-500/40">
+      <Card className="border-amber/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldAlert className="h-4 w-4" />
@@ -112,7 +112,7 @@ export function AstStatusCard({
   const url = viewer === 'tenant' ? tenantSignUrl : landlordSignUrl;
 
   return (
-    <Card className="border-amber-500/40">
+    <Card className="border-amber/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <FileSignature className="h-4 w-4" />

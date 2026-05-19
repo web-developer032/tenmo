@@ -1,8 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { KV } from '@/components/common/kv';
+import { PageHeader } from '@/components/ds/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AdminNav } from '@/features/admin/components/admin-nav';
 import { StatusBadge, TierBadge } from '@/features/admin/components/subscription-badges';
 import { SubscriptionOverrideForm } from '@/features/admin/components/subscription-override-form';
 import { loadAdminOrgDetail } from '@/features/admin/loaders';
@@ -23,29 +23,37 @@ export default async function AdminOrgDetailPage({ params }: PageProps) {
   const { org, subscription, members, usage } = detail;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <Link
-        href="/admin/orgs"
-        className="inline-flex items-center gap-1 text-muted-foreground text-sm hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to organisations
-      </Link>
-
-      <header className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">{org.name}</h1>
-          <TierBadge
-            tier={subscription?.override_tier ?? subscription?.tier ?? null}
-            override={!!subscription?.override_tier}
-          />
-          <StatusBadge status={subscription?.status ?? null} />
-        </div>
-        <p className="font-mono text-muted-foreground text-xs">
-          {org.slug} · {org.id}
-        </p>
-      </header>
-
-      <AdminNav />
+    <div className="mx-auto w-full max-w-5xl space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Organisations', href: '/admin/orgs' },
+          { label: org.name },
+        ]}
+        title={
+          <span className="flex flex-wrap items-center gap-2">
+            {org.name}
+            <TierBadge
+              tier={subscription?.override_tier ?? subscription?.tier ?? null}
+              override={!!subscription?.override_tier}
+            />
+            <StatusBadge status={subscription?.status ?? null} />
+          </span>
+        }
+        description={
+          <span className="font-mono text-[11.5px] text-ink-light">
+            {org.slug} · {org.id}
+          </span>
+        }
+        actions={
+          <Link
+            href="/admin/orgs"
+            className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-ink-light hover:text-forest-600 hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to organisations
+          </Link>
+        }
+      />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>

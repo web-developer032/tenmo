@@ -2,6 +2,8 @@ import { AlertCircle, ArrowRight, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
+import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatMoney } from '@/core/utils/money';
@@ -29,35 +31,38 @@ export default async function FinanceDashboardPage({ params }: { params: Promise
   const data = await loadOrgRentDashboard(org.id);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Finance</h1>
-          <p className="text-sm text-muted-foreground">
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Rent' },
+        ]}
+        title="Rent"
+        description={
+          <>
             Rent across your portfolio. Tenants are <strong>never</strong> charged a platform fee.
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      <ResponsiveGrid preset="kpi" className="lg:grid-cols-3">
         <SummaryCard
           label="Collected this month"
           value={formatMoney(data.totalCollectedThisMonthPence)}
-          tone="text-emerald-700 dark:text-emerald-300"
+          tone="text-forest-700"
         />
         <SummaryCard
           label="Due this month"
           value={formatMoney(data.totalDueThisMonthPence)}
-          tone="text-foreground"
+          tone="text-ink"
         />
         <SummaryCard
           label="Total arrears"
           value={formatMoney(data.totalArrearsPence)}
-          tone={
-            data.totalArrearsPence > 0 ? 'text-red-700 dark:text-red-300' : 'text-muted-foreground'
-          }
+          tone={data.totalArrearsPence > 0 ? 'text-alert' : 'text-ink-light'}
         />
-      </div>
+      </ResponsiveGrid>
 
       <Card>
         <CardHeader>
@@ -83,16 +88,16 @@ export default async function FinanceDashboardPage({ params }: { params: Promise
                 <li key={t.tenancyId}>
                   <Link
                     href={`/landlord/${slug}/tenancies/${t.tenancyId}/rent`}
-                    className="flex items-center justify-between gap-3 py-3 text-sm hover:bg-muted/40 -mx-2 px-2 rounded-md transition-colors"
+                    className="-mx-2 flex items-center justify-between gap-3 rounded-button px-2 py-3 text-[13px] transition-colors hover:bg-foam/60"
                   >
                     <div className="min-w-0">
-                      <div className="font-medium truncate">
+                      <div className="truncate font-semibold text-ink">
                         {t.propertyName}
                         {t.roomName ? (
-                          <span className="text-muted-foreground"> — {t.roomName}</span>
+                          <span className="text-ink-light"> — {t.roomName}</span>
                         ) : null}
                       </div>
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="truncate text-[12px] text-ink-light">
                         {t.tenantName ?? t.tenantEmail ?? 'Tenant'} · {formatMoney(t.rentPence)}{' '}
                         {t.rentFrequency === 'weekly' ? '/wk' : '/mo'}
                         {t.nextDueDate ? <span> · next due {t.nextDueDate}</span> : null}
@@ -100,16 +105,16 @@ export default async function FinanceDashboardPage({ params }: { params: Promise
                     </div>
                     <div className="flex items-center gap-3">
                       {t.arrearsPence > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-red-700 dark:text-red-300">
+                        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-alert">
                           <AlertCircle className="h-3.5 w-3.5" />
                           {formatMoney(t.arrearsPence)}
                         </span>
                       ) : (
-                        <span className="text-xs text-emerald-700 dark:text-emerald-300">
+                        <span className="text-[11.5px] font-semibold uppercase tracking-wide text-forest-700">
                           Up to date
                         </span>
                       )}
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      <ArrowRight className="h-4 w-4 text-ink-light" />
                     </div>
                   </Link>
                 </li>
@@ -121,7 +126,7 @@ export default async function FinanceDashboardPage({ params }: { params: Promise
 
       {data.recentCharges.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
             Recent charges
           </h2>
           <ul className="space-y-2">
@@ -146,9 +151,11 @@ export default async function FinanceDashboardPage({ params }: { params: Promise
 function SummaryCard({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <Card>
-      <CardContent className="space-y-1 py-5">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-semibold ${tone ?? ''}`}>{value}</div>
+      <CardContent className="space-y-1">
+        <div className="text-[11px] font-medium uppercase tracking-wide text-ink-light">
+          {label}
+        </div>
+        <div className={`font-sans text-[26px] font-extrabold ${tone ?? 'text-ink'}`}>{value}</div>
       </CardContent>
     </Card>
   );

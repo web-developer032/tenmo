@@ -2,6 +2,8 @@ import { ArrowRight, Building2, CreditCard, Mail, ShieldCheck, Users } from 'luc
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { KV } from '@/components/common/kv';
+import { PageHeader } from '@/components/ds/page-header';
+import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { OrgRole } from '@/core/schemas/org';
@@ -37,13 +39,21 @@ export default async function LandlordSettingsPage({ params }: { params: Promise
   const addressLines = formatBusinessAddress(detail.business_address);
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage organisation details, members and billing for <strong>{detail.name}</strong>.
-        </p>
-      </header>
+    <div className="mx-auto w-full max-w-4xl space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Settings' },
+        ]}
+        title="Settings"
+        description={
+          <>
+            Manage organisation details, members and billing for{' '}
+            <strong className="text-ink">{detail.name}</strong>.
+          </>
+        }
+      />
 
       <Card>
         <CardHeader className="space-y-1">
@@ -106,20 +116,20 @@ export default async function LandlordSettingsPage({ params }: { params: Promise
         </CardContent>
       </Card>
 
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <ResponsiveGrid preset="cards-2">
         <SettingsLinkCard
           href={`/landlord/${slug}/billing`}
-          icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+          icon={<CreditCard className="h-4 w-4 text-forest-600" />}
           title="Billing & subscription"
           description="Plan, payment method, invoices and usage. Owners only can change the plan."
         />
         <SettingsLinkCard
           href="/account/settings"
-          icon={<ShieldCheck className="h-4 w-4 text-muted-foreground" />}
+          icon={<ShieldCheck className="h-4 w-4 text-forest-600" />}
           title="Personal account"
           description="Notification preferences, profile and password. Applies across every workspace you belong to."
         />
-      </section>
+      </ResponsiveGrid>
     </div>
   );
 }
@@ -147,14 +157,10 @@ function MemberRow({ member }: { member: OrgMember }) {
 }
 
 function RoleBadge({ role }: { role: OrgRole }) {
-  const tone =
-    role === 'owner'
-      ? 'border-primary/40 bg-primary/10 text-primary'
-      : role === 'agent'
-        ? 'border-amber-300/60 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200'
-        : 'border-muted bg-muted text-muted-foreground';
+  const variant: 'active' | 'warning' | 'neutral' =
+    role === 'owner' ? 'active' : role === 'agent' ? 'warning' : 'neutral';
   return (
-    <Badge variant="outline" className={`capitalize ${tone}`}>
+    <Badge variant={variant} className="capitalize">
       {role}
     </Badge>
   );
@@ -176,18 +182,17 @@ function SettingsLinkCard({
       href={href}
       className="block rounded-lg outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <Card className="h-full transition hover:border-foreground/20 hover:bg-muted/30">
-        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2 text-base">
+      <Card className="h-full transition hover:border-forest-200 hover:bg-foam/40">
+        <CardHeader>
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="flex items-center gap-2">
               {icon}
               {title}
             </CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+          <ArrowRight className="h-4 w-4 shrink-0 text-ink-light" />
         </CardHeader>
-        <CardContent className="hidden" />
       </Card>
     </Link>
   );

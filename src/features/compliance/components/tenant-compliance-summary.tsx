@@ -30,7 +30,7 @@ export function TenantComplianceSummary({
     return (
       <div
         className={cn(
-          'rounded-md border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground',
+          'rounded-button border border-dashed border-border-soft bg-sand px-3 py-2 text-xs text-ink-light',
           className,
         )}
       >
@@ -45,19 +45,19 @@ export function TenantComplianceSummary({
 
   const tone =
     overdue > 0
-      ? 'border-red-500/30 bg-red-500/5'
+      ? 'border-alert/30 bg-alert-bg'
       : due > 0
-        ? 'border-amber-500/30 bg-amber-500/5'
-        : 'border-emerald-500/30 bg-emerald-500/5';
+        ? 'border-amber/30 bg-amber-bg'
+        : 'border-forest-200 bg-forest-50';
 
   return (
-    <div className={cn('space-y-2 rounded-md border px-3 py-3 text-sm', tone, className)}>
+    <div className={cn('space-y-2 rounded-button border px-3 py-3 text-sm', tone, className)}>
       <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2 font-medium">
-          <ShieldCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
+        <span className="flex items-center gap-2 font-semibold text-ink">
+          <ShieldCheck className="h-4 w-4 text-forest-600" />
           Safety certificates
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-ink-light">
           {ok} in date · {due} due soon · {overdue} overdue
         </span>
       </div>
@@ -65,9 +65,9 @@ export function TenantComplianceSummary({
         {items.map((it) => (
           <li
             key={it.id}
-            className="flex items-center justify-between gap-2 rounded border bg-background/60 px-2.5 py-1.5"
+            className="flex items-center justify-between gap-2 rounded-button border border-border-soft bg-white px-2.5 py-1.5"
           >
-            <span className="truncate">{complianceTypeLabel(it.type)}</span>
+            <span className="truncate text-ink">{complianceTypeLabel(it.type)}</span>
             <ComplianceStatusBadge status={it.status} />
           </li>
         ))}

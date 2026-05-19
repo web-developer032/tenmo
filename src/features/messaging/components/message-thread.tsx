@@ -242,7 +242,7 @@ function MessageBubble({
  */
 function ReadReceipt({ status }: { status: MessageReadStatus }) {
   if (status === 'read') {
-    return <CheckCheck className="h-3 w-3 text-sky-300 dark:text-sky-200" aria-label="Read" />;
+    return <CheckCheck className="h-3 w-3 text-blue" aria-label="Read" />;
   }
   return <Check className="h-3 w-3" aria-label="Sent" />;
 }

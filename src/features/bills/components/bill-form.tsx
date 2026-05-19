@@ -227,7 +227,7 @@ export function BillForm({
           </div>
 
           {method === 'by_share' && rooms.length > 0 ? (
-            <div className="space-y-2 rounded-md border bg-muted/30 p-3">
+            <div className="space-y-2 rounded-button border border-border-soft bg-sand p-3">
               <Label>Room shares (%)</Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {rooms.map((r) => (
@@ -247,7 +247,7 @@ export function BillForm({
                 ))}
               </div>
               <p
-                className={`text-xs ${sharesBalanced ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}
+                className={`text-xs font-semibold ${sharesBalanced ? 'text-forest-600' : 'text-amber'}`}
               >
                 Total: {sharesSum.toFixed(2)}%
                 {sharesBalanced ? ' (balanced)' : ' — must equal 100%'}

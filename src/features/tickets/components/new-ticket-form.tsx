@@ -247,7 +247,7 @@ export function NewTicketForm({
 
         {triage ? (
           <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-            <Sparkles className="mt-0.5 h-4 w-4 text-amber-500" />
+            <Sparkles className="mt-0.5 h-4 w-4 text-amber" />
             <div className="space-y-1">
               <div className="font-medium text-foreground">AI suggestion</div>
               <div className="flex flex-wrap items-center gap-2">

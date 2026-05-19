@@ -1,20 +1,30 @@
 import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import {
+  type AdminAnalytics,
   type AdminDashboardStats,
   type AdminOrgDetail,
+  type AdminTeamData,
   type AdminUserDetail,
+  getAdminAnalyticsWithClient,
+  getAdminTeamWithClient,
   getDashboardStatsWithClient,
   getOrgDetailWithClient,
   getUserDetailWithClient,
   type ListAuditParams,
   type ListAuditResult,
+  type ListOrgSummaryParams,
+  type ListOrgSummaryResult,
   type ListOrgsParams,
   type ListOrgsResult,
+  type ListTenantsParams,
+  type ListTenantsResult,
   type ListUsersParams,
   type ListUsersResult,
   listAuditWithClient,
+  listOrgSummaryWithClient,
   listOrgsWithClient,
+  listTenantsWithClient,
   listUsersWithClient,
 } from './server';
 
@@ -35,6 +45,18 @@ export async function loadAdminOrgs(params: ListOrgsParams): Promise<ListOrgsRes
   return listOrgsWithClient(sb, params);
 }
 
+export async function loadAdminLandlords(
+  params: ListOrgSummaryParams,
+): Promise<ListOrgSummaryResult> {
+  const sb = await createClient();
+  return listOrgSummaryWithClient(sb, params);
+}
+
+export async function loadAdminTenants(params: ListTenantsParams): Promise<ListTenantsResult> {
+  const sb = await createClient();
+  return listTenantsWithClient(sb, params);
+}
+
 export async function loadAdminUserDetail(userId: string): Promise<AdminUserDetail> {
   const sb = await createClient();
   return getUserDetailWithClient(sb, userId);
@@ -53,4 +75,14 @@ export async function loadAdminDashboardStats(): Promise<AdminDashboardStats> {
 export async function loadAdminAudit(params: ListAuditParams): Promise<ListAuditResult> {
   const sb = await createClient();
   return listAuditWithClient(sb, params);
+}
+
+export async function loadAdminAnalytics(): Promise<AdminAnalytics> {
+  const sb = await createClient();
+  return getAdminAnalyticsWithClient(sb);
+}
+
+export async function loadAdminTeam(): Promise<AdminTeamData> {
+  const sb = await createClient();
+  return getAdminTeamWithClient(sb);
 }

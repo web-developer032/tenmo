@@ -34,7 +34,7 @@ export function TierBadge({
     return (
       <Badge
         variant="outline"
-        className="border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+        className="border-amber/40 bg-amber-bg text-amber"
         title="Manual subscription override"
       >
         {tierLabel(tier)} · override

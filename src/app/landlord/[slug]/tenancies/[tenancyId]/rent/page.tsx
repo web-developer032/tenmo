@@ -81,7 +81,7 @@ export default async function TenancyRentLedgerPage({ params }: { params: Promis
       </header>
 
       {mandate ? (
-        <Card className={collectable ? 'border-emerald-500/40' : 'border-amber-500/40'}>
+        <Card className={collectable ? 'border-forest-200' : 'border-amber/40'}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               Direct Debit <MandateStatusBadge status={mandate.status} />
@@ -108,11 +108,7 @@ export default async function TenancyRentLedgerPage({ params }: { params: Promis
         <Stat
           label="Arrears"
           value={formatMoney(detail.arrearsPence)}
-          tone={
-            detail.arrearsPence > 0
-              ? 'text-red-700 dark:text-red-300'
-              : 'text-emerald-700 dark:text-emerald-300'
-          }
+          tone={detail.arrearsPence > 0 ? 'text-alert' : 'text-forest-600'}
         />
         <Stat label="Open charges" value={String(grouped.overdue.length + grouped.due.length)} />
         <Stat label="Total recorded" value={String(detail.payments.length)} subtle="payments" />
@@ -122,7 +118,7 @@ export default async function TenancyRentLedgerPage({ params }: { params: Promis
         <Section
           title="Overdue"
           subtitle="Past their due date and unpaid (or partly paid)."
-          tone="border-red-500/30"
+          tone="border-alert/30"
         >
           {grouped.overdue.map((c) => (
             <ChargeRow
@@ -138,7 +134,7 @@ export default async function TenancyRentLedgerPage({ params }: { params: Promis
         <Section
           title="Due now"
           subtitle="Currently due — the tenant should pay any day now."
-          tone="border-amber-500/30"
+          tone="border-amber/30"
         >
           {grouped.due.map((c) => (
             <ChargeRow

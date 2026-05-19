@@ -26,9 +26,12 @@ export const uuid = z.guid();
 /** Slug: lowercase, hyphens, 3-60 chars. */
 export const slug = z
   .string()
-  .min(3)
-  .max(60)
-  .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'Lowercase letters, digits and hyphens only.');
+  .min(3, 'Use at least 3 characters.')
+  .max(60, 'Keep it under 60 characters.')
+  .regex(
+    /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/,
+    'Use lowercase letters, digits and hyphens only — no spaces, underscores or other symbols.',
+  );
 
 /** Money in pence — non-negative integer. */
 export const pence = z.number().int().min(0);

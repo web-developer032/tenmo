@@ -22,22 +22,23 @@ const PRECACHE = [OFFLINE_URL];
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(SHELL_CACHE).then((cache) => cache.addAll(PRECACHE)).catch(() => {
-      // The offline page may 404 in dev before it's been compiled
-      // — don't trip the install in that case.
-    }),
+    caches
+      .open(SHELL_CACHE)
+      .then((cache) => cache.addAll(PRECACHE))
+      .catch(() => {
+        // The offline page may 404 in dev before it's been compiled
+        // — don't trip the install in that case.
+      }),
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => !k.startsWith(CACHE_VERSION))
-          .map((k) => caches.delete(k)),
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((k) => !k.startsWith(CACHE_VERSION)).map((k) => caches.delete(k))),
       ),
-    ),
   );
   self.clients.claim();
 });

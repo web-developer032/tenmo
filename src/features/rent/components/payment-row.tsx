@@ -12,11 +12,11 @@ type PaymentRowInput = {
 };
 
 const STATUS_TONE: Record<RentPaymentStatus, string> = {
-  pending: 'text-amber-700 dark:text-amber-300',
-  confirmed: 'text-emerald-700 dark:text-emerald-300',
-  failed: 'text-red-700 dark:text-red-300',
-  charged_back: 'text-red-700 dark:text-red-300',
-  refunded: 'text-zinc-500',
+  pending: 'text-amber',
+  confirmed: 'text-forest-600',
+  failed: 'text-alert',
+  charged_back: 'text-alert',
+  refunded: 'text-ink-light',
 };
 
 /**
@@ -25,15 +25,17 @@ const STATUS_TONE: Record<RentPaymentStatus, string> = {
 export function PaymentRow({ payment }: { payment: PaymentRowInput }) {
   const paidOn = payment.paid_at ? new Date(payment.paid_at).toLocaleDateString('en-GB') : '—';
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card p-3 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-button border border-border-soft bg-white p-3 text-sm">
       <div className="min-w-0 flex-1">
-        <div className="font-medium">{formatMoney(payment.amount_pence)}</div>
-        <div className="mt-0.5 text-xs text-muted-foreground">
+        <div className="font-semibold text-ink">{formatMoney(payment.amount_pence)}</div>
+        <div className="mt-0.5 text-xs text-ink-light">
           {rentMethodLabel(payment.method)} · {paidOn}
           {payment.notes ? <span> · {payment.notes}</span> : null}
         </div>
       </div>
-      <div className={`text-xs font-medium uppercase ${STATUS_TONE[payment.status]}`}>
+      <div
+        className={`text-[11px] font-bold uppercase tracking-wide ${STATUS_TONE[payment.status]}`}
+      >
         {payment.status.replace('_', ' ')}
       </div>
     </div>

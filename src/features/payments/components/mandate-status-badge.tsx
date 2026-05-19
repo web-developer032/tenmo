@@ -1,15 +1,16 @@
+import { TONE, type ToneName } from '@/components/ds/status-tone';
 import {
   type GoCardlessMandateStatus,
   MANDATE_STATUS_LABEL,
   MANDATE_STATUS_TONE,
 } from '@/core/constants/payments';
 
-const TONE_CLASS: Record<ReturnType<typeof toneFor>, string> = {
-  default: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
-  success: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
-  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
-  destructive: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200',
-  secondary: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300',
+const VARIANT_TO_TONE: Record<ReturnType<typeof toneFor>, ToneName> = {
+  default: 'neutral',
+  secondary: 'neutral',
+  success: 'forest',
+  warning: 'amber',
+  destructive: 'alert',
 };
 
 function toneFor(status: GoCardlessMandateStatus) {
@@ -21,7 +22,7 @@ function toneFor(status: GoCardlessMandateStatus) {
 export function MandateStatusBadge({ status }: { status: GoCardlessMandateStatus }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TONE_CLASS[toneFor(status)]}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${TONE[VARIANT_TO_TONE[toneFor(status)]].chip}`}
     >
       {MANDATE_STATUS_LABEL[status]}
     </span>

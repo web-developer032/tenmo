@@ -3,7 +3,60 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Tenantly — HMOeez design system tokens.
+ *
+ * Sourced from `design/hmo-eez-dashboard_4.html` + `design/hmo-eez-tenant-dashboard.html`.
+ * Forest = primary brand; teal = digital accent; mint/foam = soft surfaces.
+ * Semantic surfaces follow the `<color> + <color>-bg` pair pattern
+ * (alert/amber/blue) for badge + alert UIs.
+ *
+ * Tailwind 4 picks named scales (--color-forest-600) up as `bg-forest-600` /
+ * `text-forest-600` utilities automatically; we then remap the existing
+ * shadcn-style semantic vars (--primary etc.) so every page that already
+ * uses `bg-primary` / `text-destructive` adopts the new look without
+ * touching call sites.
+ */
 @theme inline {
+  /* --- Brand: forest scale --- */
+  --color-forest-50: var(--forest-50);
+  --color-forest-100: var(--forest-100);
+  --color-forest-200: var(--forest-200);
+  --color-forest-400: var(--forest-400);
+  --color-forest-500: var(--forest-500);
+  --color-forest-600: var(--forest-600);
+  --color-forest-700: var(--forest-700);
+
+  /* Aliases for raw tokens read straight from the mock */
+  --color-forest: var(--forest-600);
+  --color-forest-dark: var(--forest-700);
+  --color-teal: var(--forest-500);
+  --color-mint: var(--forest-200);
+  --color-foam: var(--forest-100);
+  --color-foam-dark: var(--forest-50);
+
+  /* --- Semantic surface + ink pairs --- */
+  --color-alert: var(--alert);
+  --color-alert-bg: var(--alert-bg);
+  --color-amber: var(--amber);
+  --color-amber-bg: var(--amber-bg);
+  --color-blue: var(--blue);
+  --color-blue-bg: var(--blue-bg);
+  --color-purple: var(--purple);
+  --color-purple-bg: var(--purple-bg);
+  --color-mint: var(--mint);
+  --color-sand: var(--sand);
+
+  /* --- Ink scale --- */
+  --color-ink: var(--ink);
+  --color-ink-mid: var(--ink-mid);
+  --color-ink-light: var(--ink-light);
+
+  /* --- Page surfaces + border --- */
+  --color-bg-page: var(--bg-page);
+  --color-border-soft: var(--border-soft);
+
+  /* --- Existing shadcn-shaped semantic vars (remapped, see :root) --- */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -28,47 +81,99 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* --- Radii --- */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-card: 14px;
+  --radius-modal: 16px;
+  --radius-button: 9px;
+  --radius-nav: 8px;
+  --radius-pill: 9999px;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* --- Layout --- */
+  --layout-sidebar-w: 220px;
+  --layout-drawer-w: 280px;
+  --layout-topbar-h: 60px;
+
+  /* --- Fonts --- */
+  --font-sans:
+    var(--font-plus-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
+  --font-body: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* --- Shadows --- */
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --shadow-toast: 0 8px 24px rgba(15, 110, 86, 0.35);
+  --shadow-card: 0 1px 2px rgba(15, 110, 86, 0.04);
 }
 
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.16 0.02 260);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.02 260);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.02 260);
+  /* Raw HMOeez hex tokens, light mode */
+  --forest-50: #e1f5ee;
+  --forest-100: #c8ebe0;
+  --forest-200: #9fe1cb;
+  --forest-400: #2db58a;
+  --forest-500: #1d9e75;
+  --forest-600: #0f6e56;
+  --forest-700: #085041;
 
-  --primary: oklch(0.55 0.18 250);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.01 260);
-  --secondary-foreground: oklch(0.22 0.04 260);
-  --muted: oklch(0.96 0.01 260);
-  --muted-foreground: oklch(0.5 0.02 260);
-  --accent: oklch(0.94 0.04 220);
-  --accent-foreground: oklch(0.22 0.04 260);
+  --alert: #d85a30;
+  --alert-bg: #fcebeb;
+  --amber: #ba7517;
+  --amber-bg: #faeeda;
+  --blue: #185fa5;
+  --blue-bg: #e6f1fb;
+  --purple: #6b4fa8;
+  --purple-bg: #f0ebff;
+  --mint: #9fe1cb;
+  --sand: #f1efe8;
 
-  --destructive: oklch(0.6 0.22 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.62 0.16 155);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.78 0.16 75);
-  --warning-foreground: oklch(0.16 0.02 260);
+  --ink: #1c2b26;
+  --ink-mid: #3a4f47;
+  --ink-light: #6b8c7e;
 
-  --border: oklch(0.92 0.01 260);
-  --input: oklch(0.92 0.01 260);
-  --ring: oklch(0.55 0.18 250);
+  --bg-page: #f4f7f5;
+  --border-soft: #e2ede8;
+
+  /* shadcn-style semantic vars remapped to forest palette */
+  --background: #f4f7f5;
+  --foreground: #1c2b26;
+  --card: #ffffff;
+  --card-foreground: #1c2b26;
+  --popover: #ffffff;
+  --popover-foreground: #1c2b26;
+
+  --primary: #0f6e56;
+  --primary-foreground: #ffffff;
+  --secondary: #e1f5ee;
+  --secondary-foreground: #0f6e56;
+  --muted: #f1efe8;
+  --muted-foreground: #6b8c7e;
+  --accent: #e1f5ee;
+  --accent-foreground: #0f6e56;
+
+  --destructive: #d85a30;
+  --destructive-foreground: #ffffff;
+  --success: #1d9e75;
+  --success-foreground: #ffffff;
+  --warning: #ba7517;
+  --warning-foreground: #ffffff;
+
+  --border: #e2ede8;
+  --input: #e2ede8;
+  --ring: #0f6e56;
 }
 
 .dark {
+  /* Dark mode is kept working but is not visually re-aligned to the mock,
+     which is light-only. Values below are unchanged from the original
+     shadcn palette so any user with system dark mode still gets a usable
+     theme. */
   --background: oklch(0.15 0.02 260);
   --foreground: oklch(0.96 0.01 260);
   --card: oklch(0.18 0.02 260);
@@ -76,13 +181,13 @@
   --popover: oklch(0.18 0.02 260);
   --popover-foreground: oklch(0.96 0.01 260);
 
-  --primary: oklch(0.7 0.15 250);
+  --primary: oklch(0.7 0.15 165);
   --primary-foreground: oklch(0.16 0.02 260);
   --secondary: oklch(0.24 0.02 260);
   --secondary-foreground: oklch(0.96 0.01 260);
   --muted: oklch(0.24 0.02 260);
   --muted-foreground: oklch(0.7 0.02 260);
-  --accent: oklch(0.28 0.05 220);
+  --accent: oklch(0.28 0.05 165);
   --accent-foreground: oklch(0.96 0.01 260);
 
   --destructive: oklch(0.65 0.22 27);
@@ -94,7 +199,7 @@
 
   --border: oklch(0.28 0.02 260);
   --input: oklch(0.28 0.02 260);
-  --ring: oklch(0.7 0.15 250);
+  --ring: oklch(0.7 0.15 165);
 }
 
 @layer base {
@@ -107,7 +212,16 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-sans);
   }
   ::selection {
     background: var(--primary);

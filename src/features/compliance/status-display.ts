@@ -1,3 +1,4 @@
+import { TONE, type ToneName } from '@/components/ds/status-tone';
 import type { ComplianceStatus, ComplianceType } from '@/core/constants/compliance';
 import { COMPLIANCE_RULES } from '@/core/constants/compliance';
 
@@ -7,6 +8,7 @@ import { COMPLIANCE_RULES } from '@/core/constants/compliance';
  */
 export type ComplianceDisplay = {
   label: string;
+  toneName: ToneName;
   /** Tailwind class for a soft tinted badge. */
   tone: string;
   /** Tailwind class for a solid status dot, used in dense lists. */
@@ -15,31 +17,15 @@ export type ComplianceDisplay = {
   helper: string;
 };
 
+function row(label: string, toneName: ToneName, helper: string): ComplianceDisplay {
+  return { label, toneName, tone: TONE[toneName].chip, dot: TONE[toneName].dot, helper };
+}
+
 const STATUS: Record<ComplianceStatus, ComplianceDisplay> = {
-  ok: {
-    label: 'In date',
-    tone: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20',
-    dot: 'bg-emerald-500',
-    helper: 'Renewal not yet due.',
-  },
-  due_soon: {
-    label: 'Due soon',
-    tone: 'bg-amber-500/10 text-amber-800 dark:text-amber-200 ring-1 ring-amber-500/30',
-    dot: 'bg-amber-500',
-    helper: 'Expires within 30 days — book a renewal.',
-  },
-  overdue: {
-    label: 'Overdue',
-    tone: 'bg-red-500/10 text-red-700 dark:text-red-300 ring-1 ring-red-500/30',
-    dot: 'bg-red-500',
-    helper: 'Already expired — action required immediately.',
-  },
-  unknown: {
-    label: 'Missing',
-    tone: 'bg-muted text-muted-foreground ring-1 ring-border',
-    dot: 'bg-zinc-400',
-    helper: 'No certificate uploaded yet.',
-  },
+  ok: row('In date', 'forest', 'Renewal not yet due.'),
+  due_soon: row('Due soon', 'amber', 'Expires within 30 days — book a renewal.'),
+  overdue: row('Overdue', 'alert', 'Already expired — action required immediately.'),
+  unknown: row('Missing', 'neutral', 'No certificate uploaded yet.'),
 };
 
 export function complianceStatusDisplay(status: ComplianceStatus): ComplianceDisplay {
@@ -55,7 +41,13 @@ export function complianceTypeLabel(type: ComplianceType): string {
  * the dashboard hero card.
  */
 export function scoreTone(score: number): string {
-  if (score >= 90) return 'text-emerald-700 dark:text-emerald-300';
-  if (score >= 70) return 'text-amber-700 dark:text-amber-300';
-  return 'text-red-700 dark:text-red-300';
+  if (score >= 90) return TONE.forest.text;
+  if (score >= 70) return TONE.amber.text;
+  return TONE.alert.text;
+}
+
+export function scoreToneName(score: number): ToneName {
+  if (score >= 90) return 'forest';
+  if (score >= 70) return 'amber';
+  return 'alert';
 }

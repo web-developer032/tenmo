@@ -50,7 +50,7 @@ export function MandateStatusCard({
 
   if (mandate.status === 'submitted' || mandate.status === 'pending_submission') {
     return (
-      <Card className="border-amber-500/40">
+      <Card className="border-amber/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Banknote className="h-4 w-4" />
@@ -67,7 +67,7 @@ export function MandateStatusCard({
   }
 
   return (
-    <Card className="border-emerald-500/40">
+    <Card className="border-forest-200">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <ShieldCheck className="h-4 w-4" />

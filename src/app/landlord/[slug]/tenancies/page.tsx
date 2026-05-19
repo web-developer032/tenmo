@@ -2,6 +2,7 @@ import { Home, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,22 +21,23 @@ export default async function LandlordTenanciesPage({ params }: { params: Promis
   const tenancies = await loadOrgTenancies(org.id);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Tenancies</h1>
-          <p className="text-sm text-muted-foreground">
-            Invite tenants, manage active lets and end tenancies in line with the Renters&apos;
-            Rights Bill.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href={`/landlord/${slug}/properties`}>
-            <Plus className="mr-2 h-4 w-4" />
-            Invite a tenant
-          </Link>
-        </Button>
-      </header>
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Tenancies' },
+        ]}
+        title="Tenancies"
+        description="Invite tenants, manage active lets and end tenancies in line with the Renters' Rights Bill."
+        actions={
+          <Button asChild>
+            <Link href={`/landlord/${slug}/properties`}>
+              <Plus className="h-4 w-4" /> Invite a tenant
+            </Link>
+          </Button>
+        }
+      />
 
       {tenancies.length === 0 ? (
         <EmptyState
@@ -45,41 +47,51 @@ export default async function LandlordTenanciesPage({ params }: { params: Promis
           cta={{ label: 'Choose a property', href: `/landlord/${slug}/properties` }}
         />
       ) : (
-        <ul className="grid grid-cols-1 gap-3">
+        <ul className="flex flex-col gap-3">
           {tenancies.map((t) => {
             const status = tenancyStatusDisplay(t.status);
             return (
               <li key={t.id}>
                 <Link href={`/landlord/${slug}/tenancies/${t.id}`}>
-                  <Card className="transition-colors hover:bg-muted/40">
-                    <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
-                      <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+                  <Card className="transition-colors hover:border-forest-200 hover:bg-foam/40">
+                    <CardHeader>
+                      <CardTitle className="flex flex-wrap items-center gap-2">
                         {t.property_name ?? 'Property'}
                         {t.room_name ? (
-                          <span className="text-muted-foreground">— {t.room_name}</span>
+                          <span className="text-ink-light">— {t.room_name}</span>
                         ) : null}
                       </CardTitle>
                       <Badge className={status.tone}>{status.label}</Badge>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+                    <CardContent className="grid grid-cols-2 gap-3 text-[13px] md:grid-cols-4">
                       <div>
-                        <div className="text-muted-foreground">Tenant</div>
-                        <div className="truncate font-medium">{t.tenant_email ?? '—'}</div>
+                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
+                          Tenant
+                        </div>
+                        <div className="truncate font-semibold text-ink">
+                          {t.tenant_email ?? '—'}
+                        </div>
                       </div>
                       <div>
-                        <div className="text-muted-foreground">Start</div>
-                        <div className="font-medium">{t.start_date}</div>
+                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
+                          Start
+                        </div>
+                        <div className="font-semibold text-ink">{t.start_date}</div>
                       </div>
                       <div>
-                        <div className="text-muted-foreground">Rent</div>
-                        <div className="font-medium">
+                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
+                          Rent
+                        </div>
+                        <div className="font-semibold text-ink">
                           {formatMoney(t.rent_pence)}{' '}
                           {t.rent_frequency === 'weekly' ? '/wk' : '/mo'}
                         </div>
                       </div>
                       <div>
-                        <div className="text-muted-foreground">Deposit</div>
-                        <div className="font-medium">{formatMoney(t.deposit_pence)}</div>
+                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
+                          Deposit
+                        </div>
+                        <div className="font-semibold text-ink">{formatMoney(t.deposit_pence)}</div>
                       </div>
                     </CardContent>
                   </Card>

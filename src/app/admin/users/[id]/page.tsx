@@ -1,8 +1,8 @@
 import { ArrowLeft, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { KV } from '@/components/common/kv';
+import { PageHeader } from '@/components/ds/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AdminNav } from '@/features/admin/components/admin-nav';
 import { loadAdminUserDetail } from '@/features/admin/loaders';
 
 export const dynamic = 'force-dynamic';
@@ -25,37 +25,41 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   const { profile, memberships, tenancies, is_admin, admin_notes } = detail;
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <Link
-        href="/admin/users"
-        className="inline-flex items-center gap-1 text-muted-foreground text-sm hover:underline"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to users
-      </Link>
-
-      <header className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+    <div className="mx-auto w-full max-w-5xl space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Users', href: '/admin/users' },
+          { label: profile.full_name ?? profile.preferred_name ?? '(no name)' },
+        ]}
+        title={
+          <span className="flex flex-wrap items-center gap-2">
             {profile.full_name ?? profile.preferred_name ?? '(no name)'}
-          </h1>
-          {is_admin ? (
-            <span
-              className="inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-primary text-xs"
-              title="Platform admin"
-            >
-              <ShieldCheck className="h-3 w-3" /> Platform admin
-            </span>
-          ) : null}
-          {profile.flag_abuse_review ? (
-            <span className="inline-flex items-center rounded bg-rose-500/10 px-2 py-0.5 text-rose-700 text-xs dark:text-rose-300">
-              Flagged for abuse review
-            </span>
-          ) : null}
-        </div>
-        <p className="font-mono text-muted-foreground text-xs">{profile.id}</p>
-      </header>
-
-      <AdminNav />
+            {is_admin ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-foam px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-forest-700"
+                title="Platform admin"
+              >
+                <ShieldCheck className="h-3 w-3" /> Platform admin
+              </span>
+            ) : null}
+            {profile.flag_abuse_review ? (
+              <span className="inline-flex items-center rounded-full bg-alert-bg px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-alert">
+                Flagged
+              </span>
+            ) : null}
+          </span>
+        }
+        description={<span className="font-mono text-[11.5px] text-ink-light">{profile.id}</span>}
+        actions={
+          <Link
+            href="/admin/users"
+            className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-ink-light hover:text-forest-600 hover:underline"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to users
+          </Link>
+        }
+      />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>

@@ -20,6 +20,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { slugify } from '@/core/utils/slug';
 import { CreateOrgInput } from '../schemas';
+import { SlugField } from './slug-field';
 
 type CreateOrgIn = z.input<typeof CreateOrgInput>;
 type CreateOrgOut = z.output<typeof CreateOrgInput>;
@@ -93,29 +94,13 @@ export function CreateOrgForm() {
           )}
         />
 
-        <FormField
-          control={form.control}
+        <SlugField
+          form={form}
           name="slug"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Workspace URL</FormLabel>
-              <FormControl>
-                <div className="flex items-stretch overflow-hidden rounded-md border">
-                  <span className="flex items-center bg-muted px-3 text-sm text-muted-foreground">
-                    tenantly.co.uk/landlord/
-                  </span>
-                  <Input
-                    className="border-0 focus-visible:ring-0"
-                    placeholder="morgan-lettings"
-                    {...field}
-                    value={field.value ?? ''}
-                  />
-                </div>
-              </FormControl>
-              <FormDescription>Lowercase letters, digits and hyphens only.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Workspace URL"
+          prefix="tenantly.co.uk/landlord/"
+          placeholder="morgan-lettings"
+          description="Lowercase letters, digits and hyphens only."
         />
 
         <FormField

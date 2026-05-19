@@ -1,14 +1,22 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { DM_Sans, Plus_Jakarta_Sans } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { RegisterServiceWorker } from '@/features/pwa/components/register-sw';
 import { Providers } from './providers';
 import '@/styles/globals.css';
 
-const inter = Inter({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-sans',
+  variable: '--font-plus-jakarta',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+  weight: ['400', '500'],
 });
 
 export const metadata: Metadata = {
@@ -31,15 +39,19 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: light)', color: '#f4f7f5' },
     { media: '(prefers-color-scheme: dark)', color: '#0f1115' },
   ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" suppressHydrationWarning className={inter.variable}>
-      <body className="min-h-screen bg-background font-sans antialiased">
+    <html
+      lang="en-GB"
+      suppressHydrationWarning
+      className={`${plusJakarta.variable} ${dmSans.variable}`}
+    >
+      <body className="min-h-screen bg-background text-foreground antialiased">
         <Providers>
           {children}
           <Toaster richColors closeButton position="top-right" />

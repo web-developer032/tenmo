@@ -32,14 +32,15 @@ export default async function InvitePage({ params }: { params: Promise<Params> }
   const preview = previewRow ? safeParsePreview(previewRow) : null;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-6 px-4 py-10">
+    <main className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col gap-6 bg-bg-page px-4 py-10 lg:py-14">
       <header className="space-y-1 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary">Tenantly</p>
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-forest-600">Tenantly</p>
+        <h1 className="font-sans text-[22px] font-extrabold tracking-tight text-ink lg:text-[28px]">
           You&apos;ve been invited to a tenancy
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Tenantly is <strong>free for tenants — forever</strong>. No fees, no card.
+        <p className="text-[13px] text-ink-light">
+          Tenantly is <strong className="text-ink">free for tenants — forever</strong>. No fees, no
+          card.
         </p>
       </header>
 
@@ -56,11 +57,11 @@ export default async function InvitePage({ params }: { params: Promise<Params> }
         <>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="flex items-center gap-2 text-[15px]">
+                <MapPin className="h-4 w-4 text-forest-600" />
                 {preview.property_name}
                 {preview.room_name ? (
-                  <span className="text-muted-foreground">— {preview.room_name}</span>
+                  <span className="text-ink-light">— {preview.room_name}</span>
                 ) : null}
               </CardTitle>
             </CardHeader>
@@ -85,12 +86,12 @@ export default async function InvitePage({ params }: { params: Promise<Params> }
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ShieldCheck className="h-4 w-4 text-emerald-600" />
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-forest-600" />
                 What happens next
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground">
+            <CardContent className="space-y-4 text-[13px] text-ink-mid">
               <ol className="list-inside list-decimal space-y-1.5">
                 <li>Accept the invite below (or sign up first — it&apos;s free).</li>
                 <li>
@@ -155,11 +156,11 @@ function Field({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-1 text-muted-foreground">
+      <div className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-ink-light">
         {icon}
         {label}
       </div>
-      <div className="font-medium">{children}</div>
+      <div className="font-semibold text-ink">{children}</div>
     </div>
   );
 }

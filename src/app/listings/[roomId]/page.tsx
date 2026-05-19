@@ -41,130 +41,140 @@ export default async function PublicListingDetailPage({ params }: { params: Prom
     : [listing.city, listing.postcode_outward].filter(Boolean).join(' · ');
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 md:px-8 md:py-10">
-      <Button asChild variant="ghost" size="sm">
-        <Link href="/listings">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to listings
-        </Link>
-      </Button>
-
-      <header className="space-y-2">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-              {listing.room_name}
-            </h1>
-            <p className="text-sm text-muted-foreground">{listing.property_name}</p>
+    <main className="min-h-dvh bg-bg-page">
+      <header className="border-b border-border-soft bg-white">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/listings">
+              <ArrowLeft className="h-4 w-4" /> Back to listings
+            </Link>
+          </Button>
+          <div className="flex items-center gap-1.5">
+            {!user ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/login">Log in</Link>
+              </Button>
+            ) : null}
           </div>
-          {listing.listing_bills_included || listing.bills_included ? (
-            <Badge variant="secondary">Bills included</Badge>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4" />
-          {location}
-          {!fullAddress ? (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-              Sign in to see full address
-            </span>
-          ) : null}
         </div>
       </header>
-
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-[2fr_1fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">About this room</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 capitalize">
-                {listing.property_type.replace('_', ' ')}
-              </span>
-              {listing.has_double_bed ? (
-                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-                  <BedDouble className="h-3 w-3" /> Double bed
-                </span>
-              ) : null}
-              {listing.has_ensuite ? (
-                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-                  <Bath className="h-3 w-3" /> Ensuite
-                </span>
-              ) : null}
-              {listing.size_sqm ? (
-                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5">
-                  {listing.size_sqm} m²
-                </span>
-              ) : null}
-              <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 capitalize">
-                {listing.furnishing.replace('_', ' ')}
-              </span>
+      <div className="mx-auto w-full max-w-4xl space-y-5 px-4 py-6 lg:space-y-6 lg:px-6 lg:py-8">
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="font-sans text-[22px] font-extrabold tracking-tight text-ink lg:text-[28px]">
+                {listing.room_name}
+              </h1>
+              <p className="text-[13px] text-ink-light">{listing.property_name}</p>
             </div>
-            {listing.listing_description ? (
-              <p className="whitespace-pre-line text-foreground">{listing.listing_description}</p>
-            ) : (
-              <p className="text-muted-foreground">No additional description.</p>
-            )}
-            {listing.listing_min_term_months ? (
-              <p className="text-xs text-muted-foreground">
-                Minimum term: {listing.listing_min_term_months} months
-              </p>
+            {listing.listing_bills_included || listing.bills_included ? (
+              <Badge variant="active">Bills included</Badge>
             ) : null}
-            {listing.listing_available_from ? (
-              <p className="text-xs text-muted-foreground">
-                Available from{' '}
-                <span className="font-medium text-foreground">
-                  {listing.listing_available_from}
-                </span>
-              </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-[13px] text-ink-mid">
+            <MapPin className="h-4 w-4 text-forest-600" />
+            {location}
+            {!fullAddress ? (
+              <span className="rounded-full bg-foam px-2 py-0.5 text-[11px] font-medium text-forest-700">
+                Sign in to see full address
+              </span>
             ) : null}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <aside className="space-y-3">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-[2fr_1fr] lg:gap-5">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Rent</CardTitle>
+              <CardTitle>About this room</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold">{rent}</div>
-              <p className="text-xs text-muted-foreground">
-                Plus deposit + scheme — confirmed on offer.
-              </p>
+            <CardContent className="space-y-4 text-[13px]">
+              <div className="flex flex-wrap gap-1.5 text-[11.5px] text-ink-mid">
+                <span className="inline-flex items-center gap-1 rounded-full border border-border-soft bg-white px-2 py-0.5 capitalize">
+                  {listing.property_type.replace('_', ' ')}
+                </span>
+                {listing.has_double_bed ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border-soft bg-white px-2 py-0.5">
+                    <BedDouble className="h-3 w-3" /> Double bed
+                  </span>
+                ) : null}
+                {listing.has_ensuite ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border-soft bg-white px-2 py-0.5">
+                    <Bath className="h-3 w-3" /> Ensuite
+                  </span>
+                ) : null}
+                {listing.size_sqm ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border-soft bg-white px-2 py-0.5">
+                    {listing.size_sqm} m²
+                  </span>
+                ) : null}
+                <span className="inline-flex items-center gap-1 rounded-full border border-border-soft bg-white px-2 py-0.5 capitalize">
+                  {listing.furnishing.replace('_', ' ')}
+                </span>
+              </div>
+              {listing.listing_description ? (
+                <p className="whitespace-pre-line text-ink">{listing.listing_description}</p>
+              ) : (
+                <p className="text-ink-light">No additional description.</p>
+              )}
+              {listing.listing_min_term_months ? (
+                <p className="text-[12px] text-ink-light">
+                  Minimum term: {listing.listing_min_term_months} months
+                </p>
+              ) : null}
+              {listing.listing_available_from ? (
+                <p className="text-[12px] text-ink-light">
+                  Available from{' '}
+                  <span className="font-semibold text-ink">{listing.listing_available_from}</span>
+                </p>
+              ) : null}
             </CardContent>
           </Card>
 
-          {user ? (
-            <ApplyForm roomId={listing.room_id} />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Apply for this room</CardTitle>
+          <aside className="space-y-3">
+            <Card className="overflow-hidden border-forest-200 bg-gradient-to-br from-forest-600 to-forest-500 text-white">
+              <CardHeader className="border-b-white/15">
+                <CardTitle className="text-white">Rent</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <p className="text-muted-foreground">
-                  Sign up free as a tenant to apply, message the landlord, and track your
-                  application.
+              <CardContent>
+                <div className="font-sans text-[28px] font-extrabold tracking-tight">{rent}</div>
+                <p className="mt-1 text-[12px] text-white/80">
+                  Plus deposit + scheme — confirmed on offer.
                 </p>
-                <Button asChild className="w-full">
-                  <Link
-                    href={`/sign-up?redirect=${encodeURIComponent(`/listings/${listing.room_id}`)}`}
-                  >
-                    Sign up to apply
-                  </Link>
-                </Button>
-                <Button asChild variant="ghost" className="w-full">
-                  <Link
-                    href={`/login?redirect=${encodeURIComponent(`/listings/${listing.room_id}`)}`}
-                  >
-                    Already have an account? Sign in
-                  </Link>
-                </Button>
               </CardContent>
             </Card>
-          )}
-        </aside>
-      </section>
-    </div>
+
+            {user ? (
+              <ApplyForm roomId={listing.room_id} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Apply for this room</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-[13px]">
+                  <p className="text-ink-light">
+                    Sign up free as a tenant to apply, message the landlord, and track your
+                    application.
+                  </p>
+                  <Button asChild className="w-full">
+                    <Link
+                      href={`/signup?redirect=${encodeURIComponent(`/listings/${listing.room_id}`)}`}
+                    >
+                      Sign up to apply
+                    </Link>
+                  </Button>
+                  <Button asChild variant="ghost" className="w-full">
+                    <Link
+                      href={`/login?redirect=${encodeURIComponent(`/listings/${listing.room_id}`)}`}
+                    >
+                      Already have an account? Sign in
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </aside>
+        </section>
+      </div>
+    </main>
   );
 }

@@ -2,6 +2,7 @@ import { AlertTriangle, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComplianceItemRow } from '@/features/compliance/components/compliance-item-row';
@@ -34,25 +35,27 @@ export default async function ComplianceDashboardPage({ params }: { params: Prom
   const totalItems = perProperty.reduce((n, p) => n + p.items.length, 0);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Compliance</h1>
-          <p className="text-sm text-muted-foreground">
-            Track every certificate, licence and risk assessment for your portfolio. Tenantly
-            reminds you before things expire — no spreadsheets, no surprises.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href={`/landlord/${slug}/compliance/new`}>Add a certificate</Link>
-        </Button>
-      </header>
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Compliance' },
+        ]}
+        title="Compliance"
+        description="Track every certificate, licence and risk assessment for your portfolio. Tenantly reminds you before things expire — no spreadsheets, no surprises."
+        actions={
+          <Button asChild>
+            <Link href={`/landlord/${slug}/compliance/new`}>Add a certificate</Link>
+          </Button>
+        }
+      />
 
-      <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+      <Card className="overflow-hidden border-forest-200 bg-gradient-to-br from-forest-100/60 via-white to-white">
+        <CardHeader className="items-start">
           <div>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-forest-600" />
               Portfolio compliance score
             </CardTitle>
             <CardDescription>
@@ -68,12 +71,12 @@ export default async function ComplianceDashboardPage({ params }: { params: Prom
             <Stat
               label="Overdue"
               value={flatGroups.overdue.length}
-              tone={flatGroups.overdue.length > 0 ? 'text-red-700 dark:text-red-300' : ''}
+              tone={flatGroups.overdue.length > 0 ? 'text-alert' : ''}
             />
             <Stat
               label="Due soon"
               value={flatGroups.due_soon.length}
-              tone={flatGroups.due_soon.length > 0 ? 'text-amber-700 dark:text-amber-300' : ''}
+              tone={flatGroups.due_soon.length > 0 ? 'text-amber' : ''}
             />
           </dl>
         </CardContent>
@@ -81,8 +84,8 @@ export default async function ComplianceDashboardPage({ params }: { params: Prom
 
       {urgent.length > 0 && (
         <section className="space-y-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-light">
+            <AlertTriangle className="h-4 w-4 text-amber" />
             Needs attention
           </h2>
           <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -99,9 +102,7 @@ export default async function ComplianceDashboardPage({ params }: { params: Prom
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          Properties
-        </h2>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">Properties</h2>
         {perProperty.length === 0 ? (
           <EmptyState
             icon={<ShieldCheck className="h-6 w-6" />}
@@ -126,8 +127,8 @@ export default async function ComplianceDashboardPage({ params }: { params: Prom
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <div>
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className={`text-xl font-semibold ${tone ?? ''}`}>{value}</dd>
+      <dt className="text-[11px] uppercase tracking-wide text-ink-light">{label}</dt>
+      <dd className={`font-sans text-xl font-bold text-ink ${tone ?? ''}`}>{value}</dd>
     </div>
   );
 }

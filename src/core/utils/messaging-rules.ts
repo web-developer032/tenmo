@@ -146,12 +146,12 @@ export function messageReadStatus(
  * users are guaranteed to clash.
  */
 const SENDER_COLOR_CLASSES = [
-  'text-emerald-600 dark:text-emerald-400',
-  'text-sky-600 dark:text-sky-400',
-  'text-violet-600 dark:text-violet-400',
-  'text-amber-600 dark:text-amber-400',
-  'text-rose-600 dark:text-rose-400',
-  'text-teal-600 dark:text-teal-400',
+  'text-forest-600',
+  'text-blue',
+  'text-amber',
+  'text-alert',
+  'text-forest-700',
+  'text-ink-mid',
 ] as const;
 
 export function senderColorClass(userId: string): string {

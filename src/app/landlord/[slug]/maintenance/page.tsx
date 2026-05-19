@@ -2,8 +2,10 @@ import { AlertTriangle, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader } from '@/components/ds/page-header';
+import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { resolveOrgBySlug } from '@/features/orgs/resolve';
 import { TicketCard } from '@/features/tickets/components/ticket-card';
 import { TicketKanban } from '@/features/tickets/components/ticket-kanban';
@@ -39,16 +41,16 @@ export default async function LandlordMaintenancePage({ params }: { params: Prom
   const history = [...(byStatus.closed ?? []), ...(byStatus.cancelled ?? [])].slice(0, 6);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Maintenance</h1>
-          <p className="text-sm text-muted-foreground">
-            Triage incoming tenant tickets, dispatch contractors and keep the loop tight. SLAs are
-            tracked automatically based on severity.
-          </p>
-        </div>
-      </header>
+    <div className="space-y-5 lg:space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenantly', href: '/dispatch' },
+          { label: 'Landlord', href: `/landlord/${slug}` },
+          { label: 'Maintenance' },
+        ]}
+        title="Maintenance"
+        description="Triage incoming tenant tickets, dispatch contractors and keep the loop tight. SLAs are tracked automatically based on severity."
+      />
 
       {isEmpty ? (
         <EmptyState
@@ -58,28 +60,25 @@ export default async function LandlordMaintenancePage({ params }: { params: Prom
         />
       ) : (
         <>
-          <section
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-            aria-label="Maintenance summary"
-          >
+          <ResponsiveGrid preset="kpi" aria-label="Maintenance summary">
             <Stat label="Open" value={stats.openCount} />
             <Stat
               label="Critical open"
               value={stats.criticalOpen}
-              tone={stats.criticalOpen > 0 ? 'text-red-700 dark:text-red-300' : ''}
+              tone={stats.criticalOpen > 0 ? 'text-alert' : ''}
             />
             <Stat
               label="SLA breached"
               value={stats.breachedSla}
-              tone={stats.breachedSla > 0 ? 'text-red-700 dark:text-red-300' : ''}
+              tone={stats.breachedSla > 0 ? 'text-alert' : ''}
             />
             <Stat label="Resolved (7d)" value={stats.resolvedThisWeek} />
-          </section>
+          </ResponsiveGrid>
 
           {critical.length > 0 ? (
             <section className="space-y-3">
-              <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
+              <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-light">
+                <AlertTriangle className="h-4 w-4 text-alert" />
                 Needs immediate attention
               </h2>
               <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -97,16 +96,14 @@ export default async function LandlordMaintenancePage({ params }: { params: Prom
           ) : null}
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Board
-            </h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">Board</h2>
             <TicketKanban byStatus={byStatus} orgSlug={slug} />
           </section>
 
           {history.length > 0 ? (
             <section className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
                   Recently completed
                 </h2>
                 {history.length === 6 ? (
@@ -137,11 +134,9 @@ export default async function LandlordMaintenancePage({ params }: { params: Prom
 function Stat({ label, value, tone = '' }: { label: string; value: number; tone?: string }) {
   return (
     <Card>
-      <CardHeader className="pb-1">
-        <CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className={`text-2xl font-semibold ${tone}`}>{value}</p>
+      <CardContent className="space-y-1">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-light">{label}</p>
+        <p className={`font-sans text-[26px] font-extrabold text-ink ${tone}`}>{value}</p>
       </CardContent>
     </Card>
   );

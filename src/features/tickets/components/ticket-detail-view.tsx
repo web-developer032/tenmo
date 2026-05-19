@@ -127,7 +127,7 @@ export function TicketDetailView({
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-1.5 text-sm">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                <Sparkles className="h-3.5 w-3.5 text-amber" />
                 Triage hint
               </CardTitle>
             </CardHeader>
@@ -236,9 +236,9 @@ function Row({
 }
 
 function slaTone(level: 'on_track' | 'approaching' | 'breached'): string {
-  if (level === 'breached') return 'text-red-700 dark:text-red-300 font-medium';
-  if (level === 'approaching') return 'text-amber-700 dark:text-amber-300 font-medium';
-  return 'text-emerald-700 dark:text-emerald-300';
+  if (level === 'breached') return 'text-alert font-semibold';
+  if (level === 'approaching') return 'text-amber font-semibold';
+  return 'text-forest-600';
 }
 
 function formatDate(iso: string): string {

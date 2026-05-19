@@ -19,7 +19,7 @@ export function TenantRentSummary({
 }) {
   if (charges.length === 0) {
     return (
-      <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+      <div className="rounded-button border border-dashed border-border-soft p-3 text-sm text-ink-light">
         No rent activity yet. Your landlord hasn&apos;t issued the first charge — they&apos;ll
         appear here automatically.
       </div>
@@ -31,16 +31,12 @@ export function TenantRentSummary({
   const upcomingFirst = [...grouped.overdue, ...grouped.due, ...grouped.upcoming].slice(0, 2);
 
   return (
-    <div className="space-y-3 rounded-md border bg-card p-3">
+    <div className="space-y-3 rounded-card border border-border-soft bg-white p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Rent</div>
+          <div className="text-[11px] uppercase tracking-wide text-ink-light">Rent</div>
           <div
-            className={`text-lg font-semibold ${
-              arrears > 0
-                ? 'text-red-700 dark:text-red-300'
-                : 'text-emerald-700 dark:text-emerald-300'
-            }`}
+            className={`text-lg font-semibold ${arrears > 0 ? 'text-alert' : 'text-forest-600'}`}
           >
             {arrears > 0 ? `${formatMoney(arrears)} outstanding` : 'You\u2019re up to date'}
           </div>
