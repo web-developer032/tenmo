@@ -44,19 +44,13 @@ export async function listApplicationsForRoomWithClient(
   const { data, error, count } = await sb
     .from('room_applications')
     .select(
-      `id, applicant_user_id, status, message, applied_at, decided_at, decline_reason, resulting_tenancy_id,
-       profiles:applicant_user_id ( full_name, avatar_url, contact_email )`,
+      `id, applicant_user_id, status, message, applied_at, decided_at, decline_reason, resulting_tenancy_id`,
       { count: 'exact' },
     )
     .eq('room_id', roomId)
     .order('applied_at', { ascending: true });
   if (error) throw new DbError(error);
 
-  type ProfileEmbed = {
-    full_name: string | null;
-    avatar_url: string | null;
-    contact_email: string | null;
-  };
   type Row = {
     id: string;
     applicant_user_id: string;
@@ -66,12 +60,39 @@ export async function listApplicationsForRoomWithClient(
     decided_at: string | null;
     decline_reason: string | null;
     resulting_tenancy_id: string | null;
-    // PostgREST returns embeds as arrays even for to-one — accept both shapes.
-    profiles: ProfileEmbed | ProfileEmbed[] | null;
   };
+  const rows = (data as unknown as Row[] | null) ?? [];
 
-  const raw = ((data as unknown as Row[] | null) ?? []).map<ApplicantQueueRow>((r) => {
-    const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+  // Fetch applicant profiles in a second batch. `room_applications.applicant_user_id`
+  // FKs `auth.users.id`, not `profiles.id`, so PostgREST can't single-step
+  // embed `profiles:applicant_user_id(...)` without explicit hints.
+  const applicantIds = Array.from(new Set(rows.map((r) => r.applicant_user_id))).filter(Boolean);
+  const profileById = new Map<
+    string,
+    { full_name: string | null; avatar_url: string | null; contact_email: string | null }
+  >();
+  if (applicantIds.length > 0) {
+    const { data: profiles, error: profErr } = await sb
+      .from('profiles')
+      .select('id, full_name, avatar_url, contact_email')
+      .in('id', applicantIds);
+    if (profErr) throw new DbError(profErr);
+    for (const p of (profiles ?? []) as Array<{
+      id: string;
+      full_name: string | null;
+      avatar_url: string | null;
+      contact_email: string | null;
+    }>) {
+      profileById.set(p.id, {
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        contact_email: p.contact_email,
+      });
+    }
+  }
+
+  const raw = rows.map<ApplicantQueueRow>((r) => {
+    const profile = profileById.get(r.applicant_user_id) ?? null;
     return {
       id: r.id,
       applicant_user_id: r.applicant_user_id,

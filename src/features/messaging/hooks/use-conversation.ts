@@ -1,15 +1,19 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { type ConversationParticipantView, Message } from '@/core/schemas/messaging';
-import { createClient } from '@/lib/supabase/client';
+import * as React from "react";
+import {
+  type ConversationParticipantView,
+  Message,
+} from "@/core/schemas/messaging";
+import { createClient } from "@/lib/supabase/client";
+import { freshRealtimeChannel } from "@/lib/supabase/realtime";
 import {
   fetchConversationParticipants,
   fetchMessages,
   markConversationReadApi,
   sendMessageApi,
-} from '../api/client';
-import { dispatchMessagingRead } from '../events';
+} from "../api/client";
+import { dispatchMessagingRead } from "../events";
 
 /**
  * Live thread view for a single conversation.
@@ -44,7 +48,10 @@ export type UseConversationOptions = {
   initialParticipants?: ConversationParticipantView[];
 };
 
-export type OptimisticMessage = Message & { __pending?: boolean; __failed?: boolean };
+export type OptimisticMessage = Message & {
+  __pending?: boolean;
+  __failed?: boolean;
+};
 
 /** A remote participant currently typing — name + when their broadcast expires. */
 export type TypingParticipant = {
@@ -63,9 +70,9 @@ export function useConversation({
   initialParticipants,
 }: UseConversationOptions) {
   const [messages, setMessages] = React.useState<OptimisticMessage[]>([]);
-  const [participants, setParticipants] = React.useState<ConversationParticipantView[]>(
-    initialParticipants ?? [],
-  );
+  const [participants, setParticipants] = React.useState<
+    ConversationParticipantView[]
+  >(initialParticipants ?? []);
   const [typingUsers, setTypingUsers] = React.useState<TypingParticipant[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [sending, setSending] = React.useState<boolean>(false);
@@ -83,7 +90,7 @@ export function useConversation({
       const next = await fetchMessages(conversationId, { limit: 100 });
       setMessages(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load messages');
+      setError(err instanceof Error ? err.message : "Failed to load messages");
     } finally {
       setLoading(false);
     }
@@ -134,15 +141,15 @@ export function useConversation({
   // while the tab was backgrounded. Idempotent (RPC clamps with
   // greatest()).
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
     const onFocus = () => {
-      if (document.visibilityState === 'visible') void markReadAndAnnounce();
+      if (document.visibilityState === "visible") void markReadAndAnnounce();
     };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
     return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
     };
   }, [markReadAndAnnounce]);
 
@@ -152,14 +159,13 @@ export function useConversation({
 
     const supabase = createClient();
 
-    const channel = supabase
-      .channel(`conv:${conversationId}`)
+    const channel = freshRealtimeChannel(supabase, `conv:${conversationId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
@@ -177,39 +183,45 @@ export function useConversation({
             void markReadAndAnnounce();
             window.setTimeout(() => void markReadAndAnnounce(), 800);
           }
-        },
+        }
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
           const parsed = Message.safeParse(payload.new);
           if (!parsed.success) return;
-          setMessages((prev) => prev.map((m) => (m.id === parsed.data.id ? parsed.data : m)));
-        },
+          setMessages((prev) =>
+            prev.map((m) => (m.id === parsed.data.id ? parsed.data : m))
+          );
+        }
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'conversation_participants',
+          event: "UPDATE",
+          schema: "public",
+          table: "conversation_participants",
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          const row = payload.new as { user_id?: string; last_read_at?: string } | undefined;
+          const row = payload.new as
+            | { user_id?: string; last_read_at?: string }
+            | undefined;
           if (!row?.user_id || !row.last_read_at) return;
           setParticipants((prev) =>
             prev.map((p) =>
-              p.user_id === row.user_id ? { ...p, last_read_at: row.last_read_at as string } : p,
-            ),
+              p.user_id === row.user_id
+                ? { ...p, last_read_at: row.last_read_at as string }
+                : p
+            )
           );
-        },
+        }
       )
       // INSERT fires when an admin / org-staff is auto-joined as a
       // participant via the BEFORE-INSERT messages trigger or via
@@ -218,16 +230,16 @@ export function useConversation({
       // means the new sender's display name and ✓✓ tracking start
       // working without a page reload.
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'conversation_participants',
+          event: "INSERT",
+          schema: "public",
+          table: "conversation_participants",
           filter: `conversation_id=eq.${conversationId}`,
         },
         () => {
           void refreshParticipantsRef.current?.();
-        },
+        }
       )
       // Bell-suppression: the message_received fan-out inserts a
       // notification AFTER the message INSERT, so our mark-read on
@@ -236,19 +248,24 @@ export function useConversation({
       // we're looking at it, mark-read again so the bell never holds
       // a count for a message the user is actively reading.
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
           filter: `user_id=eq.${selfId}`,
         },
         (payload) => {
-          const row = payload.new as { entity_type?: string; entity_id?: string } | undefined;
-          if (row?.entity_type === 'conversation' && row.entity_id === conversationId) {
+          const row = payload.new as
+            | { entity_type?: string; entity_id?: string }
+            | undefined;
+          if (
+            row?.entity_type === "conversation" &&
+            row.entity_id === conversationId
+          ) {
             void markReadAndAnnounce();
           }
-        },
+        }
       )
       .subscribe();
 
@@ -262,7 +279,7 @@ export function useConversation({
   // conversation; only people who already know the conversation id (i.e.
   // its participants per RLS) can join.
   const typingChannelRef = React.useRef<ReturnType<
-    ReturnType<typeof createClient>['channel']
+    ReturnType<typeof createClient>["channel"]
   > | null>(null);
   const lastTypingBroadcastRef = React.useRef<number>(0);
 
@@ -274,15 +291,21 @@ export function useConversation({
     });
 
     channel
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        const data = payload as { user_id?: string; full_name?: string } | undefined;
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        const data = payload as
+          | { user_id?: string; full_name?: string }
+          | undefined;
         if (!data?.user_id || data.user_id === selfId) return;
         const expiresAt = Date.now() + TYPING_EXPIRY_MS;
         setTypingUsers((prev) => {
           const without = prev.filter((u) => u.userId !== data.user_id);
           return [
             ...without,
-            { userId: data.user_id as string, fullName: data.full_name ?? '', expiresAt },
+            {
+              userId: data.user_id as string,
+              fullName: data.full_name ?? "",
+              expiresAt,
+            },
           ];
         });
       })
@@ -312,12 +335,13 @@ export function useConversation({
     const channel = typingChannelRef.current;
     if (!channel) return;
     const now = Date.now();
-    if (now - lastTypingBroadcastRef.current < TYPING_BROADCAST_THROTTLE_MS) return;
+    if (now - lastTypingBroadcastRef.current < TYPING_BROADCAST_THROTTLE_MS)
+      return;
     lastTypingBroadcastRef.current = now;
     void channel.send({
-      type: 'broadcast',
-      event: 'typing',
-      payload: { user_id: selfId, full_name: selfName ?? '' },
+      type: "broadcast",
+      event: "typing",
+      payload: { user_id: selfId, full_name: selfName ?? "" },
     });
   }, [selfId, selfName]);
 
@@ -326,7 +350,9 @@ export function useConversation({
       const trimmed = body.trim();
       if (!trimmed) return;
 
-      const tempId = `tmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const tempId = `tmp_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 8)}`;
       const optimistic: OptimisticMessage = {
         id: tempId,
         conversation_id: conversationId,
@@ -340,22 +366,27 @@ export function useConversation({
       setMessages((prev) => [...prev, optimistic]);
       setSending(true);
       try {
-        const real = await sendMessageApi({ conversation_id: conversationId, body: trimmed });
+        const real = await sendMessageApi({
+          conversation_id: conversationId,
+          body: trimmed,
+        });
         setMessages((prev) =>
           prev
             .map((m) => (m.id === tempId ? { ...real } : m))
-            .filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i),
+            .filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i)
         );
       } catch (err) {
         setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, __pending: false, __failed: true } : m)),
+          prev.map((m) =>
+            m.id === tempId ? { ...m, __pending: false, __failed: true } : m
+          )
         );
-        setError(err instanceof Error ? err.message : 'Failed to send');
+        setError(err instanceof Error ? err.message : "Failed to send");
       } finally {
         setSending(false);
       }
     },
-    [conversationId, selfId],
+    [conversationId, selfId]
   );
 
   return {

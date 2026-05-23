@@ -58,9 +58,12 @@ export async function getOrgDetailWithClient(
         .eq('id', orgId)
         .maybeSingle(),
       sb.from('org_subscriptions').select('*').eq('org_id', orgId).maybeSingle(),
+      // org_memberships.user_id FKs auth.users.id (not profiles.id), so we
+      // can't single-step embed profiles via PostgREST. We hydrate profile
+      // fields after the join completes (see below).
       sb
         .from('org_memberships')
-        .select('user_id, role, accepted_at, revoked_at, profiles(full_name, contact_email)')
+        .select('user_id, role, accepted_at, revoked_at')
         .eq('org_id', orgId)
         .order('accepted_at', { ascending: true }),
       sb
@@ -68,18 +71,23 @@ export async function getOrgDetailWithClient(
         .select('id', { count: 'exact', head: true })
         .eq('org_id', orgId)
         .is('archived_at', null),
+      // Count rooms via the denormalised `org_id` column we keep on rooms
+      // for exactly this kind of fan-out — the previous PostgREST embed
+      // (`properties!inner(org_id)`) raised an unhelpful empty error and
+      // silently broke the admin org detail page.
       sb
         .from('rooms')
-        .select('id, properties!inner(org_id)', { count: 'exact', head: true })
-        .eq('properties.org_id', orgId),
+        .select('id', { count: 'exact', head: true })
+        .eq('org_id', orgId)
+        .is('archived_at', null),
       sb
         .from('tenancies')
         .select('id', { count: 'exact', head: true })
         .eq('org_id', orgId)
-        .in('status', ['active', 'pending']),
+        .in('status', ['pending_invite', 'awaiting_signature', 'awaiting_deposit', 'active']),
       sb
         .from('org_memberships')
-        .select('id', { count: 'exact', head: true })
+        .select('user_id', { count: 'exact', head: true })
         .eq('org_id', orgId)
         .is('revoked_at', null),
     ]);
@@ -98,17 +106,33 @@ export async function getOrgDetailWithClient(
     role: 'owner' | 'agent' | 'staff';
     accepted_at: string | null;
     revoked_at: string | null;
-    profiles:
-      | { full_name: string | null; contact_email: string | null }
-      | { full_name: string | null; contact_email: string | null }[]
-      | null;
   };
+
+  const memberRows = (membersRes.data as MemberRow[] | null) ?? [];
+  const memberIds = Array.from(new Set(memberRows.map((m) => m.user_id))).filter(Boolean);
+  const profileById = new Map<
+    string,
+    { full_name: string | null; contact_email: string | null }
+  >();
+  if (memberIds.length > 0) {
+    const { data: profiles } = await sb
+      .from('profiles')
+      .select('id, full_name, contact_email')
+      .in('id', memberIds);
+    for (const p of (profiles ?? []) as Array<{
+      id: string;
+      full_name: string | null;
+      contact_email: string | null;
+    }>) {
+      profileById.set(p.id, { full_name: p.full_name, contact_email: p.contact_email });
+    }
+  }
 
   return {
     org: orgRes.data,
     subscription: (subRes.data as OrgSubscription | null) ?? null,
-    members: ((membersRes.data as MemberRow[] | null) ?? []).map((m) => {
-      const profile = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+    members: memberRows.map((m) => {
+      const profile = profileById.get(m.user_id) ?? null;
       return {
         user_id: m.user_id,
         role: m.role,

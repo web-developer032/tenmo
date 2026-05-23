@@ -1,0 +1,3599 @@
+{
+  "info": {
+    "name": "Tenantly API",
+    "description": "Auto-generated from frontend/tools/postman/routes.mjs (see frontend/tools/postman/README.md). Re-run `node frontend/tools/postman/generate-collection.mjs` after editing routes.mjs.\n\nQuick start: import this collection + the matching environment file, pick the persona, run `_Auth › Sign in as <persona>`, then hit any request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "sbCookie",
+      "value": ""
+    },
+    {
+      "key": "sbAccessToken",
+      "value": ""
+    },
+    {
+      "key": "sbUserId",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const url = pm.request.url.toString();",
+          "const isApi = /^https?:\\/\\/[^/]*localhost[^/]*\\/api\\//.test(url);",
+          "const isWebhook = /\\/api\\/webhooks\\//.test(url);",
+          "const isCron = /\\/api\\/cron\\//.test(url);",
+          "if (!isApi || isWebhook || isCron) return;",
+          "",
+          "const sbCookie = pm.collectionVariables.get('sbCookie');",
+          "if (!sbCookie) {",
+          "  console.warn('No sbCookie — run \"_Auth › Sign in\" first.');",
+          "  return;",
+          "}",
+          "",
+          "const supabaseUrl = pm.environment.get('supabaseUrl') || 'http://127.0.0.1:54321';",
+          "let host = '127';",
+          "try { host = new URL(supabaseUrl).hostname.split('.')[0]; } catch (_) {}",
+          "const cookieName = 'sb-' + host + '-auth-token';",
+          "",
+          "pm.request.headers.upsert({ key: 'Cookie', value: cookieName + '=' + sbCookie });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "_Auth",
+      "description": "Run a Sign in request before any API call. It writes `sbCookie` to the collection variables; the collection pre-request script then attaches it to every request that hits a localhost API route.",
+      "item": [
+        {
+          "name": "Sign in as sara (sara@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"sara@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as sara@example.com and store the SSR cookie + access token as collection variables."
+          }
+        },
+        {
+          "name": "Sign in as marcus (marcus@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"marcus@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as marcus@example.com and store the SSR cookie + access token as collection variables."
+          }
+        },
+        {
+          "name": "Sign in as priya (priya@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"priya@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as priya@example.com and store the SSR cookie + access token as collection variables."
+          }
+        },
+        {
+          "name": "Sign in as jordan (jordan@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"jordan@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as jordan@example.com and store the SSR cookie + access token as collection variables."
+          }
+        },
+        {
+          "name": "Sign in as alex (alex@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"alex@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as alex@example.com and store the SSR cookie + access token as collection variables."
+          }
+        },
+        {
+          "name": "Sign in as nina (nina@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"nina@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as nina@example.com and store the SSR cookie + access token as collection variables."
+          }
+        },
+        {
+          "name": "Sign in as admin (admin@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"admin@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as admin@example.com and store the SSR cookie + access token as collection variables."
+          }
+        },
+        {
+          "name": "Sign in as riley (riley@example.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "if (!r.access_token) {",
+                  "  pm.test('Got an access token', () => pm.expect(r.access_token).to.be.a('string'));",
+                  "  return;",
+                  "}",
+                  "const session = {",
+                  "  access_token: r.access_token,",
+                  "  refresh_token: r.refresh_token,",
+                  "  expires_in: r.expires_in,",
+                  "  expires_at: r.expires_at,",
+                  "  token_type: r.token_type,",
+                  "  provider_token: null,",
+                  "  provider_refresh_token: null,",
+                  "  user: r.user,",
+                  "};",
+                  "const json = JSON.stringify(session);",
+                  "// UTF-8 → base64 → base64-URL (the format @supabase/ssr expects: alphabet",
+                  "// A-Z a-z 0-9 - _, no padding). Standard base64 (+ / =) gets rejected.",
+                  "const utf8 = unescape(encodeURIComponent(json));",
+                  "const b64 = (typeof btoa === 'function' ? btoa(utf8) : Buffer.from(json, 'utf8').toString('base64'));",
+                  "const b64url = b64.replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');",
+                  "pm.collectionVariables.set('sbCookie', 'base64-' + b64url);",
+                  "pm.collectionVariables.set('sbAccessToken', r.access_token);",
+                  "pm.collectionVariables.set('sbUserId', r.user && r.user.id);",
+                  "console.log('Signed in:', r.user && r.user.email);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabaseAnonKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"riley@example.com\",\"password\":\"tenantly-dev\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                }
+              ]
+            },
+            "description": "Sign in as riley@example.com and store the SSR cookie + access token as collection variables."
+          }
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "item": [
+        {
+          "name": "GET /api/profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "Read the caller's profile"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "Update the caller's profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Sara Khan (updated)\",\n  \"preferred_name\": \"Sara\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/profiles/lookup-by-email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profiles/lookup-by-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profiles",
+                "lookup-by-email"
+              ]
+            },
+            "description": "Soft-warn check: does this email exist?",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jordan@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "orgs",
+      "item": [
+        {
+          "name": "POST /api/orgs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs"
+              ]
+            },
+            "description": "Create a new landlord org\n\nNina is a brand-new landlord with no orgs yet.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smoke Test Lets\",\n  \"slug\": \"smoke-test-lets\",\n  \"business_address\": {\n    \"line1\": \"1 Smoke St\",\n    \"city\": \"Birmingham\",\n    \"postcode\": \"B1 1AA\",\n    \"country\": \"GB\"\n  },\n  \"contact_email\": \"nina@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/orgs/{{saraOrgId}}/properties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/properties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "properties"
+              ]
+            },
+            "description": "List the org's properties"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orgs/{{saraOrgId}}/properties",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/properties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "properties"
+              ]
+            },
+            "description": "Create a property in the org",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smoke Test Property\",\n  \"type\": \"hmo_small\",\n  \"address\": {\n    \"line1\": \"99 Cherry Mews\",\n    \"city\": \"Birmingham\",\n    \"postcode\": \"B5 5AA\",\n    \"country\": \"GB\"\n  },\n  \"is_hmo\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/orgs/{{saraOrgId}}/tenancies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/tenancies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "tenancies"
+              ]
+            },
+            "description": "List the org's tenancies"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orgs/{{saraOrgId}}/tenancies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/tenancies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "tenancies"
+              ]
+            },
+            "description": "Invite a tenant to a room (creates a tenancy in pending_invite)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"room_id\": \"{{saraRoom4Id}}\",\n  \"tenant_email\": \"newtenant@example.com\",\n  \"start_date\": \"2030-01-01\",\n  \"rent_pence\": 75000,\n  \"rent_frequency\": \"monthly\",\n  \"rent_due_day\": 1,\n  \"deposit_pence\": 300000,\n  \"is_periodic\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/orgs/{{saraOrgId}}/compliance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/compliance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "compliance"
+              ]
+            },
+            "description": "List org compliance items"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orgs/{{saraOrgId}}/compliance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/compliance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "compliance"
+              ]
+            },
+            "description": "Create a compliance item",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"pat_test\",\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"expires_at\": \"2030-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/orgs/{{saraOrgId}}/compliance/seed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/compliance/seed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "compliance",
+                "seed"
+              ]
+            },
+            "description": "Seed the standard required compliance set for a property",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "properties",
+      "item": [
+        {
+          "name": "GET /api/properties/{{saraPropertyId}}/rooms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{saraPropertyId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{saraPropertyId}}",
+                "rooms"
+              ]
+            },
+            "description": "List rooms in a property"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/properties/{{saraPropertyId}}/rooms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties/{{saraPropertyId}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{saraPropertyId}}",
+                "rooms"
+              ]
+            },
+            "description": "Add a room to a property",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smoke Test Room\",\n  \"has_ensuite\": true,\n  \"default_rent_pence\": 80000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "tenancies",
+      "item": [
+        {
+          "name": "GET /api/tenancies/{{jordanTenancyId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}"
+              ]
+            },
+            "description": "Get a single tenancy (tenant viewing their own)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/tenancies/{{jordanTenancyId}}/charges",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/charges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "charges"
+              ]
+            },
+            "description": "List rent charges for a tenancy"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/tenancies/{{jordanTenancyId}}/payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "payments"
+              ]
+            },
+            "description": "List rent payments for a tenancy"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/tenancies/{{jordanTenancyId}}/payments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "payments"
+              ]
+            },
+            "description": "Record a manual rent payment\n\nSmoke uses tiny amount; cleanup deletes the row.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_pence\": 1000,\n  \"charge_id\": \"{{jordanChargeId}}\",\n  \"method\": \"manual_bank_transfer\",\n  \"paid_at\": \"2026-05-23\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/tenancies/{{taylorInviteTenancyId}}/cancel",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenancies/{{taylorInviteTenancyId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{taylorInviteTenancyId}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancel a pending tenancy invite"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/tenancies/{{jordanTenancyId}}/end",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/end",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "end"
+              ]
+            },
+            "description": "End an active tenancy (Renters Rights Bill notice rules apply)\n\nMutating end of seeded active tenancy disrupts other smokes.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"mutual\",\n  \"end_date\": \"2030-12-31\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "invites",
+      "item": [
+        {
+          "name": "GET /api/invites/{{taylorInviteToken}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invites/{{taylorInviteToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invites",
+                "{{taylorInviteToken}}"
+              ]
+            },
+            "description": "Public invite preview (redacted)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/invites/{{taylorInviteToken}}/accept",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invites/{{taylorInviteToken}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invites",
+                "{{taylorInviteToken}}",
+                "accept"
+              ]
+            },
+            "description": "Accept invite — requires auth as the invited email\n\nRequires a user matching the invite email; not idempotent."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "listings",
+      "item": [
+        {
+          "name": "GET /api/listings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings"
+              ]
+            },
+            "description": "Search published listings (anon — redacted address)"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/listings/{{publishedRoomId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/{{publishedRoomId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "{{publishedRoomId}}"
+              ]
+            },
+            "description": "Single published listing detail"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/listings/{{publishedRoomId}}/apply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/listings/{{publishedRoomId}}/apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "{{publishedRoomId}}",
+                "apply"
+              ]
+            },
+            "description": "Submit a room application (tenant only)\n\nReturns 409 if the persona already applied to this room.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Smoke test application from Jordan.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-listings",
+      "item": [
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "listings",
+                "{{saraRoom4Id}}",
+                "publish"
+              ]
+            },
+            "description": "Publish a room listing",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Smoke test publish — please ignore.\",\n  \"available_from\": \"2030-01-01\",\n  \"min_term_months\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/pause",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/pause",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "listings",
+                "{{saraRoom4Id}}",
+                "pause"
+              ]
+            },
+            "description": "Pause a published listing",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resume\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/close",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/close",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "listings",
+                "{{saraRoom4Id}}",
+                "close"
+              ]
+            },
+            "description": "Close a listing",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reopen\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/landlord/{{saraOrgSlug}}/listings/{{publishedRoomId}}/applications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{publishedRoomId}}/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "listings",
+                "{{publishedRoomId}}",
+                "applications"
+              ]
+            },
+            "description": "List applications for a room"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-applications",
+      "item": [
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/applications/{{rileyApplicationId}}/reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/applications/{{rileyApplicationId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "applications",
+                "{{rileyApplicationId}}",
+                "reject"
+              ]
+            },
+            "description": "Reject an application\n\nMutates the seeded pending application; rerun supabase db reset to restore.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decline_reason\": \"Smoke test reject — not real.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/applications/{{rileyApplicationId}}/accept",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/applications/{{rileyApplicationId}}/accept",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "applications",
+                "{{rileyApplicationId}}",
+                "accept"
+              ]
+            },
+            "description": "Accept an application (creates a tenancy in pending_invite)\n\nMulti-step side effect; left for manual Postman drive.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start_date\": \"2030-01-01\",\n  \"rent_pence\": 80000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "tenant-applications",
+      "item": [
+        {
+          "name": "GET /api/tenant/applications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenant",
+                "applications"
+              ]
+            },
+            "description": "List the tenant's applications"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/tenant/applications/{{rileyApplicationId}}/withdraw",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tenant/applications/{{rileyApplicationId}}/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenant",
+                "applications",
+                "{{rileyApplicationId}}",
+                "withdraw"
+              ]
+            },
+            "description": "Withdraw an application\n\nMutates the seeded pending application that other smokes rely on."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "compliance",
+      "item": [
+        {
+          "name": "GET /api/compliance/{{saraComplianceItemId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/compliance/{{saraComplianceItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compliance",
+                "{{saraComplianceItemId}}"
+              ]
+            },
+            "description": "Get a compliance item"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/compliance/{{saraComplianceItemId}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/compliance/{{saraComplianceItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compliance",
+                "{{saraComplianceItemId}}"
+              ]
+            },
+            "description": "Update a compliance item",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Smoke test note.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/compliance/{{saraComplianceItemId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/compliance/{{saraComplianceItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compliance",
+                "{{saraComplianceItemId}}"
+              ]
+            },
+            "description": "Delete a compliance item\n\nMutates seeded compliance set; left for manual Postman drive."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "ast",
+      "item": [
+        {
+          "name": "POST /api/ast/envelopes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ast/envelopes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ast",
+                "envelopes"
+              ]
+            },
+            "description": "Start an AST signing run\n\nHits DocuSeal; requires DOCUSEAL_API_TOKEN. Smoke marks as expected-skip if config missing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenancy_id\": \"{{marcusCamden2TenancyId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/ast/envelopes/{{marcusCamden2AstId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ast/envelopes/{{marcusCamden2AstId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ast",
+                "envelopes",
+                "{{marcusCamden2AstId}}"
+              ]
+            },
+            "description": "Get an envelope"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/ast/envelopes/{{marcusCamden2AstId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/ast/envelopes/{{marcusCamden2AstId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ast",
+                "envelopes",
+                "{{marcusCamden2AstId}}"
+              ]
+            },
+            "description": "Cancel an open envelope\n\nMutates the only open envelope; left for manual Postman drive."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "documents",
+      "item": [
+        {
+          "name": "GET /api/documents?property_id={{saraPropertyId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents?property_id={{saraPropertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "property_id",
+                  "value": "{{saraPropertyId}}"
+                }
+              ]
+            },
+            "description": "List documents filtered by parent"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/documents/upload-url",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/upload-url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "upload-url"
+              ]
+            },
+            "description": "Mint a signed Storage upload URL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"property\",\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"filename\": \"smoke.pdf\",\n  \"mime_type\": \"application/pdf\",\n  \"size_bytes\": 1024\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/documents",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents"
+              ]
+            },
+            "description": "Record an uploaded document\n\nStorage path uniqueness — script-side flag avoids the collision on rerun.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"property\",\n  \"category\": \"other\",\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"storage_path\": \"{{saraOrgId}}/property/{{saraPropertyId}}/smoke-record.pdf\",\n  \"filename\": \"smoke-record.pdf\",\n  \"mime_type\": \"application/pdf\",\n  \"size_bytes\": 2048,\n  \"title\": \"Smoke record\",\n  \"description\": \"Inserted by smoke runner.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/documents/{{saraDocumentId}}/url",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{saraDocumentId}}/url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{saraDocumentId}}",
+                "url"
+              ]
+            },
+            "description": "Mint a signed download URL"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/documents/{{saraDocumentId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{saraDocumentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{saraDocumentId}}"
+              ]
+            },
+            "description": "Delete a document\n\nMutates seed; left for manual Postman drive."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "notifications",
+      "item": [
+        {
+          "name": "GET /api/notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "List the caller's notifications"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/notifications",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
+            },
+            "description": "Mark all notifications read"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/notifications/mark-read",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/mark-read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "mark-read"
+              ]
+            },
+            "description": "Mark specific notifications read\n\nSmoke does not assert the body — endpoint accepts unknown ids as a no-op.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\n    \"{{jordanNotificationId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/notifications/preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "preferences"
+              ]
+            },
+            "description": "Get notification preferences"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/notifications/preferences",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/preferences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "preferences"
+              ]
+            },
+            "description": "Update notification preferences",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": {\n    \"rent_charged\": false\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "conversations",
+      "item": [
+        {
+          "name": "GET /api/conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations"
+              ]
+            },
+            "description": "Inbox list"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/conversations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations"
+              ]
+            },
+            "description": "Find or create a direct conversation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"other_user_id\": \"{{saraId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/conversations/{{jordanConversationId}}/messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "messages"
+              ]
+            },
+            "description": "List messages in a conversation"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/conversations/{{jordanConversationId}}/messages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "messages"
+              ]
+            },
+            "description": "Send a message",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Smoke test message — please ignore.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/conversations/{{jordanConversationId}}/participants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/participants",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "participants"
+              ]
+            },
+            "description": "List participants"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/conversations/{{jordanConversationId}}/read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "read"
+              ]
+            },
+            "description": "Mark conversation read"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "tickets",
+      "item": [
+        {
+          "name": "POST /api/tickets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
+            },
+            "description": "Create a maintenance ticket",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenancy_id\": \"{{jordanTenancyId}}\",\n  \"title\": \"Smoke ticket\",\n  \"description\": \"Created by smoke runner.\",\n  \"category\": \"other\",\n  \"severity\": \"low\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/tickets/{{jordanTicketId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}"
+              ]
+            },
+            "description": "Get a ticket detail"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/tickets/{{jordanTicketId}}/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "status"
+              ]
+            },
+            "description": "Change a ticket status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/tickets/{{jordanTicketId}}/assign",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "assign"
+              ]
+            },
+            "description": "Assign a ticket",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assigned_to_user_id\": \"{{saraId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/tickets/{{jordanTicketId}}/messages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "messages"
+              ]
+            },
+            "description": "Add a comment to a ticket",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Smoke comment from tenant.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/tickets/{{jordanTicketId}}/attachments/upload-url",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/attachments/upload-url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "attachments",
+                "upload-url"
+              ]
+            },
+            "description": "Mint signed attachment upload URL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"smoke.jpg\",\n  \"mime_type\": \"image/jpeg\",\n  \"size_bytes\": 2048\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/tickets/{{jordanTicketId}}/attachments/sign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/attachments/sign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "attachments",
+                "sign"
+              ]
+            },
+            "description": "Mint a signed attachment download URL (404 expected for nonexistent path)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"{{saraOrgId}}/{{jordanTicketId}}/smoke.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "bills",
+      "item": [
+        {
+          "name": "GET /api/bills?property_id={{saraPropertyId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills?property_id={{saraPropertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills"
+              ],
+              "query": [
+                {
+                  "key": "property_id",
+                  "value": "{{saraPropertyId}}"
+                }
+              ]
+            },
+            "description": "List bills for a property"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/bills",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills"
+              ]
+            },
+            "description": "Create a bill with allocations",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"vendor\": \"Smoke Utility\",\n  \"kind\": \"electricity\",\n  \"period_start\": \"2026-05-01\",\n  \"period_end\": \"2026-05-31\",\n  \"total_pence\": 12500,\n  \"currency\": \"GBP\",\n  \"split_method\": \"equal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/bills/{{saraBillId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{saraBillId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills",
+                "{{saraBillId}}"
+              ]
+            },
+            "description": "Get a bill detail"
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/bills/{{saraBillId}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{saraBillId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills",
+                "{{saraBillId}}"
+              ]
+            },
+            "description": "Update a bill",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Smoke updated.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/bills/{{saraBillId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{saraBillId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills",
+                "{{saraBillId}}"
+              ]
+            },
+            "description": "Delete a bill\n\nMutates seed; left for manual Postman drive."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "billing",
+      "item": [
+        {
+          "name": "POST /api/billing/checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "checkout"
+              ]
+            },
+            "description": "Create a Stripe Checkout session\n\nRequires STRIPE_SECRET_KEY. 5xx expected if Stripe not configured.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"org_id\": \"{{saraOrgId}}\",\n  \"tier\": \"pro\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/billing/portal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/portal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "portal"
+              ]
+            },
+            "description": "Create a Stripe Customer Portal session\n\nRequires STRIPE_SECRET_KEY + an existing Stripe customer.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"org_id\": \"{{saraOrgId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "payments",
+      "item": [
+        {
+          "name": "POST /api/payments/mandates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/mandates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "mandates"
+              ]
+            },
+            "description": "Start a Direct Debit mandate setup\n\nHits GoCardless. 5xx expected if GOCARDLESS_ACCESS_TOKEN not set.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenancy_id\": \"{{jordanTenancyId}}\",\n  \"success_redirect_url\": \"http://localhost:3000/tenant/rent/{{jordanTenancyId}}/dd-callback\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/payments/mandates/{{jordanMandateId}}/complete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/mandates/{{jordanMandateId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "mandates",
+                "{{jordanMandateId}}",
+                "complete"
+              ]
+            },
+            "description": "Complete a DD mandate after GoCardless redirect\n\nRequires a real GoCardless redirect flow id; otherwise 4xx/5xx.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"redirect_flow_id\": \"demo-flow-id\",\n  \"session_token\": \"demo-session\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/payments/mandates/{{jordanMandateId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/mandates/{{jordanMandateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "mandates",
+                "{{jordanMandateId}}"
+              ]
+            },
+            "description": "Cancel a mandate\n\nMutates seeded mandate; left for manual Postman drive."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/payments/charges/{{jordanChargeId}}/collect",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/charges/{{jordanChargeId}}/collect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "charges",
+                "{{jordanChargeId}}",
+                "collect"
+              ]
+            },
+            "description": "Trigger a one-off Direct Debit collection\n\nTier-gated (rent_collection_dd). 4xx expected if mandate not active.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_pence\": 1000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "passport",
+      "item": [
+        {
+          "name": "GET /api/passport",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/passport",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passport"
+              ]
+            },
+            "description": "Assemble the Rental Passport JSON"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/passport/pdf",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/passport/pdf",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passport",
+                "pdf"
+              ]
+            },
+            "description": "Generate a PDF and store it\n\nPDF render + Storage upload. 5xx OK if PDF worker not configured.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "admin",
+      "item": [
+        {
+          "name": "GET /api/admin/audit?page=1&per_page=10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/audit?page=1&per_page=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Audit log"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/orgs?page=1&per_page=10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs?page=1&per_page=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "List orgs"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/orgs/{{saraOrgId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs/{{saraOrgId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{saraOrgId}}"
+              ]
+            },
+            "description": "Org detail"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/orgs/{{saraOrgId}}/subscription-override",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs/{{saraOrgId}}/subscription-override",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{saraOrgId}}",
+                "subscription-override"
+              ]
+            },
+            "description": "Set or clear a manual tier override",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tier\": \"pro\",\n  \"expires_at\": \"2030-01-01\",\n  \"reason\": \"Smoke test override.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/orgs/{{saraOrgId}}/suspend",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs/{{saraOrgId}}/suspend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{saraOrgId}}",
+                "suspend"
+              ]
+            },
+            "description": "Suspend / reinstate an org",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reinstate\",\n  \"reason\": \"Smoke test reinstate (was never suspended).\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/orgs/invite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs/invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "invite"
+              ]
+            },
+            "description": "Invite a landlord org (audit-only MVP)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"org_name\": \"Smoke Org\",\n  \"email\": \"invited-landlord@example.com\",\n  \"tier\": \"starter\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/users?page=1&per_page=10",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?page=1&per_page=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "List users"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/users/{{jordanId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{jordanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{jordanId}}"
+              ]
+            },
+            "description": "User profile detail"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/profiles/search?q=sara",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/profiles/search?q=sara",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "profiles",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "sara"
+                }
+              ]
+            },
+            "description": "Search profiles by email/name"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/settings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/settings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings"
+              ]
+            },
+            "description": "Update platform settings (super only)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feature_flags\": {\n    \"smoke_test\": true\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/team/invite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/team/invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "team",
+                "invite"
+              ]
+            },
+            "description": "Invite a platform admin (super only)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new-admin@example.com\",\n  \"role\": \"support\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/admin/team/{{adminId}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/team/{{adminId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "team",
+                "{{adminId}}"
+              ]
+            },
+            "description": "Update an admin role (super only)\n\n400/403 expected when modifying self via this route.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"super\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/team/{{adminId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/team/{{adminId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "team",
+                "{{adminId}}"
+              ]
+            },
+            "description": "Revoke a platform admin\n\nSelf-modification guard."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/support/{{platformSupportTicketId}}/assign-me",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/support/{{platformSupportTicketId}}/assign-me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "support",
+                "{{platformSupportTicketId}}",
+                "assign-me"
+              ]
+            },
+            "description": "Self-assign a platform support ticket"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/support/{{platformSupportTicketId}}/resolve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/support/{{platformSupportTicketId}}/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "support",
+                "{{platformSupportTicketId}}",
+                "resolve"
+              ]
+            },
+            "description": "Resolve a platform support ticket",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"Smoke test resolve.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/compliance/notify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/compliance/notify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "compliance",
+                "notify"
+              ]
+            },
+            "description": "Notify a landlord of a compliance violation",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"org_id\": \"{{saraOrgId}}\",\n  \"violation_id\": \"00000000-0000-0000-0000-000000000000\",\n  \"kind\": \"reminder\",\n  \"note\": \"Smoke test.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/billing/{{saraOrgId}}/retry",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/billing/{{saraOrgId}}/retry",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "billing",
+                "{{saraOrgId}}",
+                "retry"
+              ]
+            },
+            "description": "Retry a failed Stripe invoice (stub)\n\n501 acceptable until wired to live Stripe API."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/billing/{{saraOrgId}}/remind",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/billing/{{saraOrgId}}/remind",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "billing",
+                "{{saraOrgId}}",
+                "remind"
+              ]
+            },
+            "description": "Send a card-update reminder"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "cron",
+      "item": [
+        {
+          "name": "GET /api/cron/rent-charges",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/rent-charges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "rent-charges"
+              ]
+            },
+            "description": "Generate rent charges (dry-run on GET)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cron/rent-charges",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/rent-charges",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "rent-charges"
+              ]
+            },
+            "description": "Generate rent charges + optionally collect via DD"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/cron/compliance-reminders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/compliance-reminders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "compliance-reminders"
+              ]
+            },
+            "description": "Compliance reminders cron (dry-run on GET)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cron/compliance-reminders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/compliance-reminders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "compliance-reminders"
+              ]
+            },
+            "description": "Send compliance reminder emails"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "webhooks",
+      "item": [
+        {
+          "name": "POST /api/webhooks/stripe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "stripe-signature",
+                "value": "t=demo,v1=demo"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/stripe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "stripe"
+              ]
+            },
+            "description": "Stripe webhook (signed)\n\nUse `stripe trigger` for real events.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_demo\",\n  \"type\": \"invoice.payment_succeeded\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"in_demo\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/webhooks/gocardless",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "webhook-signature",
+                "value": "demo"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/gocardless",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "gocardless"
+              ]
+            },
+            "description": "GoCardless webhook (signed)\n\nSign with GOCARDLESS_WEBHOOK_SECRET to test.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": [\n    {\n      \"id\": \"EV_demo\",\n      \"action\": \"created\",\n      \"resource_type\": \"mandates\",\n      \"links\": {}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/webhooks/docuseal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-docuseal-signature",
+                "value": "demo"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/docuseal",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "docuseal"
+              ]
+            },
+            "description": "DocuSeal webhook (signed)\n\nSign with DOCUSEAL_WEBHOOK_SECRET to test.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_type\": \"submission.completed\",\n  \"data\": {\n    \"id\": \"sub_demo\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

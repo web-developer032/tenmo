@@ -50,14 +50,13 @@ export async function listAuditWithClient(
 ): Promise<ListAuditResult> {
   const range = computePaginationRange(params.page, params.perPage);
 
+  // We used to embed actor profile + admin role inline via PostgREST. That
+  // path relies on FK relationships PostgREST can't resolve here (audit-log
+  // FK target is auth.users, not profiles/admin_users), so we fetch them in
+  // a second + third batch below.
   let query = sb
     .from('admin_audit_log')
-    .select(
-      `*,
-       actor:actor_user_id(full_name, contact_email),
-       actor_admin:actor_user_id(role)`,
-      { count: 'exact' },
-    )
+    .select(`*`, { count: 'exact' })
     .order('created_at', { ascending: false });
 
   if (params.event) query = query.eq('event', params.event);
@@ -83,31 +82,76 @@ export async function listAuditWithClient(
   const { data, error, count } = await query.range(range.rangeStart, range.rangeEnd);
   if (error) throw new DbError(error);
 
-  const rows: AdminAuditEntryEnriched[] = ((data ?? []) as Array<Record<string, unknown>>).map(
-    (r) => {
-      const actor = r.actor as { full_name: string | null; contact_email: string | null } | null;
-      const actorAdmin = r.actor_admin as { role: string | null } | null;
-      return {
-        ...(r as unknown as AdminAuditEntry),
-        actor_name: actor?.full_name ?? null,
-        actor_email: actor?.contact_email ?? null,
-        actor_role:
-          (actorAdmin?.role as 'super' | 'support' | 'finance' | 'readonly' | null) ?? null,
-      };
-    },
-  );
+  const rawRows = (data ?? []) as Array<Record<string, unknown>>;
+  const actorIds = Array.from(
+    new Set(rawRows.map((r) => r.actor_user_id as string | null).filter(Boolean)),
+  ) as string[];
 
-  // Pull a distinct list of admin actors for the filter drop-down.
-  const { data: adminProfiles } = await sb
-    .from('admin_users')
-    .select('user_id, profiles:user_id(full_name, contact_email)')
-    .eq('status', 'active');
-  const actor_options: ListAuditActorOption[] = (
-    (adminProfiles ?? []) as Array<Record<string, unknown>>
-  ).map((r) => {
-    const p = r.profiles as { full_name: string | null; contact_email: string | null } | null;
+  // Hydrate actor profile + admin role in batches.
+  const profileById = new Map<
+    string,
+    { full_name: string | null; contact_email: string | null }
+  >();
+  const roleByUserId = new Map<string, 'super' | 'support' | 'finance' | 'readonly' | null>();
+  if (actorIds.length > 0) {
+    const [profilesRes, adminRes] = await Promise.all([
+      sb.from('profiles').select('id, full_name, contact_email').in('id', actorIds),
+      sb.from('admin_users').select('user_id, role').in('user_id', actorIds),
+    ]);
+    for (const p of (profilesRes.data ?? []) as Array<{
+      id: string;
+      full_name: string | null;
+      contact_email: string | null;
+    }>) {
+      profileById.set(p.id, { full_name: p.full_name, contact_email: p.contact_email });
+    }
+    for (const a of (adminRes.data ?? []) as Array<{
+      user_id: string;
+      role: 'super' | 'support' | 'finance' | 'readonly' | null;
+    }>) {
+      roleByUserId.set(a.user_id, a.role ?? null);
+    }
+  }
+
+  const rows: AdminAuditEntryEnriched[] = rawRows.map((r) => {
+    const actorId = r.actor_user_id as string | null;
+    const profile = actorId ? (profileById.get(actorId) ?? null) : null;
+    const role = actorId ? (roleByUserId.get(actorId) ?? null) : null;
     return {
-      user_id: r.user_id as string,
+      ...(r as unknown as AdminAuditEntry),
+      actor_name: profile?.full_name ?? null,
+      actor_email: profile?.contact_email ?? null,
+      actor_role: role,
+    };
+  });
+
+  // Distinct admin actors for the filter drop-down — admin_users.user_id
+  // FKs auth.users.id, not profiles.id, so we batch the lookup.
+  const { data: adminRows } = await sb.from('admin_users').select('user_id').eq('status', 'active');
+  const adminIds = Array.from(
+    new Set(((adminRows ?? []) as Array<{ user_id: string }>).map((r) => r.user_id)),
+  );
+  const adminProfileById = new Map<
+    string,
+    { full_name: string | null; contact_email: string | null }
+  >();
+  if (adminIds.length > 0) {
+    const { data: adminProfiles } = await sb
+      .from('profiles')
+      .select('id, full_name, contact_email')
+      .in('id', adminIds);
+    for (const p of (adminProfiles ?? []) as Array<{
+      id: string;
+      full_name: string | null;
+      contact_email: string | null;
+    }>) {
+      adminProfileById.set(p.id, { full_name: p.full_name, contact_email: p.contact_email });
+    }
+  }
+  const actor_options: ListAuditActorOption[] = adminIds.map((user_id) => {
+    const p = adminProfileById.get(user_id);
+    return {
+      user_id,
       full_name: p?.full_name ?? null,
       contact_email: p?.contact_email ?? null,
     };

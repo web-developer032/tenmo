@@ -1,13 +1,14 @@
-'use client';
+"use client";
 
-import { MessageSquare } from 'lucide-react';
-import Link from 'next/link';
-import * as React from 'react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/cn';
-import { createClient } from '@/lib/supabase/client';
-import { fetchInbox } from '../api/client';
-import { subscribeMessagingRead } from '../events';
+import { MessageSquare } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/cn";
+import { createClient } from "@/lib/supabase/client";
+import { freshRealtimeChannel } from "@/lib/supabase/realtime";
+import { fetchInbox } from "../api/client";
+import { subscribeMessagingRead } from "../events";
 
 /**
  * App-shell inbox icon — link to `/messages` with an unread badge that
@@ -50,25 +51,28 @@ export function InboxIcon({
       }, 400);
     };
 
-    const channel = supabase
-      .channel(`inbox-icon:${userId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        debouncedRefresh();
-      })
+    const channel = freshRealtimeChannel(supabase, `inbox-icon:${userId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => {
+          debouncedRefresh();
+        }
+      )
+      .on(
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'conversation_participants',
+          event: "UPDATE",
+          schema: "public",
+          table: "conversation_participants",
           filter: `user_id=eq.${userId}`,
         },
         () => {
           debouncedRefresh();
-        },
+        }
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') realtimeOpen = true;
+        if (status === "SUBSCRIBED") realtimeOpen = true;
       });
 
     const timer = setInterval(() => {
@@ -83,9 +87,12 @@ export function InboxIcon({
   }, [userId, refresh]);
 
   // Same-tab fast path — see use-inbox for rationale.
-  React.useEffect(() => subscribeMessagingRead(() => void refresh()), [refresh]);
+  React.useEffect(
+    () => subscribeMessagingRead(() => void refresh()),
+    [refresh]
+  );
 
-  const badge = unread > 99 ? '99+' : String(unread);
+  const badge = unread > 99 ? "99+" : String(unread);
 
   return (
     <Button
@@ -93,15 +100,15 @@ export function InboxIcon({
       variant="ghost"
       size="icon"
       className="relative"
-      aria-label={unread > 0 ? `Messages (${unread} unread)` : 'Messages'}
+      aria-label={unread > 0 ? `Messages (${unread} unread)` : "Messages"}
     >
       <Link href="/messages">
         <MessageSquare className="h-5 w-5" />
         {unread > 0 ? (
           <span
             className={cn(
-              'absolute -right-0.5 -top-0.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground',
-              'h-[1.1rem]',
+              "absolute -right-0.5 -top-0.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground",
+              "h-[1.1rem]"
             )}
             aria-hidden="true"
           >

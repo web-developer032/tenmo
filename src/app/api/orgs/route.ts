@@ -48,17 +48,9 @@ export const POST = handler(
       throw new DbError(orgErr ?? 'no row returned');
     }
 
-    const { error: memErr } = await supabase.from('org_memberships').insert({
-      org_id: org.id,
-      user_id: user.id,
-      role: 'owner',
-      accepted_at: new Date().toISOString(),
-    });
-
-    if (memErr) {
-      log.error({ err: memErr }, 'failed to create owner membership');
-      throw new DbError(memErr);
-    }
+    // Owner `org_memberships` row is created by the `on_org_created`
+    // AFTER INSERT trigger (`handle_new_org`). Doing it again here would
+    // race the trigger and trip `org_memberships_unique_active`.
 
     return Response.json({ data: org }, { status: 201 });
   },

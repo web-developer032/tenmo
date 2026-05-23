@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AppShell } from '@/components/app-shell/app-shell';
 import { LandlordSidebar } from '@/components/app-shell/landlord-sidebar';
+import { loadSidebarBadgeCounts } from '@/features/app-shell/server';
 import { PastDueBanner } from '@/features/billing/components/past-due-banner';
 import { loadOrgSubscription } from '@/features/billing/loaders';
 import { createClient } from '@/lib/supabase/server';
@@ -50,10 +51,11 @@ export default async function LandlordLayout({
     notFound();
   }
 
-  const [subscription, profileResp, propertyCountResp] = await Promise.all([
+  const [subscription, profileResp, propertyCountResp, badgeCounts] = await Promise.all([
     loadOrgSubscription(org.id),
     supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
     supabase.from('properties').select('id', { count: 'exact', head: true }).eq('org_id', org.id),
+    loadSidebarBadgeCounts(supabase, { userId: user.id, orgId: org.id }),
   ]);
 
   const tier = subscription?.tier ?? 'free';
@@ -74,6 +76,9 @@ export default async function LandlordLayout({
       orgName={org.name}
       tierLabel={tierLabel}
       propertyCount={propertyCountResp.count ?? 0}
+      unreadMessages={badgeCounts.unreadMessages}
+      unreadNotifications={badgeCounts.unreadNotifications}
+      openTickets={badgeCounts.openTickets}
       userInitials={initials}
       userName={fullName}
     />

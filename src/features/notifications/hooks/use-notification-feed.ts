@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Notification, type NotificationListFilter } from '@/core/schemas/notification';
 import { subscribeMessagingRead } from '@/features/messaging/events';
 import { createClient } from '@/lib/supabase/client';
+import { freshRealtimeChannel } from '@/lib/supabase/realtime';
 import { fetchNotifications, type NotificationListResponse } from '../api/client';
 
 /**
@@ -90,8 +91,7 @@ export function useNotificationFeed(options: UseNotificationFeedOptions): UseNot
     const supabase = createClient();
     let realtimeOpen = false;
 
-    const channel = supabase
-      .channel(`notifications:${userId}`)
+    const channel = freshRealtimeChannel(supabase, `notifications:${userId}`)
       .on(
         'postgres_changes',
         {

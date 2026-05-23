@@ -134,12 +134,12 @@ async function profileFor(
 ): Promise<{ email: string | null; name: string | null } | null> {
   const { data, error } = await ctx.supabase
     .from('profiles')
-    .select('email, full_name')
+    .select('contact_email, full_name')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw new DbError(error);
   if (!data) return null;
-  return { email: data.email ?? null, name: (data.full_name as string | null) ?? null };
+  return { email: data.contact_email ?? null, name: (data.full_name as string | null) ?? null };
 }
 
 async function emailFor(ctx: HandlerContext, userId: string | null): Promise<string | null> {

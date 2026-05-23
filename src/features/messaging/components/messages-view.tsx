@@ -1,24 +1,29 @@
-'use client';
+"use client";
 
-import { ChevronLeft, MessageSquare } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import * as React from 'react';
-import { Card } from '@/components/ui/card';
-import type { ConversationParticipantView, Message } from '@/core/schemas/messaging';
+import { ChevronLeft, MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { Card } from "@/components/ui/card";
+import type {
+  ConversationParticipantView,
+  Message,
+} from "@/core/schemas/messaging";
 import {
   conversationDisplayTitle,
   participantDisplayName,
   partyRoleLabel,
-} from '@/core/utils/messaging-rules';
-import { cn } from '@/lib/cn';
-import type { InboxResponse } from '../api/client';
-import type { TypingParticipant } from '../hooks/use-conversation';
-import { useConversation } from '../hooks/use-conversation';
-import { useInbox } from '../hooks/use-inbox';
-import { ConversationList } from './conversation-list';
-import { MessageComposer } from './message-composer';
-import { MessageThread } from './message-thread';
+} from "@/core/utils/messaging-rules";
+import { cn } from "@/lib/cn";
+import type { InboxResponse } from "../api/client";
+import type { TypingParticipant } from "../hooks/use-conversation";
+import { useConversation } from "../hooks/use-conversation";
+import { useInbox } from "../hooks/use-inbox";
+import type { MessageCandidate } from "../server/list-message-candidates";
+import { ConversationList } from "./conversation-list";
+import { MessageComposer } from "./message-composer";
+import { MessageThread } from "./message-thread";
+import { NewConversationDialog } from "./new-conversation-dialog";
 
 /**
  * Composed inbox + thread view.
@@ -42,58 +47,83 @@ export function MessagesView({
   initialThread,
   initialParticipants,
   activeId,
+  composeOrgId,
+  composeCandidates,
 }: {
   userId: string;
   initialInbox: InboxResponse;
   initialThread?: Message[];
   initialParticipants?: ConversationParticipantView[];
   activeId?: string | null;
+  composeOrgId?: string | null;
+  composeCandidates?: MessageCandidate[];
 }) {
   const inbox = useInbox({ userId, initial: initialInbox });
 
   const activeItem = activeId
-    ? (inbox.data.conversations.find((c) => c.conversation.id === activeId) ?? null)
+    ? inbox.data.conversations.find((c) => c.conversation.id === activeId) ??
+      null
     : null;
 
   return (
     <div className="mx-auto flex h-[calc(100dvh-3.5rem)] w-full max-w-screen-2xl">
       <aside
         className={cn(
-          'flex w-full flex-col border-r bg-background md:w-80',
-          activeId && 'hidden md:flex',
+          "flex w-full flex-col border-r bg-background md:w-80",
+          activeId && "hidden md:flex"
         )}
       >
-        <header className="flex items-center justify-between border-b px-4 py-3">
-          <h1 className="text-base font-semibold">Messages</h1>
-          <span className="text-[10px] text-muted-foreground">
-            {inbox.data.unread_total > 0
-              ? `${inbox.data.unread_total} unread`
-              : `${inbox.data.conversations.length} total`}
-          </span>
+        <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
+          <div className="min-w-0">
+            <h1 className="text-base font-semibold">Messages</h1>
+            <span className="text-[10px] text-muted-foreground">
+              {inbox.data.unread_total > 0
+                ? `${inbox.data.unread_total} unread`
+                : `${inbox.data.conversations.length} total`}
+            </span>
+          </div>
+          {composeOrgId ? (
+            <NewConversationDialog
+              orgId={composeOrgId}
+              candidates={composeCandidates ?? []}
+            />
+          ) : null}
         </header>
         <div className="flex-1 overflow-y-auto">
           {inbox.error ? (
-            <div className="px-4 py-6 text-sm text-destructive">{inbox.error}</div>
+            <div className="px-4 py-6 text-sm text-destructive">
+              {inbox.error}
+            </div>
           ) : (
-            <ConversationList items={inbox.data.conversations} activeId={activeId ?? undefined} />
+            <ConversationList
+              items={inbox.data.conversations}
+              activeId={activeId ?? undefined}
+            />
           )}
         </div>
       </aside>
 
-      <section className={cn('flex flex-1 flex-col bg-background', !activeId && 'hidden md:flex')}>
+      <section
+        className={cn(
+          "flex flex-1 flex-col bg-background",
+          !activeId && "hidden md:flex"
+        )}
+      >
         {activeId ? (
           <ActiveThread
             key={activeId}
             conversationId={activeId}
             selfId={userId}
-            title={activeItem ? conversationDisplayTitle(activeItem) : 'Conversation'}
+            title={
+              activeItem ? conversationDisplayTitle(activeItem) : "Conversation"
+            }
             subtitle={
               activeItem
                 ? activeItem.others
                     .map((o) => partyRoleLabel(o.party_role))
                     .filter((v, i, arr) => arr.indexOf(v) === i)
-                    .join(' · ')
-                : ''
+                    .join(" · ")
+                : ""
             }
             initialMessages={initialThread}
             initialParticipants={initialParticipants}
@@ -127,10 +157,12 @@ function ActiveThread({
     () =>
       initialParticipants?.find((p) => p.is_self)
         ? participantDisplayName(
-            initialParticipants.find((p) => p.is_self) as ConversationParticipantView,
+            initialParticipants.find(
+              (p) => p.is_self
+            ) as ConversationParticipantView
           )
         : null,
-    [initialParticipants],
+    [initialParticipants]
   );
 
   const conv = useConversation({
@@ -153,7 +185,7 @@ function ActiveThread({
       <header className="flex items-center gap-3 border-b px-4 py-3">
         <button
           type="button"
-          onClick={() => router.push('/messages')}
+          onClick={() => router.push("/messages")}
           className="-ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent md:hidden"
           aria-label="Back to inbox"
         >
@@ -162,7 +194,9 @@ function ActiveThread({
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold">{title}</h2>
           {subtitle ? (
-            <p className="truncate text-[11px] text-muted-foreground">{subtitle}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {subtitle}
+            </p>
           ) : null}
         </div>
       </header>
@@ -194,13 +228,17 @@ function ActiveThread({
  */
 function TypingStrip({ typers }: { typers: TypingParticipant[] }) {
   if (typers.length === 0) return null;
-  const names = typers.map((t) => t.fullName.trim() || 'Someone').filter(Boolean);
+  const names = typers
+    .map((t) => t.fullName.trim() || "Someone")
+    .filter(Boolean);
   const label =
     names.length === 1
       ? `${names[0]} is typing…`
       : names.length === 2
-        ? `${names[0]} and ${names[1]} are typing…`
-        : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]} are typing…`;
+      ? `${names[0]} and ${names[1]} are typing…`
+      : `${names.slice(0, -1).join(", ")} and ${
+          names[names.length - 1]
+        } are typing…`;
   return (
     <div className="px-4 pb-1 text-[11px] text-muted-foreground">
       <span className="inline-flex items-center gap-1">
@@ -218,10 +256,14 @@ function EmptyState() {
         <MessageSquare className="h-8 w-8 text-muted-foreground" />
         <h2 className="text-base font-semibold">Pick a conversation</h2>
         <p className="text-sm text-muted-foreground">
-          Direct messages between landlords and tenants land here. New tenancy threads are created
-          automatically as soon as a tenant accepts an invite.
+          Direct messages between landlords and tenants land here. New tenancy
+          threads are created automatically as soon as a tenant accepts an
+          invite.
         </p>
-        <Link href="/notifications" className="text-xs text-primary hover:underline">
+        <Link
+          href="/notifications"
+          className="text-xs text-primary hover:underline"
+        >
           See notifications
         </Link>
       </Card>

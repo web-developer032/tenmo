@@ -24,14 +24,23 @@ export const POST = handler<{ orgId: string }>(
 
     const { data: org, error } = await supabase
       .from('orgs')
-      .select('id, name, contact_email, created_by, profiles:created_by(contact_email)')
+      .select('id, name, contact_email, created_by')
       .eq('id', params.orgId)
       .maybeSingle();
     if (error) throw new DbError(error);
     if (!org) throw new BusinessRuleError('Org not found');
 
-    const profile = (org as { profiles?: { contact_email?: string | null } | null }).profiles;
-    const target = org.contact_email ?? profile?.contact_email ?? null;
+    // orgs.created_by FKs auth.users.id, not profiles.id — fetch separately.
+    let ownerEmail: string | null = null;
+    if (org.created_by) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('contact_email')
+        .eq('id', org.created_by)
+        .maybeSingle();
+      ownerEmail = profile?.contact_email ?? null;
+    }
+    const target = org.contact_email ?? ownerEmail ?? null;
     if (!target) {
       throw new BusinessRuleError('No email on file for this org owner');
     }
