@@ -906,7 +906,7 @@
             "description": "Invite a tenant to a room (creates a tenancy in pending_invite)",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"room_id\": \"{{saraRoom4Id}}\",\n  \"tenant_email\": \"newtenant@example.com\",\n  \"start_date\": \"2030-01-01\",\n  \"rent_pence\": 75000,\n  \"rent_frequency\": \"monthly\",\n  \"rent_due_day\": 1,\n  \"deposit_pence\": 300000,\n  \"is_periodic\": true\n}",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"room_id\": \"{{saraRoom4Id}}\",\n  \"invite_email\": \"newtenant@example.com\",\n  \"start_date\": \"2030-01-01\",\n  \"rent_pence\": 75000,\n  \"rent_frequency\": \"monthly\",\n  \"rent_due_day\": 1,\n  \"deposit_pence\": 300000,\n  \"deposit_scheme\": \"dps\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1059,7 +1059,7 @@
             "description": "Add a room to a property",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Smoke Test Room\",\n  \"has_ensuite\": true,\n  \"default_rent_pence\": 80000\n}",
+              "raw": "{\n  \"name\": \"Smoke Test Room\",\n  \"has_ensuite\": true,\n  \"has_double_bed\": true,\n  \"furnishing\": \"furnished\",\n  \"default_rent_pence\": 80000,\n  \"default_rent_frequency\": \"monthly\",\n  \"bills_included\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1161,7 +1161,7 @@
             "description": "Record a manual rent payment\n\nSmoke uses tiny amount; cleanup deletes the row.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"amount_pence\": 1000,\n  \"charge_id\": \"{{jordanChargeId}}\",\n  \"method\": \"manual_bank_transfer\",\n  \"paid_at\": \"2026-05-23\"\n}",
+              "raw": "{\n  \"amount_pence\": 1000,\n  \"charge_id\": \"{{jordanChargeId}}\",\n  \"method\": \"manual_bank_transfer\",\n  \"paid_on\": \"2026-05-23\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1188,7 +1188,7 @@
                 "cancel"
               ]
             },
-            "description": "Cancel a pending tenancy invite"
+            "description": "Cancel a pending tenancy invite\n\n422 on rerun: the invite is already cancelled."
           },
           "response": []
         },
@@ -1217,7 +1217,7 @@
             "description": "End an active tenancy (Renters Rights Bill notice rules apply)\n\nMutating end of seeded active tenancy disrupts other smokes.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"reason\": \"mutual\",\n  \"end_date\": \"2030-12-31\"\n}",
+              "raw": "{\n  \"reason\": \"mutual_break\",\n  \"end_date\": \"2030-12-31\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1233,19 +1233,19 @@
       "name": "invites",
       "item": [
         {
-          "name": "GET /api/invites/{{taylorInviteToken}}",
+          "name": "GET /api/invites/{{marcusInviteToken}}",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/invites/{{taylorInviteToken}}",
+              "raw": "{{baseUrl}}/api/invites/{{marcusInviteToken}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "invites",
-                "{{taylorInviteToken}}"
+                "{{marcusInviteToken}}"
               ]
             },
             "description": "Public invite preview (redacted)"
@@ -1253,19 +1253,19 @@
           "response": []
         },
         {
-          "name": "POST /api/invites/{{taylorInviteToken}}/accept",
+          "name": "POST /api/invites/{{marcusInviteToken}}/accept",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/invites/{{taylorInviteToken}}/accept",
+              "raw": "{{baseUrl}}/api/invites/{{marcusInviteToken}}/accept",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "invites",
-                "{{taylorInviteToken}}",
+                "{{marcusInviteToken}}",
                 "accept"
               ]
             },
@@ -1381,7 +1381,7 @@
                 "publish"
               ]
             },
-            "description": "Publish a room listing",
+            "description": "Publish a room listing\n\n422 on rerun: listing already closed by the previous close call.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"description\": \"Smoke test publish — please ignore.\",\n  \"available_from\": \"2030-01-01\",\n  \"min_term_months\": 6\n}",
@@ -1418,7 +1418,7 @@
                 "pause"
               ]
             },
-            "description": "Pause a published listing",
+            "description": "Pause a published listing\n\n422 on rerun: listing already closed.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"resume\": false\n}",
@@ -1455,7 +1455,7 @@
                 "close"
               ]
             },
-            "description": "Close a listing",
+            "description": "Close a listing\n\n422 on rerun: listing already closed.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"reopen\": false\n}",
@@ -1520,7 +1520,7 @@
                 "reject"
               ]
             },
-            "description": "Reject an application\n\nMutates the seeded pending application; rerun supabase db reset to restore.",
+            "description": "Reject an application\n\n422 on rerun: application is already rejected. supabase db reset restores.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"decline_reason\": \"Smoke test reject — not real.\"\n}",
@@ -1561,6 +1561,398 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"start_date\": \"2030-01-01\",\n  \"rent_pence\": 80000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-financials",
+      "item": [
+        {
+          "name": "GET /api/landlord/{{saraOrgSlug}}/expenses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "expenses"
+              ]
+            },
+            "description": "List the org's expenses ledger"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/expenses",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/expenses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "expenses"
+              ]
+            },
+            "description": "Add an expense to the ledger",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"occurred_on\": \"2026-05-15\",\n  \"description\": \"Smoke test — bathroom sealant repair\",\n  \"category\": \"repairs\",\n  \"amount_pence\": 4500,\n  \"mtd_eligible\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/landlord/{{saraOrgSlug}}/mtd-submissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/mtd-submissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "mtd-submissions"
+              ]
+            },
+            "description": "List quarterly MTD submissions"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/mtd-submissions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/mtd-submissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "mtd-submissions"
+              ]
+            },
+            "description": "Record / regenerate a quarterly MTD figure\n\nPOST is upsert keyed on (org_id, quarter), so reruns return 201 with the same row.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quarter\": \"2025Q1\",\n  \"submission_method\": \"csv_export\",\n  \"notes\": \"Smoke test MTD draft.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/landlord/{{saraOrgSlug}}/financials/export",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/financials/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "financials",
+                "export"
+              ]
+            },
+            "description": "Export full-year income + expenses as CSV"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/landlord/{{saraOrgSlug}}/rent/export?month=2026-05",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/rent/export?month=2026-05",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "rent",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "month",
+                  "value": "2026-05"
+                }
+              ]
+            },
+            "description": "Export the selected month's rent ledger as CSV"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-deposits",
+      "item": [
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/deposit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/deposit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "deposit"
+              ]
+            },
+            "description": "Record / update a tenancy deposit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deposit_pence\": 95000,\n  \"deposit_scheme\": \"dps\",\n  \"deposit_reference\": \"DPS-SMOKE-1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-rtr",
+      "item": [
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/rtr-check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/rtr-check",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "rtr-check"
+              ]
+            },
+            "description": "Log / re-record a Right-to-Rent check",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document_type\": \"british_passport\",\n  \"share_code\": null,\n  \"expires_at\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-inspections",
+      "item": [
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/inspections",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/inspections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "inspections"
+              ]
+            },
+            "description": "Schedule a new inspection",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"type\": \"routine_quarterly\",\n  \"scheduled_for\": \"2030-09-15\",\n  \"inspector_name\": \"Smoke Inspector\",\n  \"notes\": \"Smoke test inspection — please ignore.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-contractors",
+      "item": [
+        {
+          "name": "GET /api/landlord/{{saraOrgSlug}}/contractors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/contractors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "contractors"
+              ]
+            },
+            "description": "List active contractors for the org"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/landlord/{{saraOrgSlug}}/contractors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/contractors",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "contractors"
+              ]
+            },
+            "description": "Add a contractor to the directory",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Smoke Test Contractor\",\n  \"contact_name\": \"Smoke Person\",\n  \"phone\": \"+44 7700 900000\",\n  \"email\": \"smoke@example.com\",\n  \"trades\": [\n    \"general\"\n  ],\n  \"coverage_areas\": [\n    \"Birmingham\"\n  ],\n  \"day_rate_pence\": 20000,\n  \"rating\": 4,\n  \"notes\": \"Created by smoke runner — please ignore.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "landlord-profile",
+      "item": [
+        {
+          "name": "PATCH /api/landlord/{{saraOrgSlug}}/org",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/org",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "org"
+              ]
+            },
+            "description": "Update business-level org fields (owner only)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contact_phone\": \"+44 7700 900100\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1722,7 +2114,7 @@
                 "envelopes"
               ]
             },
-            "description": "Start an AST signing run\n\nHits DocuSeal; requires DOCUSEAL_API_TOKEN. Smoke marks as expected-skip if config missing.",
+            "description": "Start an AST signing run\n\nHits DocuSeal; requires DOCUSEAL_API_URL + DOCUSEAL_API_TOKEN. 503 expected if not configured.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"tenancy_id\": \"{{marcusCamden2TenancyId}}\"\n}",
@@ -1831,7 +2223,7 @@
             "description": "Mint a signed Storage upload URL",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"kind\": \"property\",\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"filename\": \"smoke.pdf\",\n  \"mime_type\": \"application/pdf\",\n  \"size_bytes\": 1024\n}",
+              "raw": "{\n  \"parent\": {\n    \"kind\": \"property\",\n    \"property_id\": \"{{saraPropertyId}}\"\n  },\n  \"category\": \"other\",\n  \"filename\": \"smoke.pdf\",\n  \"mime_type\": \"application/pdf\",\n  \"size_bytes\": 1024\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1864,7 +2256,7 @@
             "description": "Record an uploaded document\n\nStorage path uniqueness — script-side flag avoids the collision on rerun.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"kind\": \"property\",\n  \"category\": \"other\",\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"storage_path\": \"{{saraOrgId}}/property/{{saraPropertyId}}/smoke-record.pdf\",\n  \"filename\": \"smoke-record.pdf\",\n  \"mime_type\": \"application/pdf\",\n  \"size_bytes\": 2048,\n  \"title\": \"Smoke record\",\n  \"description\": \"Inserted by smoke runner.\"\n}",
+              "raw": "{\n  \"parent\": {\n    \"kind\": \"property\",\n    \"property_id\": \"{{saraPropertyId}}\"\n  },\n  \"category\": \"other\",\n  \"storage_path\": \"{{saraOrgId}}/property/{{saraPropertyId}}/smoke-record.pdf\",\n  \"filename\": \"smoke-record.pdf\",\n  \"mime_type\": \"application/pdf\",\n  \"size_bytes\": 2048,\n  \"title\": \"Smoke record\",\n  \"description\": \"Inserted by smoke runner.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1891,7 +2283,7 @@
                 "url"
               ]
             },
-            "description": "Mint a signed download URL"
+            "description": "Mint a signed download URL\n\nStorage object is not actually uploaded in the seed, so signing may 404 — acceptable for smoke."
           },
           "response": []
         },
@@ -2036,7 +2428,7 @@
             "description": "Update notification preferences",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": {\n    \"rent_charged\": false\n  }\n}",
+              "raw": "{\n  \"channels\": {\n    \"email\": false\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2090,10 +2482,10 @@
                 "conversations"
               ]
             },
-            "description": "Find or create a direct conversation",
+            "description": "Find or create a direct conversation\n\nCaller must be a member of the org; the other user can be a member or current tenant.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"other_user_id\": \"{{saraId}}\"\n}",
+              "raw": "{\n  \"org_id\": \"{{saraOrgId}}\",\n  \"other_user_id\": \"{{jordanId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2229,7 +2621,7 @@
             "description": "Create a maintenance ticket",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tenancy_id\": \"{{jordanTenancyId}}\",\n  \"title\": \"Smoke ticket\",\n  \"description\": \"Created by smoke runner.\",\n  \"category\": \"other\",\n  \"severity\": \"low\"\n}",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"room_id\": \"{{saraRoom1Id}}\",\n  \"tenancy_id\": \"{{jordanTenancyId}}\",\n  \"title\": \"Smoke ticket\",\n  \"description\": \"Created by smoke runner — please ignore.\",\n  \"category\": \"other\",\n  \"severity\": \"low\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2281,7 +2673,7 @@
                 "status"
               ]
             },
-            "description": "Change a ticket status",
+            "description": "Change a ticket status\n\n422 on rerun: status transitions are validated and a no-op transition is rejected.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"in_progress\"\n}",
@@ -2489,7 +2881,7 @@
             "description": "Create a bill with allocations",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"vendor\": \"Smoke Utility\",\n  \"kind\": \"electricity\",\n  \"period_start\": \"2026-05-01\",\n  \"period_end\": \"2026-05-31\",\n  \"total_pence\": 12500,\n  \"currency\": \"GBP\",\n  \"split_method\": \"equal\"\n}",
+              "raw": "{\n  \"property_id\": \"{{saraPropertyId}}\",\n  \"type\": \"electricity\",\n  \"provider\": \"Smoke Utility\",\n  \"period_start\": \"2026-05-01\",\n  \"period_end\": \"2026-05-31\",\n  \"total_pence\": 12500,\n  \"allocation_method\": \"equal_per_room\",\n  \"notes\": \"Smoke test bill.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2599,7 +2991,7 @@
                 "checkout"
               ]
             },
-            "description": "Create a Stripe Checkout session\n\nRequires STRIPE_SECRET_KEY. 5xx expected if Stripe not configured.",
+            "description": "Create a Stripe Checkout session\n\nRequires STRIPE_SECRET_KEY + STRIPE_PRICE_PRO_MONTHLY. 4xx/5xx expected if Stripe not configured.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"org_id\": \"{{saraOrgId}}\",\n  \"tier\": \"pro\"\n}",
@@ -2633,7 +3025,7 @@
                 "portal"
               ]
             },
-            "description": "Create a Stripe Customer Portal session\n\nRequires STRIPE_SECRET_KEY + an existing Stripe customer.",
+            "description": "Create a Stripe Customer Portal session\n\nRequires STRIPE_SECRET_KEY + an existing Stripe customer (400 expected on a fresh org).",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"org_id\": \"{{saraOrgId}}\"\n}",
@@ -2765,7 +3157,7 @@
                 "collect"
               ]
             },
-            "description": "Trigger a one-off Direct Debit collection\n\nTier-gated (rent_collection_dd). 4xx expected if mandate not active.",
+            "description": "Trigger a one-off Direct Debit collection\n\nTier-gated (rent_collection_dd). 202 expected if no active mandate (Stripe/GC unconfigured).",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"amount_pence\": 1000\n}",
@@ -2948,7 +3340,7 @@
             "description": "Set or clear a manual tier override",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"tier\": \"pro\",\n  \"expires_at\": \"2030-01-01\",\n  \"reason\": \"Smoke test override.\"\n}",
+              "raw": "{\n  \"tier\": \"pro\",\n  \"reason\": \"Smoke test override.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3131,7 +3523,7 @@
             "description": "Update platform settings (super only)",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"feature_flags\": {\n    \"smoke_test\": true\n  }\n}",
+              "raw": "{\n  \"trial_days\": 14\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3163,7 +3555,7 @@
                 "invite"
               ]
             },
-            "description": "Invite a platform admin (super only)",
+            "description": "Invite a platform admin (super only)\n\n409 on rerun: the invitee email is already an admin row.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"new-admin@example.com\",\n  \"role\": \"support\"\n}",
@@ -3177,7 +3569,7 @@
           "response": []
         },
         {
-          "name": "PATCH /api/admin/team/{{adminId}}",
+          "name": "PATCH /api/admin/team/{{supportAdminId}}",
           "request": {
             "method": "PATCH",
             "header": [
@@ -3187,7 +3579,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/team/{{adminId}}",
+              "raw": "{{baseUrl}}/api/admin/team/{{supportAdminId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3195,13 +3587,13 @@
                 "api",
                 "admin",
                 "team",
-                "{{adminId}}"
+                "{{supportAdminId}}"
               ]
             },
-            "description": "Update an admin role (super only)\n\n400/403 expected when modifying self via this route.",
+            "description": "Update an admin role (super only)",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"super\"\n}",
+              "raw": "{\n  \"role\": \"support\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3212,12 +3604,12 @@
           "response": []
         },
         {
-          "name": "DELETE /api/admin/team/{{adminId}}",
+          "name": "DELETE /api/admin/team/{{supportAdminId}}",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/team/{{adminId}}",
+              "raw": "{{baseUrl}}/api/admin/team/{{supportAdminId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -3225,10 +3617,10 @@
                 "api",
                 "admin",
                 "team",
-                "{{adminId}}"
+                "{{supportAdminId}}"
               ]
             },
-            "description": "Revoke a platform admin\n\nSelf-modification guard."
+            "description": "Revoke a platform admin\n\nMutates the seeded support admin."
           },
           "response": []
         },
@@ -3277,7 +3669,7 @@
                 "resolve"
               ]
             },
-            "description": "Resolve a platform support ticket",
+            "description": "Resolve a platform support ticket\n\n422 on rerun: ticket already resolved.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"resolution\": \"Smoke test resolve.\"\n}",

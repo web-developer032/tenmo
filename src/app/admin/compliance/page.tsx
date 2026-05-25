@@ -8,9 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AdminListQuery } from '@/core/schemas/admin';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
-import { AdminBanner } from '@/features/admin/components/ds/admin-banner';
-import { AdminFilterRow } from '@/features/admin/components/ds/admin-filter-row';
-import { AdminTabBar } from '@/features/admin/components/ds/admin-tab-bar';
+import { AdminBanner, AdminFilterRow, AdminTabBar } from '@/features/admin/components/ds';
 import { FilterSelect } from '@/features/admin/components/filter-select';
 import { NotifyLandlordButton } from '@/features/admin/components/notify-landlord-button';
 import {

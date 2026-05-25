@@ -1,23 +1,23 @@
-import { redirect } from "next/navigation";
-import type { ReactNode } from "react";
-import { AppShell } from "@/components/app-shell/app-shell";
-import { LandlordSidebar } from "@/components/app-shell/landlord-sidebar";
-import { TenantSidebar } from "@/components/app-shell/tenant-sidebar";
+import { redirect } from 'next/navigation';
+import type { ReactNode } from 'react';
+import { AppShell } from '@/components/app-shell/app-shell';
+import { LandlordSidebar } from '@/components/app-shell/landlord-sidebar';
+import { TenantSidebar } from '@/components/app-shell/tenant-sidebar';
 import {
   loadSidebarBadgeCounts,
-  readRememberedWorkspace,
   type RememberedWorkspace,
-} from "@/features/app-shell/server";
-import { loadOrgSubscription } from "@/features/billing/loaders";
-import { loadRoleAvailability } from "@/features/role-switcher/loader";
-import { createClient } from "@/lib/supabase/server";
+  readRememberedWorkspace,
+} from '@/features/app-shell/server';
+import { loadOrgSubscription } from '@/features/billing/loaders';
+import { loadRoleAvailability } from '@/features/role-switcher/loader';
+import { createClient } from '@/lib/supabase/server';
 
 const TIER_LABELS: Record<string, string> = {
-  free: "Free plan",
-  starter: "Starter plan",
-  pro: "Pro plan",
-  portfolio: "Portfolio plan",
-  trial: "Trial",
+  free: 'Free plan',
+  starter: 'Starter plan',
+  pro: 'Pro plan',
+  portfolio: 'Portfolio plan',
+  trial: 'Trial',
 };
 
 /**
@@ -35,29 +35,21 @@ const TIER_LABELS: Record<string, string> = {
  * Without this restoration the workspace nav disappears the moment a
  * landlord opens their inbox.
  */
-export default async function MessagesLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default async function MessagesLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?redirect=/messages");
+  if (!user) redirect('/login?redirect=/messages');
 
   const [availability, remembered, profileResp] = await Promise.all([
     loadRoleAvailability(),
     readRememberedWorkspace(),
-    supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .maybeSingle(),
+    supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
   ]);
 
   const workspace = pickWorkspace(remembered, availability);
-  const fullName = profileResp.data?.full_name ?? user.email ?? "Tenantly user";
+  const fullName = profileResp.data?.full_name ?? user.email ?? 'Tenantly user';
   const initials = initialsFrom(fullName);
 
   const sidebar = await renderSidebarFor({
@@ -79,25 +71,25 @@ export default async function MessagesLayout({
 
 function pickWorkspace(
   remembered: RememberedWorkspace | null,
-  availability: Awaited<ReturnType<typeof loadRoleAvailability>>
+  availability: Awaited<ReturnType<typeof loadRoleAvailability>>,
 ): RememberedWorkspace | null {
   if (
-    remembered?.kind === "landlord" &&
+    remembered?.kind === 'landlord' &&
     availability.orgs.some((o) => o.slug === remembered.slug)
   ) {
     return remembered;
   }
-  if (remembered?.kind === "tenant" && availability.hasTenancies) {
+  if (remembered?.kind === 'tenant' && availability.hasTenancies) {
     return remembered;
   }
-  if (remembered?.kind === "admin" && availability.isAdmin) {
+  if (remembered?.kind === 'admin' && availability.isAdmin) {
     return remembered;
   }
   if (availability.orgs.length > 0) {
-    return { kind: "landlord", slug: availability.orgs[0]!.slug };
+    return { kind: 'landlord', slug: availability.orgs[0]!.slug };
   }
-  if (availability.hasTenancies) return { kind: "tenant" };
-  if (availability.isAdmin) return { kind: "admin" };
+  if (availability.hasTenancies) return { kind: 'tenant' };
+  if (availability.isAdmin) return { kind: 'admin' };
   return null;
 }
 
@@ -108,8 +100,8 @@ function initialsFrom(name: string): string {
       .map((p: string) => p[0])
       .filter(Boolean)
       .slice(0, 2)
-      .join("")
-      .toUpperCase() || "U"
+      .join('')
+      .toUpperCase() || 'U'
   );
 }
 
@@ -132,18 +124,18 @@ async function renderSidebarFor({
   initials,
   userSub,
 }: RenderSidebarArgs) {
-  if (workspace?.kind === "landlord") {
+  if (workspace?.kind === 'landlord') {
     const org = availability.orgs.find((o) => o.slug === workspace.slug);
     if (org) {
       const [subscription, propertyCountResp, badgeCounts] = await Promise.all([
         loadOrgSubscription(org.id),
         supabase
-          .from("properties")
-          .select("id", { count: "exact", head: true })
-          .eq("org_id", org.id),
+          .from('properties')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', org.id),
         loadSidebarBadgeCounts(supabase, { userId, orgId: org.id }),
       ]);
-      const tier = subscription?.tier ?? "free";
+      const tier = subscription?.tier ?? 'free';
       return (
         <LandlordSidebar
           orgSlug={org.slug}
@@ -153,6 +145,10 @@ async function renderSidebarFor({
           unreadMessages={badgeCounts.unreadMessages}
           unreadNotifications={badgeCounts.unreadNotifications}
           openTickets={badgeCounts.openTickets}
+          vacantListings={badgeCounts.vacantListings}
+          overdueRent={badgeCounts.overdueRent}
+          expiringCompliance={badgeCounts.expiringCompliance}
+          rtrRechecksDue={badgeCounts.rtrRechecksDue}
           userInitials={initials}
           userName={fullName}
           userSub={userSub}
@@ -161,14 +157,14 @@ async function renderSidebarFor({
     }
   }
 
-  if (workspace?.kind === "tenant") {
+  if (workspace?.kind === 'tenant') {
     const [badgeCounts, pendingApplications] = await Promise.all([
       loadSidebarBadgeCounts(supabase, { userId }),
       supabase
-        .from("room_applications")
-        .select("id", { count: "exact", head: true })
-        .eq("applicant_user_id", userId)
-        .eq("status", "pending"),
+        .from('room_applications')
+        .select('id', { count: 'exact', head: true })
+        .eq('applicant_user_id', userId)
+        .eq('status', 'pending'),
     ]);
     return (
       <TenantSidebar

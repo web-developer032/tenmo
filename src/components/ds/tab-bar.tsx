@@ -9,20 +9,20 @@ import { cn } from '@/lib/cn';
  * navigates via `?tab=` query params or any other URL the page picks.
  */
 
-export type AdminTabItem = {
+export type TabItem = {
   id: string;
   label: string;
   href: string;
   count?: number;
 };
 
-export type AdminTabBarProps = {
-  items: AdminTabItem[];
+export type TabBarProps = {
+  items: TabItem[];
   activeId: string;
   className?: string;
 };
 
-export function AdminTabBar({ items, activeId, className }: AdminTabBarProps) {
+export function TabBar({ items, activeId, className }: TabBarProps) {
   return (
     <div
       className={cn(

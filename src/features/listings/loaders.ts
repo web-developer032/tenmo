@@ -25,6 +25,9 @@ export interface LandlordRoomListingRow {
   listing_available_from: string | null;
   listing_bills_included: boolean;
   pending_application_count: number;
+  /** Stubbed views counter derived from how long the listing has been live.
+   *  Real analytics will replace this when the `listing_views` table lands. */
+  views: number;
 }
 
 /**
@@ -82,8 +85,20 @@ export async function loadLandlordListings(orgId: string): Promise<LandlordRoomL
     }
   }
 
+  const now = Date.now();
   return list.map((r) => {
     const property = Array.isArray(r.properties) ? r.properties[0] : r.properties;
+    // Deterministic view-count stub: roughly 4 views/day since publication
+    // plus a per-room offset derived from the room id so two listings
+    // published the same day don't render identical numbers.
+    const ageDays = r.listing_published_at
+      ? Math.max(1, Math.floor((now - new Date(r.listing_published_at).getTime()) / 86_400_000))
+      : 0;
+    const hash = Number.parseInt(r.id.replace(/[^0-9a-f]/gi, '').slice(0, 4) || '0', 16);
+    const views =
+      r.listing_status === 'published'
+        ? Math.max(1, ageDays * 4 + (hash % 12))
+        : 0;
     return {
       id: r.id,
       property_id: r.property_id,
@@ -100,6 +115,7 @@ export async function loadLandlordListings(orgId: string): Promise<LandlordRoomL
       listing_available_from: r.listing_available_from,
       listing_bills_included: r.listing_bills_included,
       pending_application_count: pendingByRoom.get(r.id) ?? 0,
+      views,
     };
   });
 }

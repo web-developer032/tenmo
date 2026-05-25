@@ -3,16 +3,17 @@ import type * as React from 'react';
 import { cn } from '@/lib/cn';
 
 /**
- * Admin alert / warning / info banner from the HMOeez mock's
+ * Alert / warning / info banner from the HMOeez mock's
  * `.alert-banner` / `.warn-banner` / `.info-banner` patterns.
  *
- * Single component, four tones. Server-renderable.
+ * Single component, four tones. Server-renderable. Generic enough to be
+ * used by both landlord and admin surfaces.
  */
 
-export type AdminBannerTone = 'alert' | 'warn' | 'info' | 'success';
+export type BannerTone = 'alert' | 'warn' | 'info' | 'success';
 
 const TONE: Record<
-  AdminBannerTone,
+  BannerTone,
   { wrap: string; border: string; icon: React.ReactNode; title: string }
 > = {
   alert: {
@@ -41,15 +42,15 @@ const TONE: Record<
   },
 };
 
-export type AdminBannerProps = {
-  tone: AdminBannerTone;
+export type BannerProps = {
+  tone: BannerTone;
   title: React.ReactNode;
   description?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
 };
 
-export function AdminBanner({ tone, title, description, actions, className }: AdminBannerProps) {
+export function Banner({ tone, title, description, actions, className }: BannerProps) {
   const t = TONE[tone];
   return (
     <div

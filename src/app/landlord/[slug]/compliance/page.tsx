@@ -1,38 +1,131 @@
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Plus, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { Banner } from '@/components/ds/banner';
+import { type Column, DataTable } from '@/components/ds/data-table';
 import { PageHeader } from '@/components/ds/page-header';
+import { SectionCard } from '@/components/ds/section-card';
+import { TabBar, type TabItem } from '@/components/ds/tab-bar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ComplianceItemRow } from '@/features/compliance/components/compliance-item-row';
-import { PropertyComplianceCard } from '@/features/compliance/components/property-compliance-card';
-import { ScorePill } from '@/features/compliance/components/score-pill';
-import { loadOrgComplianceOverview } from '@/features/compliance/loaders';
+import {
+  type ComplianceItemWithContext,
+  loadOrgComplianceOverview,
+} from '@/features/compliance/loaders';
+import { formatComplianceType } from '@/features/landlord-dashboard/load-landlord-dashboard';
 import { resolveOrgBySlug } from '@/features/orgs/resolve';
+import { cn } from '@/lib/cn';
 
 type Params = { slug: string };
+type Search = { tab?: string };
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Landlord compliance dashboard.
- *
- * Layout:
- *   [ Hero: org-level score + counts ]
- *   [ Most urgent items (overdue + due soon, up to 8) ]
- *   [ Per-property cards ]
- *
- * Tenants never see this page — RLS scopes data to org members.
- */
-export default async function ComplianceDashboardPage({ params }: { params: Promise<Params> }) {
+export default async function ComplianceDashboardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams?: Promise<Search>;
+}) {
   const { slug } = await params;
+  const { tab = 'all' } = (await searchParams) ?? {};
   const org = await resolveOrgBySlug(slug);
   if (!org) notFound();
 
-  const { perProperty, flatGroups, orgScore } = await loadOrgComplianceOverview(org.id);
-  const urgent = [...flatGroups.overdue, ...flatGroups.due_soon].slice(0, 8);
-  const totalItems = perProperty.reduce((n, p) => n + p.items.length, 0);
+  const { flatItems, flatGroups } = await loadOrgComplianceOverview(org.id);
+
+  const valid = flatGroups.ok.length;
+  const dueSoon = flatGroups.due_soon.length;
+  const overdue = flatGroups.overdue.length;
+  const unknown = flatGroups.unknown.length;
+
+  // Build tab list with by-kind filters that only show when there are rows.
+  const kinds = Array.from(new Set(flatItems.map((i) => i.type))).sort();
+  const tabs: TabItem[] = [
+    { id: 'all', label: 'All', count: flatItems.length, href: tabHref(slug, 'all') },
+    { id: 'expiring', label: 'Expiring', count: dueSoon, href: tabHref(slug, 'expiring') },
+    { id: 'overdue', label: 'Overdue', count: overdue, href: tabHref(slug, 'overdue') },
+    ...kinds.map((k) => ({
+      id: k,
+      label: formatComplianceType(k),
+      count: flatItems.filter((i) => i.type === k).length,
+      href: tabHref(slug, k),
+    })),
+  ];
+
+  const filtered = flatItems.filter((i) => {
+    if (tab === 'all') return true;
+    if (tab === 'expiring') return i.status === 'due_soon';
+    if (tab === 'overdue') return i.status === 'overdue';
+    return i.type === tab;
+  });
+
+  const today = new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+
+  const columns: Column<ComplianceItemWithContext>[] = [
+    {
+      id: 'cert',
+      header: 'Certificate',
+      mobile: 'primary',
+      cell: (i) => <span className="font-semibold text-ink">{formatComplianceType(i.type)}</span>,
+    },
+    {
+      id: 'property',
+      header: 'Property',
+      mobile: 'secondary',
+      cell: (i) => i.property_name ?? 'Portfolio-wide',
+    },
+    {
+      id: 'issued',
+      header: 'Issued',
+      cell: (i) => (i.issued_at ? formatMonth(i.issued_at) : '—'),
+    },
+    {
+      id: 'expires',
+      header: 'Expires',
+      cell: (i) => (i.expires_at ? formatShort(i.expires_at) : '—'),
+    },
+    {
+      id: 'days',
+      header: 'Days remaining',
+      align: 'right',
+      cell: (i) => <DaysRemaining expiresAt={i.expires_at ?? null} todayIso={todayIso} />,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      mobile: 'meta',
+      cell: (i) => <ComplianceStatusPill status={i.status} />,
+    },
+    {
+      id: 'doc',
+      header: 'Document',
+      cell: (i) =>
+        i.document_path ? (
+          <span className="text-[12px] font-semibold text-blue">View PDF</span>
+        ) : (
+          <span className="text-[12px] text-ink-light">—</span>
+        ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      align: 'right',
+      cell: (i) => (
+        <Link
+          href={`/landlord/${slug}/compliance/${i.id}`}
+          className={cn(
+            'text-[12.5px] font-semibold hover:underline',
+            i.status === 'due_soon' || i.status === 'overdue' ? 'text-amber' : 'text-forest-600',
+          )}
+        >
+          {i.status === 'due_soon' || i.status === 'overdue' ? 'Renew →' : 'Edit →'}
+        </Link>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -43,92 +136,102 @@ export default async function ComplianceDashboardPage({ params }: { params: Prom
           { label: 'Compliance' },
         ]}
         title="Compliance"
-        description="Track every certificate, licence and risk assessment for your portfolio. Tenantly reminds you before things expire — no spreadsheets, no surprises."
+        description={
+          flatItems.length === 0
+            ? 'Add a certificate to start tracking expiries and stay HMO-compliant.'
+            : `${valid} valid · ${dueSoon} expiring soon · ${overdue} expired${unknown > 0 ? ` · ${unknown} unknown` : ''}`
+        }
         actions={
           <Button asChild>
-            <Link href={`/landlord/${slug}/compliance/new`}>Add a certificate</Link>
+            <Link href={`/landlord/${slug}/compliance/new`}>
+              <Plus className="h-4 w-4" /> Upload certificate
+            </Link>
           </Button>
         }
       />
 
-      <Card className="overflow-hidden border-forest-200 bg-gradient-to-br from-forest-100/60 via-white to-white">
-        <CardHeader className="items-start">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-forest-600" />
-              Portfolio compliance score
-            </CardTitle>
-            <CardDescription>
-              Weighted across all certificates. 100% means you&apos;re fully covered.
-            </CardDescription>
-          </div>
-          <ScorePill score={orgScore} size="lg" />
-        </CardHeader>
-        <CardContent>
-          <dl className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-            <Stat label="Properties" value={perProperty.length} />
-            <Stat label="Items tracked" value={totalItems} />
-            <Stat
-              label="Overdue"
-              value={flatGroups.overdue.length}
-              tone={flatGroups.overdue.length > 0 ? 'text-alert' : ''}
-            />
-            <Stat
-              label="Due soon"
-              value={flatGroups.due_soon.length}
-              tone={flatGroups.due_soon.length > 0 ? 'text-amber' : ''}
-            />
-          </dl>
-        </CardContent>
-      </Card>
+      {overdue > 0 ? (
+        <Banner
+          tone="alert"
+          title={`${overdue} certificate${overdue === 1 ? '' : 's'} expired`}
+          description="Renew now to stay compliant with HMO licensing and Fitness for Habitation."
+          actions={
+            <Link
+              href={`/landlord/${slug}/compliance?tab=overdue`}
+              className="text-[12.5px] font-bold text-alert hover:underline"
+            >
+              Review →
+            </Link>
+          }
+        />
+      ) : null}
 
-      {urgent.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-light">
-            <AlertTriangle className="h-4 w-4 text-amber" />
-            Needs attention
-          </h2>
-          <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {urgent.map((item) => (
-              <li key={item.id}>
-                <ComplianceItemRow
-                  item={item}
-                  editHref={`/landlord/${slug}/compliance/${item.id}`}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
+      {flatItems.length === 0 ? (
+        <EmptyState
+          icon={<ShieldCheck className="h-6 w-6" />}
+          title="No certificates tracked yet"
+          description="Add your gas safety cert, EICR or HMO licence to start tracking expiries."
+          cta={{ label: 'Add a certificate', href: `/landlord/${slug}/compliance/new` }}
+        />
+      ) : (
+        <>
+          <TabBar items={tabs} activeId={tab} />
+          <SectionCard padded={false}>
+            <DataTable
+              columns={columns}
+              rows={filtered}
+              rowKey={(i) => i.id}
+              rowHref={(i) => `/landlord/${slug}/compliance/${i.id}`}
+              emptyState={
+                <p className="text-[13px] text-ink-light">No certificates match this filter.</p>
+              }
+              className="border-0 lg:rounded-none lg:border-0"
+            />
+          </SectionCard>
+        </>
       )}
-
-      <section className="space-y-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">Properties</h2>
-        {perProperty.length === 0 ? (
-          <EmptyState
-            icon={<ShieldCheck className="h-6 w-6" />}
-            title="No properties to track yet"
-            description="Add a property to start tracking its compliance certificates."
-            cta={{ label: 'Add a property', href: `/landlord/${slug}/properties/new` }}
-          />
-        ) : (
-          <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {perProperty.map((summary) => (
-              <li key={summary.property.id}>
-                <PropertyComplianceCard slug={slug} summary={summary} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
-  return (
-    <div>
-      <dt className="text-[11px] uppercase tracking-wide text-ink-light">{label}</dt>
-      <dd className={`font-sans text-xl font-bold text-ink ${tone ?? ''}`}>{value}</dd>
-    </div>
+function DaysRemaining({ expiresAt, todayIso }: { expiresAt: string | null; todayIso: string }) {
+  if (!expiresAt) return <span className="text-ink-light">—</span>;
+  const days = Math.round(
+    (new Date(`${expiresAt}T00:00:00Z`).getTime() - new Date(`${todayIso}T00:00:00Z`).getTime()) /
+      86_400_000,
   );
+  const tone = days < 0 ? 'text-alert' : days < 60 ? 'text-amber' : 'text-forest-600';
+  return (
+    <span className={cn('font-semibold', tone)}>
+      {days < 0 ? `${Math.abs(days)}d overdue` : `${days}d`}
+    </span>
+  );
+}
+
+function ComplianceStatusPill({ status }: { status: string }) {
+  const base = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold';
+  switch (status) {
+    case 'ok':
+      return <span className={cn(base, 'bg-foam text-forest-700')}>Valid</span>;
+    case 'due_soon':
+      return <span className={cn(base, 'bg-amber-bg text-amber')}>Expiring</span>;
+    case 'overdue':
+      return <span className={cn(base, 'bg-alert-bg text-alert')}>Overdue</span>;
+    default:
+      return <span className={cn(base, 'bg-sand text-ink-mid')}>Unknown</span>;
+  }
+}
+
+function formatMonth(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { month: 'short', year: 'numeric' });
+}
+
+function formatShort(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function tabHref(slug: string, tab: string): string {
+  return tab === 'all'
+    ? `/landlord/${slug}/compliance`
+    : `/landlord/${slug}/compliance?tab=${encodeURIComponent(tab)}`;
 }

@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { formatMoneyShort, formatMoneyWhole } from '@/core/utils/money';
-import { AdminBarChart } from '@/features/admin/components/ds/admin-bar-chart';
+import { AdminBarChart } from '@/features/admin/components/ds';
 import { AdminPlatformHealth } from '@/features/admin/components/ds/admin-platform-health';
 import { loadAdminDashboardStats } from '@/features/admin/loaders';
 import type { OpenTicketRow, RecentSignupRow } from '@/features/admin/server/dashboard-stats';

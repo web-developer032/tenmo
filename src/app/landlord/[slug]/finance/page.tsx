@@ -1,34 +1,96 @@
-import { AlertCircle, ArrowRight, Wallet } from 'lucide-react';
+import { CalendarRange, Download, Plus, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
+import { AvRow } from '@/components/ds/av-row';
+import { type Column, DataTable } from '@/components/ds/data-table';
+import { KpiCard } from '@/components/ds/kpi-card';
 import { PageHeader } from '@/components/ds/page-header';
 import { ResponsiveGrid } from '@/components/ds/responsive-grid';
+import { SectionCard } from '@/components/ds/section-card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatMoney } from '@/core/utils/money';
+import { formatMoneyShort, formatMoneyWhole } from '@/core/utils/money';
 import { resolveOrgBySlug } from '@/features/orgs/resolve';
-import { ChargeRow } from '@/features/rent/components/charge-row';
-import { loadOrgRentDashboard } from '@/features/rent/loaders';
+import { loadRentMonth, type RentMonthRow } from '@/features/rent/load-rent-month';
+import { cn } from '@/lib/cn';
+import { createClient } from '@/lib/supabase/server';
 
 type Params = { slug: string };
+type Search = { month?: string };
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Landlord rent dashboard.
- *
- * Top: month-at-a-glance (collected vs due, total arrears).
- * Middle: arrears-first list of active tenancies — click into each
- *   for the full ledger and to record manual payments.
- * Bottom: most recent charges feed.
- */
-export default async function FinanceDashboardPage({ params }: { params: Promise<Params> }) {
+export default async function LandlordRentPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams?: Promise<Search>;
+}) {
   const { slug } = await params;
+  const { month } = (await searchParams) ?? {};
   const org = await resolveOrgBySlug(slug);
   if (!org) notFound();
 
-  const data = await loadOrgRentDashboard(org.id);
+  const supabase = await createClient();
+  const data = await loadRentMonth(
+    supabase,
+    org.id,
+    `${month ?? new Date().toISOString().slice(0, 7)}-01`,
+  );
+
+  const columns: Column<RentMonthRow>[] = [
+    {
+      id: 'tenant',
+      header: 'Tenant',
+      mobile: 'primary',
+      cell: (r) => <AvRow name={r.tenantName} size="sm" />,
+    },
+    {
+      id: 'where',
+      header: 'Property / Room',
+      mobile: 'secondary',
+      cell: (r) => (
+        <span className="text-ink">
+          {r.propertyName ?? '—'}
+          {r.roomName ? ` · ${r.roomName}` : ''}
+        </span>
+      ),
+    },
+    {
+      id: 'amount',
+      header: 'Amount',
+      align: 'right',
+      cell: (r) => <span className="font-semibold">{formatMoneyWhole(r.amountPence)}</span>,
+    },
+    {
+      id: 'due',
+      header: 'Due',
+      cell: (r) => formatShort(r.dueDate),
+    },
+    {
+      id: 'received',
+      header: 'Received',
+      cell: (r) => (r.receivedOn ? formatShort(r.receivedOn) : '—'),
+    },
+    {
+      id: 'method',
+      header: 'Method',
+      cell: (r) => formatMethod(r.method),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      mobile: 'meta',
+      cell: (r) => <RentStatusPill row={r} />,
+    },
+    {
+      id: 'actions',
+      header: '',
+      align: 'right',
+      cell: (r) => <RentRowActions row={r} slug={slug} />,
+    },
+  ];
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -41,122 +103,201 @@ export default async function FinanceDashboardPage({ params }: { params: Promise
         title="Rent"
         description={
           <>
-            Rent across your portfolio. Tenants are <strong>never</strong> charged a platform fee.
+            {data.monthLabel} · <strong>{formatMoneyWhole(data.kpis.collectedPence)}</strong>{' '}
+            collected
+            {data.kpis.outstandingPence > 0 ? (
+              <>
+                {' · '}
+                <span className="text-alert">
+                  {formatMoneyWhole(data.kpis.outstandingPence)} outstanding
+                </span>
+              </>
+            ) : null}
           </>
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <MonthPicker
+              slug={slug}
+              months={data.availableMonths}
+              active={data.monthIso.slice(0, 7)}
+            />
+            <Button asChild variant="outline">
+              <Link href={`/landlord/${slug}/tenancies`}>
+                <Plus className="h-4 w-4" /> Record payment
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link
+                href={`/api/landlord/${slug}/rent/export?month=${data.monthIso.slice(0, 7)}`}
+                prefetch={false}
+              >
+                <Download className="h-4 w-4" /> Export CSV
+              </Link>
+            </Button>
+          </div>
         }
       />
 
-      <ResponsiveGrid preset="kpi" className="lg:grid-cols-3">
-        <SummaryCard
-          label="Collected this month"
-          value={formatMoney(data.totalCollectedThisMonthPence)}
-          tone="text-forest-700"
+      <ResponsiveGrid preset="kpi">
+        <KpiCard
+          label="Collected"
+          value={formatMoneyShort(data.kpis.collectedPence)}
+          icon={<Wallet />}
+          accent="forest"
+          delta={{ value: `${data.kpis.collectionPct}%`, tone: 'up' }}
         />
-        <SummaryCard
-          label="Due this month"
-          value={formatMoney(data.totalDueThisMonthPence)}
-          tone="text-ink"
+        <KpiCard
+          label="Overdue"
+          value={formatMoneyShort(data.kpis.outstandingPence)}
+          icon={<Wallet />}
+          accent={data.kpis.outstandingPence > 0 ? 'red' : 'forest'}
+          delta={
+            data.kpis.overdueTenantsCount > 0
+              ? {
+                  value: `${data.kpis.overdueTenantsCount} tenant${data.kpis.overdueTenantsCount === 1 ? '' : 's'}`,
+                  tone: 'down',
+                }
+              : undefined
+          }
         />
-        <SummaryCard
-          label="Total arrears"
-          value={formatMoney(data.totalArrearsPence)}
-          tone={data.totalArrearsPence > 0 ? 'text-alert' : 'text-ink-light'}
+        <KpiCard
+          label="Due this week"
+          value={formatMoneyShort(data.kpis.dueThisWeekPence)}
+          icon={<CalendarRange />}
+          accent="amber"
+          delta={
+            data.kpis.dueThisWeekTenantsCount > 0
+              ? {
+                  value: `${data.kpis.dueThisWeekTenantsCount} tenant${data.kpis.dueThisWeekTenantsCount === 1 ? '' : 's'}`,
+                  tone: 'warn',
+                }
+              : undefined
+          }
+        />
+        <KpiCard
+          label="Monthly total due"
+          value={formatMoneyShort(data.kpis.monthlyTotalDuePence)}
+          icon={<Wallet />}
+          accent="blue"
         />
       </ResponsiveGrid>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Wallet className="h-4 w-4" />
-            Active tenancies
-          </CardTitle>
-          <CardDescription>
-            Sorted by arrears. Click in to view the full rent ledger or record a manual payment.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {data.tenancies.length === 0 ? (
-            <EmptyState
-              icon={<Wallet className="h-6 w-6" />}
-              title="No active tenancies yet"
-              description="Once you invite a tenant and they accept, their rent ledger will appear here."
-              cta={{ label: 'Add a tenancy', href: `/landlord/${slug}/tenancies` }}
-            />
-          ) : (
-            <ul className="divide-y divide-border">
-              {data.tenancies.map((t) => (
-                <li key={t.tenancyId}>
-                  <Link
-                    href={`/landlord/${slug}/tenancies/${t.tenancyId}/rent`}
-                    className="-mx-2 flex items-center justify-between gap-3 rounded-button px-2 py-3 text-[13px] transition-colors hover:bg-foam/60"
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate font-semibold text-ink">
-                        {t.propertyName}
-                        {t.roomName ? (
-                          <span className="text-ink-light"> — {t.roomName}</span>
-                        ) : null}
-                      </div>
-                      <div className="truncate text-[12px] text-ink-light">
-                        {t.tenantName ?? t.tenantEmail ?? 'Tenant'} · {formatMoney(t.rentPence)}{' '}
-                        {t.rentFrequency === 'weekly' ? '/wk' : '/mo'}
-                        {t.nextDueDate ? <span> · next due {t.nextDueDate}</span> : null}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {t.arrearsPence > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-alert">
-                          <AlertCircle className="h-3.5 w-3.5" />
-                          {formatMoney(t.arrearsPence)}
-                        </span>
-                      ) : (
-                        <span className="text-[11.5px] font-semibold uppercase tracking-wide text-forest-700">
-                          Up to date
-                        </span>
-                      )}
-                      <ArrowRight className="h-4 w-4 text-ink-light" />
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {data.recentCharges.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
-            Recent charges
-          </h2>
-          <ul className="space-y-2">
-            {data.recentCharges.slice(0, 8).map((charge) => (
-              <li key={charge.id}>
-                <ChargeRow charge={charge} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <div>
-        <Button variant="ghost" asChild>
-          <Link href={`/landlord/${slug}/tenancies`}>Browse tenancies →</Link>
-        </Button>
-      </div>
+      {data.rows.length === 0 ? (
+        <EmptyState
+          icon={<Wallet className="h-6 w-6" />}
+          title={`No charges in ${data.monthLabel}`}
+          description="Add a tenancy or wait for the monthly rent run — charges will appear here automatically."
+          cta={{ label: 'Browse tenancies', href: `/landlord/${slug}/tenancies` }}
+        />
+      ) : (
+        <SectionCard padded={false}>
+          <DataTable
+            columns={columns}
+            rows={data.rows}
+            rowKey={(r) => r.id}
+            emptyState={<p className="text-[13px] text-ink-light">No charges this month.</p>}
+            className="border-0 lg:rounded-none lg:border-0"
+          />
+        </SectionCard>
+      )}
     </div>
   );
 }
 
-function SummaryCard({ label, value, tone }: { label: string; value: string; tone?: string }) {
+function MonthPicker({ slug, months, active }: { slug: string; months: string[]; active: string }) {
+  const list = months.length > 0 ? months : [active];
   return (
-    <Card>
-      <CardContent className="space-y-1">
-        <div className="text-[11px] font-medium uppercase tracking-wide text-ink-light">
-          {label}
-        </div>
-        <div className={`font-sans text-[26px] font-extrabold ${tone ?? 'text-ink'}`}>{value}</div>
-      </CardContent>
-    </Card>
+    <form action={`/landlord/${slug}/finance`} method="get" className="flex items-center gap-2">
+      <label className="sr-only" htmlFor="month-select">
+        Month
+      </label>
+      <select
+        id="month-select"
+        name="month"
+        defaultValue={active}
+        className="h-9 rounded-button border border-border-soft bg-white px-3 text-[12.5px] font-semibold text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-forest-500"
+      >
+        {list.map((m) => (
+          <option key={m} value={m}>
+            {new Date(`${m}-01`).toLocaleString('en-GB', { month: 'long', year: 'numeric' })}
+          </option>
+        ))}
+      </select>
+      <Button type="submit" variant="ghost" size="sm">
+        Go
+      </Button>
+    </form>
   );
+}
+
+function RentRowActions({ row, slug }: { row: RentMonthRow; slug: string }) {
+  if (row.status === 'paid') {
+    return (
+      <Link
+        href={`/landlord/${slug}/tenancies/${row.tenancyId}/rent`}
+        className="text-[12.5px] font-semibold text-forest-600 hover:underline"
+      >
+        View →
+      </Link>
+    );
+  }
+  return (
+    <div className="flex items-center justify-end gap-3">
+      <Link
+        href={`/landlord/${slug}/tenancies/${row.tenancyId}/rent`}
+        className="text-[12.5px] font-semibold text-forest-600 hover:underline"
+      >
+        Record →
+      </Link>
+      {row.status === 'overdue' ? (
+        <Link
+          href={`/messages?ticket=${row.tenancyId}`}
+          className="text-[12.5px] font-semibold text-alert hover:underline"
+        >
+          Chase →
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
+function RentStatusPill({ row }: { row: RentMonthRow }) {
+  const base = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold';
+  switch (row.status) {
+    case 'paid':
+      return <span className={cn(base, 'bg-foam text-forest-700')}>Paid</span>;
+    case 'overdue':
+      return (
+        <span className={cn(base, 'bg-alert-bg text-alert')}>
+          {Math.abs(row.daysFromDue)}d overdue
+        </span>
+      );
+    case 'due':
+      return (
+        <span className={cn(base, 'bg-amber-bg text-amber')}>
+          {row.daysFromDue <= 0 ? 'Due today' : `Due in ${row.daysFromDue}d`}
+        </span>
+      );
+    case 'partial':
+      return <span className={cn(base, 'bg-blue-bg text-blue')}>Partial</span>;
+    default:
+      return <span className={cn(base, 'bg-sand text-ink-mid')}>{row.status}</span>;
+  }
+}
+
+function formatShort(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function formatMethod(m: string | null): string {
+  if (!m) return '—';
+  const labels: Record<string, string> = {
+    manual_bank_transfer: 'Bank transfer',
+    manual_cash: 'Cash',
+    manual_card: 'Card',
+    gocardless: 'GoCardless',
+    stripe: 'Stripe',
+  };
+  return labels[m] ?? m.replace(/_/g, ' ');
 }

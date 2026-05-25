@@ -7,46 +7,37 @@ import { cn } from '@/lib/cn';
  * short label below. The current period is highlighted with the strong
  * forest accent; historical bars use the soft mint.
  *
- * No external charting dependency — this keeps the bundle lean and lets
- * the component server-render.
+ * No external charting dependency — keeps the bundle lean and lets the
+ * component server-render.
  */
 
-export type AdminBarChartDatum = {
+export type BarChartDatum = {
   label: string;
   value: number;
-  /** Pre-formatted display value shown above the bar (e.g. "£28k"). */
   displayValue?: string;
-  /** Mark this bar as the current/latest period — gets the strong fill. */
   highlight?: boolean;
 };
 
-export type AdminBarChartProps = {
-  data: AdminBarChartDatum[];
-  /** Total bar-stack height in pixels (mock uses 120/140). */
+export type BarChartProps = {
+  data: BarChartDatum[];
   height?: number;
-  /** Switch the historical bar fill — defaults to forest mint. */
   variant?: 'forest' | 'foam' | 'purple';
   className?: string;
 };
 
-const VARIANT_HISTORY: Record<NonNullable<AdminBarChartProps['variant']>, string> = {
+const VARIANT_HISTORY: Record<NonNullable<BarChartProps['variant']>, string> = {
   forest: 'bg-forest-200',
   foam: 'bg-forest-100',
   purple: 'bg-purple-bg',
 };
 
-const VARIANT_LATEST: Record<NonNullable<AdminBarChartProps['variant']>, string> = {
+const VARIANT_LATEST: Record<NonNullable<BarChartProps['variant']>, string> = {
   forest: 'bg-forest-600',
   foam: 'bg-forest-500',
   purple: 'bg-purple',
 };
 
-export function AdminBarChart({
-  data,
-  height = 120,
-  variant = 'forest',
-  className,
-}: AdminBarChartProps) {
+export function BarChart({ data, height = 120, variant = 'forest', className }: BarChartProps) {
   if (data.length === 0) {
     return (
       <div

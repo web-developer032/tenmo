@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/ds/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AdminBanner } from '@/features/admin/components/ds/admin-banner';
+import { AdminBanner } from '@/features/admin/components/ds';
 import { PlatformSettingsForm } from '@/features/admin/components/platform-settings-form';
 import { getAdminSelf, getPlatformSettingsWithClient, hasAdminRole } from '@/features/admin/server';
 import { getServerEnv } from '@/lib/env.server';

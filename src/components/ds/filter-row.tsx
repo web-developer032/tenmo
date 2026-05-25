@@ -2,14 +2,14 @@ import type * as React from 'react';
 import { cn } from '@/lib/cn';
 
 /**
- * Flex row for filter controls (search + selects) above an admin table.
+ * Flex row for filter controls (search + selects) above a table.
  *
  * Pure layout wrapper — children remain server-renderable form controls.
  * Mobile: stacks; desktop: row.
  */
-export type AdminFilterRowProps = React.ComponentProps<'div'>;
+export type FilterRowProps = React.ComponentProps<'div'>;
 
-export function AdminFilterRow({ className, children, ...rest }: AdminFilterRowProps) {
+export function FilterRow({ className, children, ...rest }: FilterRowProps) {
   return (
     <div
       className={cn(

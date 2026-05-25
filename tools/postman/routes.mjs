@@ -163,6 +163,77 @@ export const routes = [
     skipInSmoke: true, notes: 'Multi-step side effect; left for manual Postman drive.' },
 
   // ============================================================
+  // Landlord — Financials (expenses, MTD, CSV exports)
+  // ============================================================
+  { group: 'landlord-financials', persona: 'sara', method: 'GET', path: '/api/landlord/{{saraOrgSlug}}/expenses', expect: [200],
+    summary: "List the org's expenses ledger" },
+  { group: 'landlord-financials', persona: 'sara', method: 'POST', path: '/api/landlord/{{saraOrgSlug}}/expenses', expect: [201],
+    body: {
+      property_id: '{{saraPropertyId}}',
+      occurred_on: '2026-05-15',
+      description: 'Smoke test — bathroom sealant repair',
+      category: 'repairs',
+      amount_pence: 4500,
+      mtd_eligible: true,
+    },
+    summary: 'Add an expense to the ledger' },
+  { group: 'landlord-financials', persona: 'sara', method: 'GET', path: '/api/landlord/{{saraOrgSlug}}/mtd-submissions', expect: [200],
+    summary: 'List quarterly MTD submissions' },
+  { group: 'landlord-financials', persona: 'sara', method: 'POST', path: '/api/landlord/{{saraOrgSlug}}/mtd-submissions', expect: [201],
+    body: { quarter: '2025Q1', submission_method: 'csv_export', notes: 'Smoke test MTD draft.' },
+    summary: 'Record / regenerate a quarterly MTD figure',
+    notes: 'POST is upsert keyed on (org_id, quarter), so reruns return 201 with the same row.' },
+  { group: 'landlord-financials', persona: 'sara', method: 'GET', path: '/api/landlord/{{saraOrgSlug}}/financials/export', expect: [200],
+    summary: 'Export full-year income + expenses as CSV' },
+  { group: 'landlord-financials', persona: 'sara', method: 'GET', path: '/api/landlord/{{saraOrgSlug}}/rent/export?month=2026-05', expect: [200],
+    summary: "Export the selected month's rent ledger as CSV" },
+
+  // ============================================================
+  // Landlord — Deposits + Right-to-Rent (tenancy-scoped patches)
+  // ============================================================
+  { group: 'landlord-deposits', persona: 'sara', method: 'POST', path: '/api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/deposit', expect: [200],
+    body: { deposit_pence: 95000, deposit_scheme: 'dps', deposit_reference: 'DPS-SMOKE-1' },
+    summary: 'Record / update a tenancy deposit' },
+  { group: 'landlord-rtr', persona: 'sara', method: 'POST', path: '/api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/rtr-check', expect: [200],
+    body: { document_type: 'british_passport', share_code: null, expires_at: null },
+    summary: 'Log / re-record a Right-to-Rent check' },
+
+  // ============================================================
+  // Landlord — Inspections + Contractors directory
+  // ============================================================
+  { group: 'landlord-inspections', persona: 'sara', method: 'POST', path: '/api/landlord/{{saraOrgSlug}}/inspections', expect: [201],
+    body: {
+      property_id: '{{saraPropertyId}}',
+      type: 'routine_quarterly',
+      scheduled_for: '2030-09-15',
+      inspector_name: 'Smoke Inspector',
+      notes: 'Smoke test inspection — please ignore.',
+    },
+    summary: 'Schedule a new inspection' },
+  { group: 'landlord-contractors', persona: 'sara', method: 'GET', path: '/api/landlord/{{saraOrgSlug}}/contractors', expect: [200],
+    summary: 'List active contractors for the org' },
+  { group: 'landlord-contractors', persona: 'sara', method: 'POST', path: '/api/landlord/{{saraOrgSlug}}/contractors', expect: [201],
+    body: {
+      name: 'Smoke Test Contractor',
+      contact_name: 'Smoke Person',
+      phone: '+44 7700 900000',
+      email: 'smoke@example.com',
+      trades: ['general'],
+      coverage_areas: ['Birmingham'],
+      day_rate_pence: 20000,
+      rating: 4,
+      notes: 'Created by smoke runner — please ignore.',
+    },
+    summary: 'Add a contractor to the directory' },
+
+  // ============================================================
+  // Landlord — Profile (org business details)
+  // ============================================================
+  { group: 'landlord-profile', persona: 'sara', method: 'PATCH', path: '/api/landlord/{{saraOrgSlug}}/org', expect: [200],
+    body: { contact_phone: '+44 7700 900100' },
+    summary: 'Update business-level org fields (owner only)' },
+
+  // ============================================================
   // Tenant — applications
   // ============================================================
   { group: 'tenant-applications', persona: 'jordan', method: 'GET', path: '/api/tenant/applications', expect: [200],

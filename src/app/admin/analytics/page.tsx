@@ -6,7 +6,7 @@ import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { formatMoneyShort, formatMoneyWhole } from '@/core/utils/money';
-import { AdminBarChart } from '@/features/admin/components/ds/admin-bar-chart';
+import { AdminBarChart } from '@/features/admin/components/ds';
 import { AdminFeatureBar } from '@/features/admin/components/ds/admin-feature-bar';
 import { loadAdminAnalytics } from '@/features/admin/loaders';
 

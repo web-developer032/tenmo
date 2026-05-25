@@ -79,6 +79,10 @@ export default async function LandlordLayout({
       unreadMessages={badgeCounts.unreadMessages}
       unreadNotifications={badgeCounts.unreadNotifications}
       openTickets={badgeCounts.openTickets}
+      vacantListings={badgeCounts.vacantListings}
+      overdueRent={badgeCounts.overdueRent}
+      expiringCompliance={badgeCounts.expiringCompliance}
+      rtrRechecksDue={badgeCounts.rtrRechecksDue}
       userInitials={initials}
       userName={fullName}
     />

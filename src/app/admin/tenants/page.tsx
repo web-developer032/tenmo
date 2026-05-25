@@ -10,7 +10,7 @@ import { AdminListQuery } from '@/core/schemas/admin';
 import { formatMoney } from '@/core/utils/money';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
-import { AdminFilterRow } from '@/features/admin/components/ds/admin-filter-row';
+import { AdminFilterRow } from '@/features/admin/components/ds';
 import { FilterSelect } from '@/features/admin/components/filter-select';
 import { loadAdminTenants } from '@/features/admin/loaders';
 

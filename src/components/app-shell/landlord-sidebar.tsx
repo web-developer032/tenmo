@@ -12,10 +12,10 @@ import {
   LayoutDashboard,
   MessageSquare,
   PiggyBank,
-  Receipt,
   ScrollText,
   Settings,
   ShieldCheck,
+  UserCircle,
   Users,
   Wallet,
   Wrench,
@@ -32,12 +32,13 @@ import {
 /*
  * Landlord sidebar.
  *
- * IA mirrors the mock's landlord nav:
- *   Landlord  — Dashboard, Properties, Listings, Tenancies, Rent, Compliance,
- *                Documents, Maintenance, Billing, Settings
- *   Operations — Financials, Deposits, Right to Rent, Inspections, Contractors
- *                (these are stub screens until their feature phases ship)
- *   Shared    — Messages, Notifications
+ * IA (per HMOeez design + plan decisions):
+ *   Landlord    — Dashboard, Properties, Listings, Tenants, Rent,
+ *                 Maintenance, Compliance, Documents
+ *   Operations  — Financials & MTD, Deposits, Right to Rent,
+ *                 Inspections, Contractors
+ *   Shared      — Messages, Notifications
+ *   Account     — My Profile, Billing, Settings
  *
  * The component is fully presentational. Counts/badges are passed in by
  * the layout (server) which has access to live unread totals.
@@ -51,6 +52,10 @@ export type LandlordSidebarProps = {
   unreadMessages?: number;
   unreadNotifications?: number;
   openTickets?: number;
+  vacantListings?: number;
+  overdueRent?: number;
+  expiringCompliance?: number;
+  rtrRechecksDue?: number;
   userInitials?: string;
   userName?: string;
   userSub?: string;
@@ -64,6 +69,10 @@ export function LandlordSidebar({
   unreadMessages = 0,
   unreadNotifications = 0,
   openTickets = 0,
+  vacantListings = 0,
+  overdueRent = 0,
+  expiringCompliance = 0,
+  rtrRechecksDue = 0,
   userInitials = 'U',
   userName,
   userSub,
@@ -99,18 +108,32 @@ export function LandlordSidebar({
           match={dashboardMatch}
         />
         <SidebarNavItem href={`${base}/properties`} label="Properties" icon={Building2} />
-        <SidebarNavItem href={`${base}/listings`} label="Listings" icon={DoorOpen} />
-        <SidebarNavItem href={`${base}/tenancies`} label="Tenancies" icon={Users} />
-        <SidebarNavItem href={`${base}/finance`} label="Rent" icon={Wallet} />
+        <SidebarNavItem
+          href={`${base}/listings`}
+          label="Listings"
+          icon={DoorOpen}
+          badge={vacantListings > 0 ? { count: vacantListings, tone: 'green' } : undefined}
+        />
+        <SidebarNavItem href={`${base}/tenancies`} label="Tenants" icon={Users} />
+        <SidebarNavItem
+          href={`${base}/finance`}
+          label="Rent"
+          icon={Wallet}
+          badge={overdueRent > 0 ? { count: overdueRent, tone: 'red' } : undefined}
+        />
         <SidebarNavItem
           href={`${base}/maintenance`}
           label="Maintenance"
           icon={Wrench}
           badge={openTickets > 0 ? { count: openTickets, tone: 'amber' } : undefined}
         />
-        <SidebarNavItem href={`${base}/compliance`} label="Compliance" icon={ShieldCheck} />
-        <SidebarNavItem href={`${base}/billing`} label="Billing" icon={CreditCard} />
-        <SidebarNavItem href={`${base}/settings`} label="Settings" icon={Settings} />
+        <SidebarNavItem
+          href={`${base}/compliance`}
+          label="Compliance"
+          icon={ShieldCheck}
+          badge={expiringCompliance > 0 ? { count: expiringCompliance, tone: 'amber' } : undefined}
+        />
+        <SidebarNavItem href={`${base}/documents`} label="Documents" icon={FileText} />
       </SidebarSection>
 
       <SidebarSection label="Operations">
@@ -120,7 +143,12 @@ export function LandlordSidebar({
           icon={BadgePoundSterling}
         />
         <SidebarNavItem href={`${base}/deposits`} label="Deposits" icon={PiggyBank} />
-        <SidebarNavItem href={`${base}/right-to-rent`} label="Right to Rent" icon={ScrollText} />
+        <SidebarNavItem
+          href={`${base}/right-to-rent`}
+          label="Right to Rent"
+          icon={ScrollText}
+          badge={rtrRechecksDue > 0 ? { count: rtrRechecksDue, tone: 'amber' } : undefined}
+        />
         <SidebarNavItem href={`${base}/inspections`} label="Inspections" icon={ClipboardList} />
         <SidebarNavItem href={`${base}/contractors`} label="Contractors" icon={HardHat} />
       </SidebarSection>
@@ -142,24 +170,10 @@ export function LandlordSidebar({
         />
       </SidebarSection>
 
-      {/*
-        Documents and Receipts live in the "Shared" group of the mock but are
-        cross-cutting; we keep them here so they're never more than two
-        clicks away from any landlord context.
-      */}
-      <SidebarSection label="Library">
-        <SidebarNavItem
-          href={`${base}/properties`}
-          label="Documents"
-          icon={FileText}
-          match={(p) => p.startsWith(`${base}/documents`)}
-        />
-        <SidebarNavItem
-          href={`${base}/finance`}
-          label="Receipts"
-          icon={Receipt}
-          match={(p) => p.startsWith(`${base}/receipts`)}
-        />
+      <SidebarSection label="Account">
+        <SidebarNavItem href={`${base}/profile`} label="My Profile" icon={UserCircle} />
+        <SidebarNavItem href={`${base}/billing`} label="Billing" icon={CreditCard} />
+        <SidebarNavItem href={`${base}/settings`} label="Settings" icon={Settings} />
       </SidebarSection>
     </SidebarShell>
   );
