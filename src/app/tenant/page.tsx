@@ -1,362 +1,286 @@
-import { BookUser, Building2, CalendarClock, Home, Inbox, Mail } from 'lucide-react';
+import { CreditCard, FileText, Inbox, Mail, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
-import { PageHeader } from '@/components/ds/page-header';
-import { Badge } from '@/components/ui/badge';
+import { Banner, SectionCard } from '@/components/ds';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { ComplianceStatus, ComplianceType } from '@/core/constants/compliance';
-import type { AstEnvelope } from '@/core/schemas/ast';
-import { RentCharge } from '@/core/schemas/rent';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatMoney } from '@/core/utils/money';
-import { AstStatusCard } from '@/features/ast/components/ast-status-card';
-import { loadActiveEnvelopeForTenancy } from '@/features/ast/loaders';
-import { TenantBillsCard } from '@/features/bills/components/tenant-bills-card';
-import { loadBillsForTenancy, type TenantBillRow } from '@/features/bills/loaders';
-import { TenantComplianceSummary } from '@/features/compliance/components/tenant-compliance-summary';
-import { TenantRentSummary } from '@/features/rent/components/tenant-rent-summary';
-import { TenantMaintenanceSummary } from '@/features/tickets/components/tenant-maintenance-summary';
-import { loadTenantTicketsBoard } from '@/features/tickets/loaders';
+import { EmergencyContacts } from '@/features/tenant-dashboard/components/emergency-contacts';
+import { MaintenanceSnapshotList } from '@/features/tenant-dashboard/components/maintenance-snapshot';
+import { NoticesList } from '@/features/tenant-dashboard/components/notices-card';
+import { RecentPaymentsTimeline } from '@/features/tenant-dashboard/components/recent-payments-timeline';
+import { ReportIssueButton } from '@/features/tenant-dashboard/components/report-issue-button';
+import { TenancyDetailList } from '@/features/tenant-dashboard/components/tenancy-detail-list';
+import { TenantRentHero } from '@/features/tenant-dashboard/components/tenant-rent-hero';
+import { loadTenantDashboard } from '@/features/tenant-dashboard/load-tenant-dashboard';
+import { loadTenantTenancyOptions } from '@/features/tickets/loaders';
 import { createClient } from '@/lib/supabase/server';
 
-const ACTIVE_STATUSES = [
-  'pending_invite',
-  'awaiting_signature',
-  'awaiting_deposit',
-  'active',
-] as const;
+export const dynamic = 'force-dynamic';
 
-function pickFirst<T>(value: unknown): T | null {
-  if (value == null) return null;
-  if (Array.isArray(value)) return (value[0] ?? null) as T | null;
-  return value as T;
-}
-
-type StatusMeta = { label: string; tone: string };
-
-const STATUS_LABEL: Record<string, StatusMeta> = {
-  pending_invite: { label: 'Awaiting your accept', tone: 'bg-amber-bg text-amber' },
-  awaiting_signature: { label: 'Sign your tenancy', tone: 'bg-amber-bg text-amber' },
-  awaiting_deposit: { label: 'Awaiting deposit', tone: 'bg-amber-bg text-amber' },
-  active: { label: 'Active', tone: 'bg-forest-100 text-forest-700' },
-};
-
-const FALLBACK_STATUS: StatusMeta = { label: 'Active', tone: 'bg-forest-100 text-forest-700' };
-
-export default async function TenantDashboardPage() {
+/**
+ * `/tenant` — tenant home dashboard.
+ *
+ * Single server component that loads everything via
+ * `loadTenantDashboard` (one parallel fan-out) and renders the design's
+ * two-column grid: rent hero across the top, then left col (Quick actions,
+ * My home, My requests) and right col (Recent payments, Notices,
+ * Emergency contacts).
+ *
+ * The "Report an issue" CTA opens a modal wrapping the same `NewTicketForm`
+ * used by `/tenant/tickets/new`, so we don't duplicate the form code.
+ */
+export default async function TenantHomePage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login?redirect=/tenant');
 
-  const { data: tenancies } = await supabase
-    .from('tenancies')
-    .select(
-      `id, status, start_date, end_date, rent_pence, rent_frequency, rent_due_day,
-       deposit_pence, deposit_scheme, deposit_protected_at, property_id,
-       properties:property_id ( name, address ),
-       rooms:room_id ( name )`,
-    )
-    .eq('tenant_user_id', user.id)
-    .in('status', ACTIVE_STATUSES as unknown as string[])
-    .order('start_date', { ascending: false });
+  const [dashboard, tenancyOptions] = await Promise.all([
+    loadTenantDashboard(supabase, { userId: user.id, userEmail: user.email ?? null }),
+    loadTenantTenancyOptions(user.id),
+  ]);
 
-  const list = tenancies ?? [];
+  const { tenancy, rentHero, recentPayments, notices, maintenance, emergencyContact } = dashboard;
 
-  // Pull compliance items for each tenancy's property. RLS lets tenants see
-  // property-scoped items where they have an active tenancy on that property
-  // (`compliance_items_select_tenant_property`), so a single query is enough.
-  const propertyIds = Array.from(
-    new Set(list.map((t) => t.property_id).filter((id): id is string => !!id)),
-  );
-  const { data: complianceRows } = propertyIds.length
-    ? await supabase
-        .from('compliance_items')
-        .select('id, property_id, type, status, expires_at')
-        .in('property_id', propertyIds)
-    : { data: [] };
-
-  const complianceByProperty = new Map<
-    string,
-    { id: string; type: ComplianceType; status: ComplianceStatus; expires_at: string | null }[]
-  >();
-  for (const row of complianceRows ?? []) {
-    if (!row.property_id) continue;
-    const bucket = complianceByProperty.get(row.property_id) ?? [];
-    bucket.push({
-      id: row.id,
-      type: row.type as ComplianceType,
-      status: row.status as ComplianceStatus,
-      expires_at: row.expires_at,
-    });
-    complianceByProperty.set(row.property_id, bucket);
-  }
-
-  // Rent charges for the tenant's tenancies — RLS already restricts visibility
-  // to their own tenancies via `rent_charges_select_tenant_self`.
-  const tenancyIds = list.map((t) => t.id);
-  const { data: chargeRows } = tenancyIds.length
-    ? await supabase
-        .from('rent_charges')
-        .select('*')
-        .in('tenancy_id', tenancyIds)
-        .order('period_start', { ascending: false })
-        .limit(50)
-    : { data: [] };
-  const chargesByTenancy = new Map<string, RentCharge[]>();
-  for (const raw of chargeRows ?? []) {
-    const c = RentCharge.parse(raw);
-    const bucket = chargesByTenancy.get(c.tenancy_id) ?? [];
-    bucket.push(c);
-    chargesByTenancy.set(c.tenancy_id, bucket);
-  }
-
-  // Pending invites for this email — RLS lets the owner of the email view them
-  // via the `tenancies_select_tenant_self` policy once they accept, but at the
-  // pending stage we need a separate match on `invite_email`. The org members
-  // already see them; tenants get to see their own via this lookup.
-  const userEmail = (user.email ?? '').toLowerCase();
-  const { data: pendingInvites } = userEmail
-    ? await supabase
-        .from('tenancies')
-        .select(
-          `id, invite_token, invite_expires_at, start_date, rent_pence, rent_frequency,
-           properties:property_id ( name, address ),
-           rooms:room_id ( name ),
-           orgs:org_id ( name )`,
-        )
-        .eq('invite_email', userEmail)
-        .eq('status', 'pending_invite')
-        .order('created_at', { ascending: false })
-    : { data: [] };
-
-  const invites = pendingInvites ?? [];
-
-  // Maintenance tickets — shown as a single summary card on the dashboard.
-  // RLS scopes results to tenancies the user owns; if they have none, the
-  // loader returns an empty array.
-  const { tickets: maintenanceTickets } = await loadTenantTicketsBoard(user.id);
-
-  // Open AST envelopes — one per tenancy. We hydrate the per-tenancy
-  // card so the tenant sees the "Sign now" CTA inline.
-  const envelopesByTenancy = new Map<string, AstEnvelope | null>();
-  // Top-3 most recent shared bills per tenancy — surfaced inline so
-  // the tenant doesn't need to click through to /tenant/bills for
-  // their headline number.
-  const billsByTenancy = new Map<string, TenantBillRow[]>();
-  await Promise.all(
-    list.map(async (t) => {
-      try {
-        envelopesByTenancy.set(t.id, await loadActiveEnvelopeForTenancy(t.id));
-      } catch {
-        envelopesByTenancy.set(t.id, null);
-      }
-      try {
-        const all = await loadBillsForTenancy(t.id);
-        billsByTenancy.set(t.id, all.slice(0, 3));
-      } catch {
-        billsByTenancy.set(t.id, []);
-      }
-    }),
-  );
-
-  return (
-    <div className="mx-auto w-full max-w-5xl space-y-5 lg:space-y-6">
-      <PageHeader
-        title="Your home"
-        description={
-          <>
-            Tenantly is <span className="font-semibold text-ink">free for you, forever</span>. Track
-            your rent, deposit and maintenance — all in one place.
-          </>
-        }
-      />
-
-      <Card className="overflow-hidden border-forest-200 bg-gradient-to-br from-forest-100/60 via-white to-white">
-        <CardHeader className="items-start">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              <BookUser className="h-4 w-4 text-forest-600" />
-              Your Rental Passport
-            </CardTitle>
-            <CardDescription>
-              A portable record of your tenancy history, payment record and verified identity. Yours
-              to take with you.
-            </CardDescription>
-          </div>
-          <Button asChild variant="secondary" size="sm">
-            <Link href="/tenant/passport">Open passport</Link>
-          </Button>
-        </CardHeader>
-      </Card>
-
-      {invites.length > 0 ? (
-        <Card className="border-amber-bg bg-amber-bg/40">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Inbox className="h-4 w-4 text-amber" />
-              {invites.length === 1
-                ? 'You have an invite waiting'
-                : `${invites.length} invites waiting`}
-            </CardTitle>
-            <CardDescription>
-              Review and accept your tenancy. Tenantly is free for tenants — forever.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {invites.map((iv) => {
-              const property = pickFirst<{
-                name: string;
-                address: { line1?: string; city?: string } | null;
-              }>(iv.properties);
-              const room = pickFirst<{ name: string }>(iv.rooms);
-              const org = pickFirst<{ name: string }>(iv.orgs);
-              return (
-                <div
-                  key={iv.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-button border border-border-soft bg-white p-3"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate font-semibold text-ink">
-                      {property?.name ?? 'Property'}
-                      {room?.name ? <span className="text-ink-light"> — {room.name}</span> : null}
-                    </div>
-                    <div className="text-[12px] text-ink-light">
-                      {org?.name ?? 'Landlord'} · move-in {iv.start_date} ·{' '}
-                      {formatMoney(iv.rent_pence)} {iv.rent_frequency === 'weekly' ? 'pw' : 'pcm'}
-                    </div>
-                  </div>
-                  {iv.invite_token ? (
-                    <Button asChild size="sm">
-                      <Link href={`/invite/${iv.invite_token}`}>Review &amp; accept</Link>
-                    </Button>
-                  ) : null}
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {list.length === 0 && invites.length === 0 ? (
+  // No active tenancy and no pending invites — empty-state home.
+  if (!tenancy && dashboard.inviteCount === 0) {
+    return (
+      <div className="mx-auto w-full max-w-5xl space-y-6">
+        <header>
+          <h1 className="font-sans text-[22px] font-bold tracking-tight text-ink">
+            Hi {dashboard.firstName}, welcome to Tenantly
+          </h1>
+          <p className="mt-1 text-[13px] text-ink-light">
+            Tenantly is <span className="font-semibold text-ink">free for tenants, forever</span>.
+            Once your landlord invites you (or you accept a room on Listings), your home will appear
+            here.
+          </p>
+        </header>
         <EmptyState
           icon={<Mail className="h-6 w-6" />}
           title="No active tenancies yet"
-          description="Browse rooms on the public listings page or ask your landlord to send you an invite — once they do, your home will appear here. Track every room you've applied for in your applications page."
+          description="Browse rooms or ask your landlord to send you an invite — once they do, your tenancy will appear here."
           cta={{ label: 'Browse listings', href: '/listings' }}
         />
-      ) : list.length === 0 ? null : (
-        <ul className="grid grid-cols-1 gap-4">
-          {list.map((t) => {
-            const property = pickFirst<{
-              name: string;
-              address: { line1: string; city: string; postcode: string };
-            }>(t.properties);
-            const room = pickFirst<{ name: string }>(t.rooms);
-            const status = STATUS_LABEL[t.status] ?? FALLBACK_STATUS;
+      </div>
+    );
+  }
 
-            return (
-              <li key={t.id}>
-                <Card>
-                  <CardHeader className="flex-col items-stretch gap-1 sm:flex-row sm:items-center">
-                    <CardTitle className="flex flex-wrap items-center gap-2">
-                      <Home className="h-4 w-4 text-forest-600" />
-                      {property?.name ?? 'Your home'}
-                      {room?.name ? <span className="text-ink-light">— {room.name}</span> : null}
-                      <Badge className={status.tone}>{status.label}</Badge>
-                    </CardTitle>
-                    {property?.address ? (
-                      <CardDescription>
-                        {property.address.line1} · {property.address.city} ·{' '}
-                        {property.address.postcode}
-                      </CardDescription>
-                    ) : null}
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <div className="rounded-card border border-border-soft bg-white p-3">
-                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
-                          Rent
-                        </div>
-                        <div className="mt-1 font-sans text-[18px] font-extrabold text-ink">
-                          {formatMoney(t.rent_pence)}
-                          <span className="ml-1 text-[11px] font-medium text-ink-light">
-                            {t.rent_frequency === 'weekly' ? 'pw' : 'pcm'}
-                          </span>
-                        </div>
-                        <div className="text-[11.5px] text-ink-light">Due day {t.rent_due_day}</div>
-                      </div>
-                      <div className="rounded-card border border-border-soft bg-white p-3">
-                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
-                          Deposit
-                        </div>
-                        <div className="mt-1 font-sans text-[18px] font-extrabold text-ink">
-                          {formatMoney(t.deposit_pence)}
-                        </div>
-                        <div className="text-[11.5px] text-ink-light">
-                          {t.deposit_protected_at
-                            ? `Protected · ${t.deposit_scheme?.toUpperCase() ?? ''}`
-                            : 'Awaiting protection'}
-                        </div>
-                      </div>
-                      <div className="rounded-card border border-border-soft bg-white p-3">
-                        <div className="text-[11px] uppercase tracking-wide text-ink-light">
-                          Tenancy
-                        </div>
-                        <div className="mt-1 text-[14px] font-semibold text-ink">
-                          {t.start_date}
-                        </div>
-                        <div className="text-[11.5px] text-ink-light">
-                          {t.end_date ? `to ${t.end_date}` : 'Periodic — no end date'}
-                        </div>
-                      </div>
-                    </div>
-                    <AstStatusCard
-                      tenancyId={t.id}
-                      envelope={envelopesByTenancy.get(t.id) ?? null}
-                      viewer="tenant"
-                    />
-                    <TenantRentSummary
-                      tenancyId={t.id}
-                      charges={chargesByTenancy.get(t.id) ?? []}
-                    />
-                    <TenantBillsCard bills={billsByTenancy.get(t.id) ?? []} />
-                    <TenantComplianceSummary
-                      items={t.property_id ? (complianceByProperty.get(t.property_id) ?? []) : []}
-                    />
-                  </CardContent>
-                </Card>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+  return (
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      {/* ── Greeting ─────────────────────────────────────────────────── */}
+      <header>
+        <h1 className="font-sans text-[22px] font-bold tracking-tight text-ink">
+          Good {timeOfDay()}, {dashboard.firstName}
+        </h1>
+        {tenancy ? (
+          <p className="mt-1 text-[13px] text-ink-light">
+            {[tenancy.property.name, tenancy.roomName, tenancy.property.postcode]
+              .filter(Boolean)
+              .join(' · ')}
+            {tenancy.endDate ? ` · Tenancy active until ${longDate(tenancy.endDate)}` : null}
+          </p>
+        ) : (
+          <p className="mt-1 text-[13px] text-ink-light">
+            You have {dashboard.inviteCount} invite{dashboard.inviteCount === 1 ? '' : 's'} waiting
+            below.
+          </p>
+        )}
+      </header>
 
-      {list.length > 0 ? (
-        <TenantMaintenanceSummary tickets={maintenanceTickets} hasActiveTenancy={list.length > 0} />
+      {/* ── Pending invites banner ──────────────────────────────────── */}
+      {dashboard.hasInvites ? (
+        <Card className="border-amber-bg bg-amber-bg/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[14px]">
+              <Inbox className="h-4 w-4 text-amber" />
+              {dashboard.inviteCount === 1
+                ? 'You have an invite waiting'
+                : `${dashboard.inviteCount} invites waiting`}
+            </CardTitle>
+            <CardDescription>
+              Open your invite link from the landlord&apos;s email to accept.
+            </CardDescription>
+          </CardHeader>
+        </Card>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-forest-600" />
-            Coming soon
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-[13px] text-ink-light">
-          Pay rent in-app, manage your deposit and view your{' '}
-          <Building2 className="-mt-0.5 inline h-3.5 w-3.5" /> Rental Passport.{' '}
-          <Link
-            href="/account"
-            className="font-semibold text-forest-600 underline-offset-4 hover:underline"
-          >
-            Update your profile
-          </Link>{' '}
-          to be ready when these land.
-        </CardContent>
-      </Card>
+      {/* ── Rent hero ────────────────────────────────────────────────── */}
+      {tenancy && rentHero ? (
+        <TenantRentHero hero={rentHero} tenancy={tenancy} monthLabel={dashboard.monthLabel} />
+      ) : null}
+
+      {/* ── Two column grid ─────────────────────────────────────────── */}
+      {tenancy ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-5">
+          {/* Left column */}
+          <div className="space-y-4 lg:space-y-5">
+            <SectionCard title="Quick actions">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <ReportIssueButton
+                  tenancies={tenancyOptions}
+                  redirectBase="/tenant/tickets"
+                  className="w-full justify-center"
+                />
+                <Button asChild variant="outline" size="sm" className="w-full justify-center">
+                  <Link href="/messages">
+                    <MessageSquare className="h-4 w-4" />
+                    Message landlord
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="w-full justify-center">
+                  <Link href="/tenant/documents">
+                    <FileText className="h-4 w-4" />
+                    My documents
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm" className="w-full justify-center">
+                  <Link href={`/tenant/rent/${tenancy.id}`}>
+                    <CreditCard className="h-4 w-4" />
+                    Payment history
+                  </Link>
+                </Button>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="My home">
+              <TenancyDetailList
+                rows={[
+                  {
+                    label: 'Property',
+                    value: [
+                      tenancy.property.addressLine1 ?? tenancy.property.name,
+                      tenancy.property.city,
+                      tenancy.property.postcode,
+                    ]
+                      .filter(Boolean)
+                      .join(', '),
+                  },
+                  ...(tenancy.roomName ? [{ label: 'Room', value: tenancy.roomName }] : []),
+                  {
+                    label: 'Landlord',
+                    value: (
+                      <Link
+                        href="/messages"
+                        className="text-forest-700 hover:underline focus:outline-none focus:ring-2 focus:ring-forest-600/30"
+                      >
+                        {tenancy.landlord.displayName} →
+                      </Link>
+                    ),
+                    emphasis: 'forest',
+                  },
+                  {
+                    label: 'Monthly rent',
+                    value: formatMoney(tenancy.rentPence).replace(/\.00$/, ''),
+                  },
+                  {
+                    label: 'Rent due',
+                    value: tenancy.rentDueDay
+                      ? `${ordinal(tenancy.rentDueDay)} of the month`
+                      : 'Monthly',
+                  },
+                  {
+                    label: 'Tenancy start',
+                    value: tenancy.startDate ? longDate(tenancy.startDate) : '—',
+                  },
+                  {
+                    label: 'Tenancy end',
+                    value: tenancy.endDate ? longDate(tenancy.endDate) : 'Periodic — no end date',
+                  },
+                  {
+                    label: 'Deposit',
+                    value: tenancy.depositScheme
+                      ? `${formatMoney(tenancy.depositPence).replace(/\.00$/, '')} · ${tenancy.depositScheme.toUpperCase()} protected`
+                      : formatMoney(tenancy.depositPence).replace(/\.00$/, ''),
+                  },
+                  {
+                    label: 'Right to Rent',
+                    value: 'Verified ✓',
+                    emphasis: 'forest',
+                  },
+                ]}
+              />
+            </SectionCard>
+
+            <SectionCard
+              title="My requests"
+              action={
+                <Link
+                  href="/tenant/tickets"
+                  className="text-[12px] font-semibold text-forest-700 hover:underline"
+                >
+                  View all →
+                </Link>
+              }
+            >
+              <MaintenanceSnapshotList rows={maintenance} />
+            </SectionCard>
+          </div>
+
+          {/* Right column */}
+          <div className="space-y-4 lg:space-y-5">
+            <SectionCard
+              title="Recent payments"
+              action={
+                <Link
+                  href={`/tenant/rent/${tenancy.id}`}
+                  className="text-[12px] font-semibold text-forest-700 hover:underline"
+                >
+                  View all →
+                </Link>
+              }
+            >
+              <RecentPaymentsTimeline rows={recentPayments} />
+            </SectionCard>
+
+            <SectionCard title="Notices from landlord">
+              <NoticesList notices={notices} />
+            </SectionCard>
+
+            <SectionCard title="Emergency contacts">
+              <EmergencyContacts tenancy={tenancy} />
+            </SectionCard>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── Personal next-of-kin reminder ──────────────────────────── */}
+      {tenancy && !emergencyContact ? (
+        <Banner
+          tone="warn"
+          title="Add an emergency contact"
+          description="We don't have a next-of-kin on file for you. Add one from your profile so your landlord knows who to call."
+          actions={
+            <Button asChild variant="outline" size="sm">
+              <Link href="/tenant/profile">Add now</Link>
+            </Button>
+          }
+        />
+      ) : null}
     </div>
   );
+}
+
+function timeOfDay(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'morning';
+  if (hour < 18) return 'afternoon';
+  return 'evening';
+}
+
+function longDate(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
 }

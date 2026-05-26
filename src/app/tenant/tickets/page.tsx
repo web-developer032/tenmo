@@ -1,142 +1,275 @@
-import { Wrench } from 'lucide-react';
+import { CheckCircle2, Clock, Star, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { EmptyState } from '@/components/common/empty-state';
-import { PageHeader } from '@/components/ds/page-header';
-import { ResponsiveGrid } from '@/components/ds/responsive-grid';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { TICKET_OPEN_STATUSES, type TicketStatus } from '@/core/constants/tickets';
-import { TicketCard } from '@/features/tickets/components/ticket-card';
+import { DataTable, KpiCard, PageHeader, SectionCard, TabBar } from '@/components/ds';
+import { TICKET_CATEGORY_RULES, type TicketStatus } from '@/core/constants/tickets';
+import { ReportIssueButton } from '@/features/tenant-dashboard/components/report-issue-button';
 import {
   loadTenantTenancyOptions,
   loadTenantTicketsBoard,
   type TicketWithContext,
 } from '@/features/tickets/loaders';
+import { summariseTenantTickets } from '@/features/tickets/summarise-tenant-tickets';
+import { cn } from '@/lib/cn';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
+const TAB_FILTERS: Record<string, (status: TicketStatus) => boolean> = {
+  all: () => true,
+  open: (s) => s === 'open' || s === 'triaged',
+  in_progress: (s) => s === 'in_progress' || s === 'awaiting_tenant' || s === 'awaiting_contractor',
+  resolved: (s) => s === 'resolved' || s === 'closed',
+};
+
+const STATUS_LABEL: Record<TicketStatus, { label: string; classes: string }> = {
+  open: { label: 'Open', classes: 'bg-alert-bg text-alert' },
+  triaged: { label: 'Triaged', classes: 'bg-blue-bg text-blue' },
+  in_progress: { label: 'In progress', classes: 'bg-blue-bg text-blue' },
+  awaiting_tenant: { label: 'Needs you', classes: 'bg-amber-bg text-amber' },
+  awaiting_contractor: { label: 'Awaiting fix', classes: 'bg-amber-bg text-amber' },
+  resolved: { label: 'Resolved', classes: 'bg-forest-100 text-forest-700' },
+  closed: { label: 'Closed', classes: 'bg-foam text-forest-700' },
+  cancelled: { label: 'Cancelled', classes: 'bg-foam text-ink-light' },
+};
+
 /**
- * Tenant maintenance hub.
+ * `/tenant/tickets` — HMOeez redesign of the maintenance hub.
  *
- * Two-column-ish layout that reads top-to-bottom on mobile:
- *   - Header with "Raise an issue" CTA
- *   - "Open" section listing currently-active tickets
- *   - "History" section for resolved/closed/cancelled tickets
- *
- * If the tenant has no tickets at all we show the friendly empty state
- * instead of two empty buckets.
+ *  - PageHeader with "Report an issue" CTA (opens modal — keeps
+ *    `/tenant/tickets/new` reachable for deep links).
+ *  - 4-tile KPI strip: open / resolved total / avg resolution / landlord rating.
+ *  - Pill-style TabBar (All / Open / In progress / Resolved) wired to `?tab=`.
+ *  - Flat DataTable with row-href to `/tenant/tickets/[ticketId]`.
  */
-export default async function TenantTicketsPage() {
+export default async function TenantMaintenancePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login?redirect=/tenant/tickets');
 
-  const [{ tickets, stats }, tenancies] = await Promise.all([
+  const sp = (await searchParams) ?? {};
+  const activeTab = sp.tab && TAB_FILTERS[sp.tab] ? sp.tab : 'all';
+
+  const [{ tickets }, tenancyOptions] = await Promise.all([
     loadTenantTicketsBoard(user.id),
     loadTenantTenancyOptions(user.id),
   ]);
 
-  const openStatuses = new Set<TicketStatus>(TICKET_OPEN_STATUSES);
-  const open: TicketWithContext[] = [];
-  const history: TicketWithContext[] = [];
-  for (const t of tickets) {
-    if (openStatuses.has(t.status)) open.push(t);
-    else history.push(t);
+  const summary = summariseTenantTickets(tickets);
+  const filtered = tickets.filter((t) => TAB_FILTERS[activeTab]?.(t.status) ?? true);
+
+  const canReport = tenancyOptions.length > 0;
+
+  if (tickets.length === 0) {
+    return (
+      <div className="mx-auto w-full max-w-5xl space-y-6">
+        <PageHeader
+          breadcrumbs={[{ label: 'Tenant', href: '/tenant' }, { label: 'Maintenance' }]}
+          title="Maintenance"
+          description="Report issues and track repair progress."
+          actions={
+            canReport ? (
+              <ReportIssueButton tenancies={tenancyOptions} redirectBase="/tenant/tickets" />
+            ) : null
+          }
+        />
+        <EmptyState
+          icon={<Wrench className="h-6 w-6" />}
+          title={canReport ? 'No tickets yet' : 'You can raise issues once your tenancy is active'}
+          description={
+            canReport
+              ? 'When something needs fixing, report an issue and your landlord will be notified straight away.'
+              : 'Once you accept your tenancy invite, you can raise maintenance issues here.'
+          }
+        />
+      </div>
+    );
   }
 
-  const canRaise = tenancies.length > 0;
+  const stars = summary.landlordResponseStars;
+  const starString = '★'.repeat(stars) + '☆'.repeat(Math.max(0, 5 - stars));
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5 lg:space-y-6">
+    <div className="mx-auto w-full max-w-6xl space-y-6">
       <PageHeader
         breadcrumbs={[{ label: 'Tenant', href: '/tenant' }, { label: 'Maintenance' }]}
         title="Maintenance"
-        description="Tell your landlord about issues, share photos, and track progress in one place."
+        description="Report issues and track repair progress."
         actions={
-          canRaise ? (
-            <Button asChild>
-              <Link href="/tenant/tickets/new">Raise an issue</Link>
-            </Button>
+          canReport ? (
+            <ReportIssueButton tenancies={tenancyOptions} redirectBase="/tenant/tickets" />
           ) : null
         }
       />
 
-      {tickets.length === 0 ? (
-        <EmptyState
-          icon={<Wrench className="h-6 w-6" />}
-          title={canRaise ? 'No tickets yet' : 'You can raise issues once your tenancy is active'}
-          description={
-            canRaise
-              ? 'When something needs fixing in your home, raise an issue and your landlord will be notified straight away.'
-              : 'Once you accept your tenancy invite, you can raise maintenance issues here.'
-          }
-          cta={canRaise ? { label: 'Raise an issue', href: '/tenant/tickets/new' } : undefined}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          label="Open requests"
+          value={String(summary.openCount + summary.inProgressCount)}
+          icon={<Clock />}
+          accent="blue"
+          delta={{ value: 'Active', tone: 'info' }}
         />
-      ) : (
-        <div className="space-y-6">
-          <ResponsiveGrid preset="kpi" aria-label="Maintenance summary">
-            <SummaryCell label="Open" value={stats.openCount} />
-            <SummaryCell
-              label="Critical open"
-              value={stats.criticalOpen}
-              tone={stats.criticalOpen > 0 ? 'text-alert' : ''}
-            />
-            <SummaryCell label="Awaiting you" value={stats.awaitingTenant} />
-            <SummaryCell label="Resolved (7d)" value={stats.resolvedThisWeek} />
-          </ResponsiveGrid>
+        <KpiCard
+          label="Resolved total"
+          value={String(summary.resolvedCount)}
+          icon={<CheckCircle2 />}
+          accent="forest"
+          delta={{ value: 'Done', tone: 'up' }}
+        />
+        <KpiCard
+          label="Avg resolution time"
+          value={summary.avgResolutionDays != null ? `${summary.avgResolutionDays}d` : '—'}
+          icon={<Clock />}
+          accent="forest"
+          delta={summary.avgResolutionDays != null ? { value: 'Avg', tone: 'up' } : undefined}
+        />
+        <KpiCard
+          label="Landlord response"
+          value={
+            <span
+              role="img"
+              aria-label={`${stars} out of 5 stars`}
+              className="text-amber tracking-wider"
+            >
+              {stars > 0 ? starString : '—'}
+            </span>
+          }
+          icon={<Star />}
+          accent="forest"
+          delta={stars > 0 ? { value: 'Score', tone: 'up' } : undefined}
+        />
+      </div>
 
-          <section className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
-              Open ({open.length})
-            </h2>
-            {open.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-[13px] text-ink-light">
-                  Nothing open right now.
-                </CardContent>
-              </Card>
-            ) : (
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {open.map((t) => (
-                  <li key={t.id}>
-                    <TicketCard ticket={t} href={`/tenant/tickets/${t.id}`} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+      <TabBar
+        activeId={activeTab}
+        items={[
+          { id: 'all', label: 'All', href: '/tenant/tickets', count: summary.total },
+          {
+            id: 'open',
+            label: 'Open',
+            href: '/tenant/tickets?tab=open',
+            count: summary.openCount,
+          },
+          {
+            id: 'in_progress',
+            label: 'In progress',
+            href: '/tenant/tickets?tab=in_progress',
+            count: summary.inProgressCount,
+          },
+          {
+            id: 'resolved',
+            label: 'Resolved',
+            href: '/tenant/tickets?tab=resolved',
+            count: summary.resolvedCount,
+          },
+        ]}
+      />
 
-          {history.length > 0 ? (
-            <section className="space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-ink-light">
-                History ({history.length})
-              </h2>
-              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {history.map((t) => (
-                  <li key={t.id}>
-                    <TicketCard ticket={t} href={`/tenant/tickets/${t.id}`} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
-        </div>
-      )}
+      <SectionCard padded={false}>
+        <DataTable<TicketWithContext>
+          rowKey={(t) => t.id}
+          rows={filtered}
+          rowHref={(t) => `/tenant/tickets/${t.id}`}
+          emptyState={
+            <p className="text-[13px] text-ink-light">
+              Nothing in this tab. Try a different filter or report a new issue.
+            </p>
+          }
+          columns={[
+            {
+              id: 'issue',
+              header: 'Issue',
+              mobile: 'primary',
+              cell: (t) => (
+                <div className="min-w-0">
+                  <div className="truncate text-[13px] font-semibold text-ink">{t.title}</div>
+                  {t.description ? (
+                    <div className="mt-0.5 line-clamp-1 text-[11.5px] text-ink-light">
+                      {t.description}
+                    </div>
+                  ) : null}
+                </div>
+              ),
+            },
+            {
+              id: 'category',
+              header: 'Category',
+              cell: (t) => (
+                <span className="inline-flex items-center rounded-full bg-foam px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider text-forest-700">
+                  {TICKET_CATEGORY_RULES[t.category]?.label ?? t.category}
+                </span>
+              ),
+              hideMd: true,
+            },
+            {
+              id: 'reported',
+              header: 'Reported',
+              mobile: 'secondary',
+              cell: (t) => shortDate(t.created_at),
+            },
+            {
+              id: 'updated',
+              header: 'Last update',
+              cell: (t) => shortDate(t.updated_at ?? t.created_at),
+              hideMd: true,
+            },
+            {
+              id: 'assigned',
+              header: 'Assigned to',
+              cell: (t) => (
+                <span className="text-[12.5px] text-ink-light">
+                  {t.assigned_contractor ?? (t.assigned_to_user_id ? 'Landlord' : '—')}
+                </span>
+              ),
+              hideMd: true,
+            },
+            {
+              id: 'status',
+              header: 'Status',
+              mobile: 'meta',
+              cell: (t) => {
+                const meta = STATUS_LABEL[t.status];
+                return (
+                  <span
+                    className={cn(
+                      'inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider',
+                      meta.classes,
+                    )}
+                  >
+                    {meta.label}
+                  </span>
+                );
+              },
+            },
+            {
+              id: 'view',
+              header: '',
+              align: 'right',
+              cell: () => (
+                <Link
+                  href="#"
+                  className="text-[12px] font-semibold text-forest-700 hover:underline"
+                  aria-label="Open ticket"
+                >
+                  View →
+                </Link>
+              ),
+            },
+          ]}
+        />
+      </SectionCard>
     </div>
   );
 }
 
-function SummaryCell({ label, value, tone = '' }: { label: string; value: number; tone?: string }) {
-  return (
-    <Card>
-      <CardContent className="space-y-1">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-light">{label}</p>
-        <p className={`font-sans text-[26px] font-extrabold text-ink ${tone}`}>{value}</p>
-      </CardContent>
-    </Card>
-  );
+function shortDate(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }

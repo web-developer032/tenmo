@@ -1,15 +1,12 @@
-import { redirect } from "next/navigation";
-import { readRememberedWorkspace } from "@/features/app-shell/server";
-import { MessagesView } from "@/features/messaging/components/messages-view";
-import { loadInbox } from "@/features/messaging/loaders";
-import {
-  listMessageCandidates,
-  type MessageCandidate,
-} from "@/features/messaging/server";
-import { loadRoleAvailability } from "@/features/role-switcher/loader";
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from 'next/navigation';
+import { readRememberedWorkspace } from '@/features/app-shell/server';
+import { MessagesView } from '@/features/messaging/components/messages-view';
+import { loadInbox } from '@/features/messaging/loaders';
+import { listMessageCandidates, type MessageCandidate } from '@/features/messaging/server';
+import { loadRoleAvailability } from '@/features/role-switcher/loader';
+import { createClient } from '@/lib/supabase/server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 /**
  * `/messages` — inbox + empty thread placeholder. Server-renders the
@@ -24,7 +21,7 @@ export default async function MessagesIndexPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?redirect=/messages");
+  if (!user) redirect('/login?redirect=/messages');
 
   const [inbox, workspace, availability] = await Promise.all([
     loadInbox(),
@@ -34,7 +31,7 @@ export default async function MessagesIndexPage() {
 
   let composeOrgId: string | null = null;
   let composeCandidates: MessageCandidate[] = [];
-  if (workspace?.kind === "landlord") {
+  if (workspace?.kind === 'landlord') {
     const org = availability.orgs.find((o) => o.slug === workspace.slug);
     if (org) {
       composeOrgId = org.id;

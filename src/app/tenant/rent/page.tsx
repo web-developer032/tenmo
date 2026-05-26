@@ -94,9 +94,7 @@ export default async function TenantRentIndexPage() {
                     <div className="min-w-0 space-y-1">
                       <CardTitle className="truncate">
                         {property?.name ?? 'Your home'}
-                        {room?.name ? (
-                          <span className="text-ink-light"> — {room.name}</span>
-                        ) : null}
+                        {room?.name ? <span className="text-ink-light"> — {room.name}</span> : null}
                       </CardTitle>
                       <CardDescription>
                         {formatMoney(detail.rent_pence)} {frequencySuffix} · due day{' '}

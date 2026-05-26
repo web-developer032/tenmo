@@ -88,10 +88,7 @@ export async function listAuditWithClient(
   ) as string[];
 
   // Hydrate actor profile + admin role in batches.
-  const profileById = new Map<
-    string,
-    { full_name: string | null; contact_email: string | null }
-  >();
+  const profileById = new Map<string, { full_name: string | null; contact_email: string | null }>();
   const roleByUserId = new Map<string, 'super' | 'support' | 'finance' | 'readonly' | null>();
   if (actorIds.length > 0) {
     const [profilesRes, adminRes] = await Promise.all([

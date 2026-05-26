@@ -14,6 +14,18 @@ export const NotificationPrefs = z.object({
 export type NotificationPrefs = z.infer<typeof NotificationPrefs>;
 
 /**
+ * Tenant next-of-kin block stored on `public.profiles.emergency_contact`
+ * as a single JSONB column. All three fields are optional; we persist
+ * `null` when the entire block is cleared.
+ */
+export const EmergencyContact = z.object({
+  name: z.string().trim().min(1).max(120).nullable().optional(),
+  relationship: z.string().trim().min(1).max(60).nullable().optional(),
+  phone: z.string().trim().min(1).max(40).nullable().optional(),
+});
+export type EmergencyContact = z.infer<typeof EmergencyContact>;
+
+/**
  * The active context lives in the URL but is also persisted on `profiles`
  * so we can restore the previous workspace on a fresh login.
  */
@@ -91,6 +103,11 @@ export const ProfileEditInput = z.object({
   timezone: z.enum(TIMEZONE_VALUES as [string, ...string[]]).optional(),
   theme: z.enum(['light', 'dark', 'system']).optional(),
   marketing_opt_in: z.boolean().optional(),
+  /**
+   * Tenant-only next-of-kin block. Pass `null` to clear, pass an object
+   * (partial fields allowed) to upsert. Omit to leave untouched.
+   */
+  emergency_contact: EmergencyContact.nullable().optional(),
 });
 export type ProfileEditInput = z.infer<typeof ProfileEditInput>;
 

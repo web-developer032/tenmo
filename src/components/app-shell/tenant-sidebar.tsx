@@ -10,6 +10,7 @@ import {
   MessageSquare,
   ReceiptText,
   Sparkles,
+  UserCircle,
   Wrench,
 } from 'lucide-react';
 import {
@@ -21,11 +22,17 @@ import {
 } from './sidebar-shell';
 
 /*
- * Tenant sidebar.
+ * Tenant sidebar — HMOeez tenant portal IA.
  *
- * IA mirrors the mock's tenant portal nav (My Home / Communication /
- * Account), plus a "Explore" group exposing the pre-tenancy listings flow
- * for tenants who are between properties.
+ * Groups mirror the design's `nav-section-label`s:
+ *   My Home       — Home, Payments, Maintenance, Documents, Bills, Rental Passport
+ *   Explore       — Find a room, My applications
+ *   Communication — Messages, Notifications
+ *   Account       — My Profile (new in the redesign)
+ *
+ * Per user direction (2026-05-26): no real features are dropped — every
+ * existing functional page stays in the sidebar; only the grouping is
+ * reshuffled and a new "Account / My Profile" route is added.
  */
 
 export type TenantSidebarProps = {
@@ -103,6 +110,10 @@ export function TenantSidebar({
             unreadNotifications > 0 ? { count: unreadNotifications, tone: 'amber' } : undefined
           }
         />
+      </SidebarSection>
+
+      <SidebarSection label="Account">
+        <SidebarNavItem href="/tenant/profile" label="My Profile" icon={UserCircle} />
       </SidebarSection>
     </SidebarShell>
   );

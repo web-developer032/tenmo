@@ -40,7 +40,7 @@ export async function fetchProfile(): Promise<CurrentProfile> {
   return unwrap<CurrentProfile>(res);
 }
 
-export async function updateProfileApi(patch: ProfileEditInput): Promise<CurrentProfile> {
+export async function updateProfileApi(patch: Partial<ProfileEditInput>): Promise<CurrentProfile> {
   const res = await fetch('/api/profile', {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

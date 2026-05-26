@@ -58,8 +58,10 @@ export async function updateOwnProfile(
  * being absent. To wipe a value from the UI we'd need a dedicated UX (a
  * trash icon) — for MVP we just don't expose that path.
  */
-function toDbPatch(patch: ProfileEditInput): Record<string, string | boolean | null> {
-  const out: Record<string, string | boolean | null> = {};
+function toDbPatch(
+  patch: ProfileEditInput,
+): Record<string, string | boolean | Record<string, string | null> | null> {
+  const out: Record<string, string | boolean | Record<string, string | null> | null> = {};
   if (patch.full_name !== undefined) out.full_name = patch.full_name ?? null;
   if (patch.preferred_name !== undefined) out.preferred_name = patch.preferred_name ?? null;
   if (patch.contact_email !== undefined) out.contact_email = patch.contact_email ?? null;
@@ -68,5 +70,22 @@ function toDbPatch(patch: ProfileEditInput): Record<string, string | boolean | n
   if (patch.timezone !== undefined) out.timezone = patch.timezone;
   if (patch.theme !== undefined) out.theme = patch.theme;
   if (patch.marketing_opt_in !== undefined) out.marketing_opt_in = patch.marketing_opt_in;
+  if (patch.emergency_contact !== undefined) {
+    // Explicit `null` clears the JSONB column. An object upserts; we coerce
+    // blank values to `null` so the DB doesn't store empty strings.
+    if (patch.emergency_contact === null) {
+      out.emergency_contact = null;
+    } else {
+      const ec = patch.emergency_contact;
+      const allEmpty = !ec.name && !ec.relationship && !ec.phone;
+      out.emergency_contact = allEmpty
+        ? null
+        : {
+            name: ec.name ?? null,
+            relationship: ec.relationship ?? null,
+            phone: ec.phone ?? null,
+          };
+    }
+  }
   return out;
 }

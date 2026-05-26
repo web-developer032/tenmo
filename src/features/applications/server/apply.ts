@@ -26,10 +26,9 @@ export async function applyToListing(
   // and existing tenants do). The RPC returns a row iff the listing is
   // currently `published` and not archived, so a missing row legitimately
   // means "not findable / not accepting applications".
-  const { data: listingRows, error: roomErr } = await ctx.supabase.rpc(
-    'get_published_listing',
-    { p_room_id: roomId },
-  );
+  const { data: listingRows, error: roomErr } = await ctx.supabase.rpc('get_published_listing', {
+    p_room_id: roomId,
+  });
   if (roomErr) throw new DbError(roomErr);
   const listing = Array.isArray(listingRows) ? listingRows[0] : listingRows;
   if (!listing) {

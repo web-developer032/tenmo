@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/common/empty-state';
+import { PageHeader, SectionCard } from '@/components/ds';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -172,33 +173,36 @@ export function NotificationsFeedView({ userId, initial }: NotificationsFeedView
     }
   }, [unreadCount, markingAll, applyLocalReadAll, refresh]);
 
+  const subDescription =
+    unreadCount > 0
+      ? `${unreadCount} unread · sorted by most recent`
+      : 'All caught up · sorted by most recent';
+
   return (
     <div className="space-y-5">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Notifications</h1>
-          <p className="text-sm text-muted-foreground">
-            Everything Tenantly has flagged for you — compliance, rent, maintenance and more.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onMarkAll}
-          disabled={unreadCount === 0 || markingAll}
-        >
-          {markingAll ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <CheckCheck className="mr-2 h-4 w-4" />
-          )}
-          Mark all read
-        </Button>
-      </header>
+      <PageHeader
+        title="Notifications"
+        description={subDescription}
+        actions={
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onMarkAll}
+            disabled={unreadCount === 0 || markingAll}
+          >
+            {markingAll ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCheck className="h-4 w-4" />
+            )}
+            Mark all read
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+        <Filter className="h-4 w-4 text-ink-light" aria-hidden="true" />
         <FilterChip label="All" active={filter === 'all'} onClick={() => setFilter('all')} />
         <FilterChip
           label={`Unread${unreadCount > 0 ? ` · ${unreadCount}` : ''}`}
@@ -230,17 +234,15 @@ export function NotificationsFeedView({ userId, initial }: NotificationsFeedView
           }
         />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <ul className="divide-y">
-              {allRows.map((n) => (
-                <li key={n.id}>
-                  <NotificationRow notification={n} onClick={onSelect} />
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <SectionCard padded={false} className="max-w-3xl">
+          <ul className="divide-y divide-border-soft">
+            {allRows.map((n) => (
+              <li key={n.id}>
+                <NotificationRow notification={n} onClick={onSelect} />
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
       )}
 
       {allRows.length > 0 && hasMore ? (
@@ -275,10 +277,10 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+        'rounded-full border px-3 py-1 text-[12px] font-medium transition-colors',
         active
-          ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border bg-background text-muted-foreground hover:border-foreground/40 hover:text-foreground',
+          ? 'border-forest-600 bg-forest-600 text-white'
+          : 'border-border-soft bg-white text-ink-light hover:border-ink/30 hover:text-ink',
       )}
       aria-pressed={active}
     >

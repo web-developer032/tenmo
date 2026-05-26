@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { Loader2, MessageSquarePlus, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
-import * as React from "react";
-import { Button } from "@/components/ui/button";
+import { Loader2, MessageSquarePlus, Search } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import * as React from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,11 +12,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/cn";
-import { findOrCreateDirect, MessagingApiError } from "../api/client";
-import type { MessageCandidate } from "../server/list-message-candidates";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/cn';
+import { findOrCreateDirect, MessagingApiError } from '../api/client';
+import type { MessageCandidate } from '../server/list-message-candidates';
 
 /**
  * Modal that lets a landlord start (or jump to) a 1-1 direct conversation
@@ -47,7 +47,7 @@ export function NewConversationDialog({
 }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  const [query, setQuery] = React.useState('');
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -56,8 +56,8 @@ export function NewConversationDialog({
     if (!q) return candidates;
     return candidates.filter((c) => {
       return (
-        (c.full_name ?? "").toLowerCase().includes(q) ||
-        (c.contact_email ?? "").toLowerCase().includes(q)
+        (c.full_name ?? '').toLowerCase().includes(q) ||
+        (c.contact_email ?? '').toLowerCase().includes(q)
       );
     });
   }, [candidates, query]);
@@ -75,9 +75,7 @@ export function NewConversationDialog({
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof MessagingApiError
-          ? err.message
-          : (err as Error).message ?? "Failed";
+        err instanceof MessagingApiError ? err.message : ((err as Error).message ?? 'Failed');
       setError(message);
     } finally {
       setPendingId(null);
@@ -87,11 +85,7 @@ export function NewConversationDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant="secondary"
-          className={cn("gap-1.5", triggerClassName)}
-        >
+        <Button size="sm" variant="secondary" className={cn('gap-1.5', triggerClassName)}>
           <MessageSquarePlus className="h-3.5 w-3.5" />
           New message
         </Button>
@@ -100,8 +94,8 @@ export function NewConversationDialog({
         <DialogHeader>
           <DialogTitle>Start a conversation</DialogTitle>
           <DialogDescription>
-            Pick a team member or current tenant. Existing threads are reused —
-            clicking someone you already messaged jumps straight to it.
+            Pick a team member or current tenant. Existing threads are reused — clicking someone you
+            already messaged jumps straight to it.
           </DialogDescription>
         </DialogHeader>
 
@@ -123,8 +117,8 @@ export function NewConversationDialog({
             {filtered.length === 0 ? (
               <li className="px-3 py-6 text-center text-[12.5px] text-muted-foreground">
                 {candidates.length === 0
-                  ? "No teammates or tenants found in this workspace yet."
-                  : "No matches."}
+                  ? 'No teammates or tenants found in this workspace yet.'
+                  : 'No matches.'}
               </li>
             ) : (
               filtered.map((c) => (
@@ -134,8 +128,8 @@ export function NewConversationDialog({
                     onClick={() => start(c)}
                     disabled={pendingId !== null}
                     className={cn(
-                      "flex w-full items-center justify-between gap-3 rounded px-3 py-2 text-left text-sm hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
-                      pendingId === c.user_id && "bg-accent"
+                      'flex w-full items-center justify-between gap-3 rounded px-3 py-2 text-left text-sm hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50',
+                      pendingId === c.user_id && 'bg-accent',
                     )}
                   >
                     <div className="min-w-0">
@@ -143,9 +137,8 @@ export function NewConversationDialog({
                         {c.full_name ?? c.contact_email ?? c.user_id}
                       </div>
                       <div className="truncate text-[11.5px] text-muted-foreground">
-                        {c.contact_email ?? "—"} ·{" "}
-                        {c.kind === "member" ? "Team" : "Tenant"}
-                        {c.detail ? ` · ${c.detail}` : ""}
+                        {c.contact_email ?? '—'} · {c.kind === 'member' ? 'Team' : 'Tenant'}
+                        {c.detail ? ` · ${c.detail}` : ''}
                       </div>
                     </div>
                     {pendingId === c.user_id ? (
@@ -158,19 +151,12 @@ export function NewConversationDialog({
           </ul>
 
           {error ? (
-            <p className="rounded bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {error}
-            </p>
+            <p className="rounded bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
           ) : null}
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setOpen(false)}
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
             Cancel
           </Button>
         </DialogFooter>

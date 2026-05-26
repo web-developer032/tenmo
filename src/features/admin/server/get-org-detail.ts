@@ -110,10 +110,7 @@ export async function getOrgDetailWithClient(
 
   const memberRows = (membersRes.data as MemberRow[] | null) ?? [];
   const memberIds = Array.from(new Set(memberRows.map((m) => m.user_id))).filter(Boolean);
-  const profileById = new Map<
-    string,
-    { full_name: string | null; contact_email: string | null }
-  >();
+  const profileById = new Map<string, { full_name: string | null; contact_email: string | null }>();
   if (memberIds.length > 0) {
     const { data: profiles } = await sb
       .from('profiles')

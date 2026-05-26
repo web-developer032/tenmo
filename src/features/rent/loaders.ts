@@ -206,3 +206,202 @@ export async function loadTenancyRent(tenancyId: string): Promise<TenancyRentDet
     arrearsPence: totalArrearsPence(charges),
   };
 }
+
+// ============================================================================
+// Tenant Payments page — flat charge + payment view + KPI strip
+// ============================================================================
+
+export type TenantPaymentRow = {
+  id: string;
+  monthLabel: string;
+  periodStart: string;
+  dueDate: string;
+  paidAt: string | null;
+  amountPence: number;
+  paidPence: number;
+  status: 'paid' | 'paid_late' | 'due' | 'overdue' | 'upcoming' | 'cancelled' | 'partial';
+  daysLate: number;
+  methodLabel: string;
+  reference: string;
+};
+
+export type TenantPaymentsView = {
+  year: number | 'all';
+  availableYears: number[];
+  rows: TenantPaymentRow[];
+  reference: string;
+  next: {
+    monthLabel: string;
+    amountPence: number;
+    dueDate: string;
+  } | null;
+  kpis: {
+    paidThisYearPence: number;
+    monthlyRentPence: number;
+    depositPence: number;
+    depositSchemeLabel: string | null;
+    nextPaymentDueDate: string | null;
+  };
+};
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  manual_bank_transfer: 'Bank transfer',
+  manual_cash: 'Cash',
+  manual_card: 'Card',
+  manual_other: 'Other',
+  gocardless_dd: 'Direct Debit',
+  truelayer_ob: 'Open Banking',
+};
+
+/**
+ * Build the flat table that the rebuilt `/tenant/rent/[tenancyId]` page
+ * renders — one row per charge plus the matching payment metadata, KPIs
+ * for the headline strip and the "next payment" banner.
+ *
+ *  - `year = 'all'` returns everything, sorted newest first.
+ *  - `year = 2025` only includes charges whose `period_start` falls in
+ *    the calendar year, but the KPIs always reflect *the current year*
+ *    so the strip stays stable regardless of which year the user picks.
+ */
+export async function loadTenantPaymentsView(
+  tenancyId: string,
+  year: number | 'all' = 'all',
+): Promise<TenantPaymentsView> {
+  const supabase = await createClient();
+  const detail = await loadTenancyRent(tenancyId);
+
+  const tenancyResp = await supabase
+    .from('tenancies')
+    .select(
+      `id, rent_pence, deposit_pence, deposit_scheme,
+       orgs:org_id ( slug ),
+       properties:property_id ( name ),
+       rooms:room_id ( name )`,
+    )
+    .eq('id', tenancyId)
+    .maybeSingle();
+  if (tenancyResp.error) throw tenancyResp.error;
+  const tenancyRow = tenancyResp.data;
+  const monthlyRent = (tenancyRow?.rent_pence as number | undefined) ?? 0;
+  const depositPence = (tenancyRow?.deposit_pence as number | undefined) ?? 0;
+  const depositScheme = (tenancyRow?.deposit_scheme as string | null | undefined) ?? null;
+  const org = pickFirst<{ slug: string | null }>(tenancyRow?.orgs);
+  const property = pickFirst<{ name: string }>(tenancyRow?.properties);
+  const room = pickFirst<{ name: string }>(tenancyRow?.rooms);
+
+  const reference = buildReference({
+    orgSlug: org?.slug ?? null,
+    propertyName: property?.name ?? null,
+    roomName: room?.name ?? null,
+  });
+
+  const paymentByCharge = new Map<string, (typeof detail.payments)[number]>();
+  for (const p of detail.payments) {
+    if (p.charge_id && p.status === 'confirmed') {
+      paymentByCharge.set(p.charge_id, p);
+    }
+  }
+
+  const today = new Date();
+  const todayISO = today.toISOString().slice(0, 10);
+
+  const rowsAll: TenantPaymentRow[] = detail.charges.map((c) => {
+    const payment = paymentByCharge.get(c.id);
+    const daysLate = payment?.paid_at
+      ? Math.max(0, daysBetweenIso(c.due_date, payment.paid_at))
+      : 0;
+    let status: TenantPaymentRow['status'];
+    if (c.status === 'paid') status = daysLate > 1 ? 'paid_late' : 'paid';
+    else if (c.status === 'cancelled') status = 'cancelled';
+    else if (c.status === 'partially_paid') status = 'partial';
+    else if (c.status === 'overdue' || c.due_date < todayISO) status = 'overdue';
+    else if (c.status === 'due') status = 'due';
+    else status = 'upcoming';
+
+    return {
+      id: c.id,
+      monthLabel: shortMonthYear(c.period_start),
+      periodStart: c.period_start,
+      dueDate: c.due_date,
+      paidAt: payment?.paid_at ?? null,
+      amountPence: c.amount_pence,
+      paidPence: c.paid_pence,
+      status,
+      daysLate,
+      methodLabel: payment
+        ? (PAYMENT_METHOD_LABELS[payment.method] ?? 'Bank transfer')
+        : 'Bank transfer',
+      reference,
+    };
+  });
+
+  const yearsSet = new Set<number>(rowsAll.map((r) => new Date(r.periodStart).getUTCFullYear()));
+  const availableYears = Array.from(yearsSet).sort((a, b) => b - a);
+
+  const rows =
+    year === 'all'
+      ? rowsAll
+      : rowsAll.filter((r) => new Date(r.periodStart).getUTCFullYear() === year);
+
+  // KPIs always reference the current calendar year so the strip is stable.
+  const currentYear = today.getUTCFullYear();
+  const paidThisYearPence = rowsAll
+    .filter((r) => new Date(r.periodStart).getUTCFullYear() === currentYear)
+    .reduce((sum, r) => sum + r.paidPence, 0);
+
+  // Next upcoming/due charge (closest future due_date that isn't paid).
+  const next = rowsAll
+    .filter((r) => r.status !== 'paid' && r.status !== 'paid_late' && r.status !== 'cancelled')
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))[0];
+
+  return {
+    year,
+    availableYears,
+    rows,
+    reference,
+    next: next
+      ? {
+          monthLabel: next.monthLabel,
+          amountPence: next.amountPence,
+          dueDate: next.dueDate,
+        }
+      : null,
+    kpis: {
+      paidThisYearPence,
+      monthlyRentPence: monthlyRent,
+      depositPence,
+      depositSchemeLabel: depositScheme ? depositScheme.toUpperCase() : null,
+      nextPaymentDueDate: next?.dueDate ?? null,
+    },
+  };
+}
+
+function buildReference(opts: {
+  orgSlug: string | null;
+  propertyName: string | null;
+  roomName: string | null;
+}): string {
+  const slug = (opts.orgSlug ?? '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .slice(0, 6)
+    .toUpperCase();
+  const prop = (opts.propertyName ?? '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .slice(0, 8)
+    .toUpperCase();
+  const room = (opts.roomName ?? '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .slice(0, 4)
+    .toUpperCase();
+  return [slug || 'RENT', prop || 'HOME', room || 'R1'].join('-');
+}
+
+function shortMonthYear(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { month: 'short', year: 'numeric' });
+}
+
+function daysBetweenIso(a: string, b: string): number {
+  const aD = Date.parse(`${a.slice(0, 10)}T00:00:00Z`);
+  const bD = Date.parse(`${b.slice(0, 10)}T00:00:00Z`);
+  return Math.round((bD - aD) / 86_400_000);
+}

@@ -95,10 +95,7 @@ export async function loadLandlordListings(orgId: string): Promise<LandlordRoomL
       ? Math.max(1, Math.floor((now - new Date(r.listing_published_at).getTime()) / 86_400_000))
       : 0;
     const hash = Number.parseInt(r.id.replace(/[^0-9a-f]/gi, '').slice(0, 4) || '0', 16);
-    const views =
-      r.listing_status === 'published'
-        ? Math.max(1, ageDays * 4 + (hash % 12))
-        : 0;
+    const views = r.listing_status === 'published' ? Math.max(1, ageDays * 4 + (hash % 12)) : 0;
     return {
       id: r.id,
       property_id: r.property_id,

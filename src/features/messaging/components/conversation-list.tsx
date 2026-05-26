@@ -34,51 +34,77 @@ export function ConversationList({
   }
 
   return (
-    <ul className="divide-y">
+    <ul className="divide-y divide-border-soft">
       {items.map((item) => {
         const title = conversationDisplayTitle(item);
         const preview = previewLine(item);
         const unread = item.unread_count;
         const isActive = activeId === item.conversation.id;
         const ts = formatTs(item.conversation.last_message_at);
+        const initials = initialsFrom(title);
         return (
           <li key={item.conversation.id}>
             <Link
               href={`/messages/${item.conversation.id}`}
               prefetch={false}
               className={cn(
-                'flex w-full flex-col gap-0.5 px-3 py-3 transition-colors hover:bg-accent/40',
-                isActive && 'bg-accent/60',
+                'flex w-full items-center gap-3 px-3.5 py-3 transition-colors hover:bg-stone-50',
+                isActive && 'bg-forest-50/60',
               )}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className={cn('truncate text-sm', unread > 0 ? 'font-semibold' : 'font-medium')}
-                >
-                  {title}
-                </span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">{ts}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className={cn(
-                    'truncate text-xs',
-                    unread > 0 ? 'text-foreground' : 'text-muted-foreground',
-                  )}
-                >
-                  {preview}
-                </span>
-                {unread > 0 ? (
-                  <span className="inline-flex h-4 min-w-[1rem] shrink-0 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                    {unread > 99 ? '99+' : unread}
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest-600 font-sans text-[11px] font-bold uppercase tracking-tight text-white"
+                aria-hidden="true"
+              >
+                {initials}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={cn(
+                      'truncate text-[13px]',
+                      unread > 0 ? 'font-bold text-ink' : 'font-semibold text-ink',
+                    )}
+                  >
+                    {title}
                   </span>
-                ) : null}
+                  <span className="shrink-0 text-[10px] text-ink-light">{ts}</span>
+                </div>
+                <div className="mt-0.5 flex items-center justify-between gap-2">
+                  <span
+                    className={cn(
+                      'truncate text-[12px]',
+                      unread > 0 ? 'text-ink' : 'text-ink-light',
+                    )}
+                  >
+                    {preview}
+                  </span>
+                  {unread > 0 ? (
+                    <span
+                      role="status"
+                      aria-label={`${unread > 99 ? '99+' : unread} unread`}
+                      className="ml-1 inline-flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-forest-600"
+                    />
+                  ) : null}
+                </div>
               </div>
             </Link>
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function initialsFrom(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '?'
   );
 }
 

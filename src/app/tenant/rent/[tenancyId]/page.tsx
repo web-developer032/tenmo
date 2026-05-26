@@ -1,34 +1,45 @@
-import { ArrowLeft, MessageSquare, Wallet } from 'lucide-react';
+import { ArrowLeft, CalendarClock, CreditCard, Download, Shield, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { Banner, DataTable, KpiCard, PageHeader, SectionCard } from '@/components/ds';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatMoney } from '@/core/utils/money';
-import { groupChargesByTime } from '@/core/utils/rent-rules';
 import { TenancyDocumentsCard } from '@/features/documents/components/tenancy-documents-card';
 import { resolveTenancyConversationId } from '@/features/messaging/server';
 import { MandateStatusCard } from '@/features/payments/components/mandate-status-card';
 import { loadActiveMandateForTenancy } from '@/features/payments/loaders';
-import { ChargeRow } from '@/features/rent/components/charge-row';
-import { PaymentRow } from '@/features/rent/components/payment-row';
-import { loadTenancyRent } from '@/features/rent/loaders';
+import { loadTenantPaymentsView, type TenantPaymentRow } from '@/features/rent/loaders';
+import { cn } from '@/lib/cn';
 import { createClient } from '@/lib/supabase/server';
 
 type Params = { tenancyId: string };
+type SearchParams = { year?: string };
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Tenant rent ledger — read-only mirror of the landlord's view.
+ * `/tenant/rent/[tenancyId]` — tenant Payments page (HMOeez redesign).
  *
- * RLS guarantees a tenant can only ever load `rent_charges` and `rent_payments`
- * for tenancies they're attached to (via `tenant_user_id`), so the loader is
- * the same as the landlord page. We additionally double-check that the
- * tenancy belongs to this user before rendering, to fail closed on any RLS
- * misconfiguration.
+ * KPI strip + next-payment banner + a single flat `DataTable` of all
+ * charges/payments. The optional `?year=` query filters the table; the
+ * KPIs always reflect the current calendar year so they don't jump as
+ * the user changes the filter.
+ *
+ * RLS already restricts rent_charges/rent_payments to the caller's own
+ * tenancies; we additionally double-check that the tenancy belongs to
+ * this user (defence in depth).
  */
-export default async function TenantRentLedgerPage({ params }: { params: Promise<Params> }) {
+export default async function TenantPaymentsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams?: Promise<SearchParams>;
+}) {
   const { tenancyId } = await params;
+  const sp = (await searchParams) ?? {};
+  const year: number | 'all' =
+    sp.year && /^\d{4}$/.test(sp.year) ? Number(sp.year) : sp.year === 'all' ? 'all' : 'all';
 
   const supabase = await createClient();
   const {
@@ -36,7 +47,7 @@ export default async function TenantRentLedgerPage({ params }: { params: Promise
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?redirect=/tenant/rent/${tenancyId}`);
 
-  const { data: tenancy, error: tenancyErr } = await supabase
+  const tenancyResp = await supabase
     .from('tenancies')
     .select(
       `id, tenant_user_id, rent_pence, rent_frequency,
@@ -45,147 +56,274 @@ export default async function TenantRentLedgerPage({ params }: { params: Promise
     )
     .eq('id', tenancyId)
     .maybeSingle();
-  if (tenancyErr) throw tenancyErr;
+  if (tenancyResp.error) throw tenancyResp.error;
+  const tenancy = tenancyResp.data;
   if (!tenancy || tenancy.tenant_user_id !== user.id) notFound();
 
   const property = pickFirst<{ name: string }>(tenancy.properties);
   const room = pickFirst<{ name: string }>(tenancy.rooms);
 
-  const detail = await loadTenancyRent(tenancyId);
-  const grouped = groupChargesByTime(detail.charges);
-  const conversationId = await resolveTenancyConversationId(tenancyId);
-  const mandate = await loadActiveMandateForTenancy(tenancyId);
+  const [view, conversationId, mandate] = await Promise.all([
+    loadTenantPaymentsView(tenancyId, year),
+    resolveTenancyConversationId(tenancyId),
+    loadActiveMandateForTenancy(tenancyId),
+  ]);
+
+  const yearLabel = year === 'all' ? 'all time' : String(year);
+
+  const yearOptions: { value: string; label: string }[] = [
+    { value: 'all', label: 'All time' },
+    ...view.availableYears.map((y) => ({ value: String(y), label: String(y) })),
+  ];
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 md:px-8 md:py-8">
-      <div className="flex items-center justify-between gap-2">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/tenant">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to your home
-          </Link>
-        </Button>
-        {conversationId ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/messages/${conversationId}`}>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Message landlord
-            </Link>
+    <div className="mx-auto w-full max-w-6xl space-y-6">
+      <PageHeader
+        breadcrumbs={[
+          { label: 'Tenant', href: '/tenant' },
+          { label: 'Payments', href: '/tenant/rent' },
+        ]}
+        title="Payments"
+        description={
+          <>
+            {property?.name ?? 'Your home'}
+            {room?.name ? ` — ${room.name}` : ''} · {yearLabel}
+          </>
+        }
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <YearFilter
+              activeValue={year === 'all' ? 'all' : String(year)}
+              options={yearOptions}
+              tenancyId={tenancyId}
+            />
+            {conversationId ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/messages/${conversationId}`}>Message landlord</Link>
+              </Button>
+            ) : null}
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/tenant">
+                <ArrowLeft className="h-4 w-4" /> Back
+              </Link>
+            </Button>
+          </div>
+        }
+      />
+
+      {/* ── KPI strip ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          label={`Paid this year (${new Date().getUTCFullYear()})`}
+          value={formatMoney(view.kpis.paidThisYearPence).replace(/\.00$/, '')}
+          icon={<CreditCard />}
+          accent="forest"
+          delta={{ value: 'On time', tone: 'up' }}
+        />
+        <KpiCard
+          label="Monthly rent"
+          value={formatMoney(view.kpis.monthlyRentPence).replace(/\.00$/, '')}
+          icon={<Wallet />}
+          accent="forest"
+        />
+        <KpiCard
+          label={
+            view.kpis.depositSchemeLabel
+              ? `Deposit (${view.kpis.depositSchemeLabel} protected)`
+              : 'Deposit'
+          }
+          value={formatMoney(view.kpis.depositPence).replace(/\.00$/, '')}
+          icon={<Shield />}
+          accent="forest"
+          delta={
+            view.kpis.depositSchemeLabel
+              ? { value: view.kpis.depositSchemeLabel, tone: 'up' }
+              : undefined
+          }
+        />
+        <KpiCard
+          label="Next payment due"
+          value={view.kpis.nextPaymentDueDate ? shortDate(view.kpis.nextPaymentDueDate) : '—'}
+          icon={<CalendarClock />}
+          accent={view.kpis.nextPaymentDueDate ? 'amber' : 'forest'}
+          delta={view.kpis.nextPaymentDueDate ? { value: 'Next', tone: 'warn' } : undefined}
+        />
+      </div>
+
+      {/* ── Next payment banner ─────────────────────────────────────── */}
+      {view.next ? (
+        <Banner
+          tone="info"
+          title={`Next payment — ${formatMoney(view.next.amountPence).replace(/\.00$/, '')} due ${longDate(view.next.dueDate)}`}
+          description={
+            <>
+              Please transfer to the bank details in your tenancy agreement. Use reference{' '}
+              <strong className="font-semibold text-ink">{view.reference}</strong>.
+            </>
+          }
+        />
+      ) : null}
+
+      {/* ── Payments table ──────────────────────────────────────────── */}
+      <SectionCard
+        title="Payment history"
+        action={
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4" />
+            Download all receipts
           </Button>
-        ) : null}
-      </div>
+        }
+        padded={false}
+      >
+        <DataTable<TenantPaymentRow>
+          rowKey={(r) => r.id}
+          rows={view.rows}
+          emptyState={
+            <p className="text-[13px] text-ink-light">No payments in the selected period.</p>
+          }
+          columns={[
+            {
+              id: 'month',
+              header: 'Month',
+              mobile: 'primary',
+              cell: (row) => <strong className="font-semibold text-ink">{row.monthLabel}</strong>,
+            },
+            {
+              id: 'amount',
+              header: 'Amount',
+              align: 'right',
+              cell: (row) => (
+                <span className="font-bold text-ink">
+                  {formatMoney(row.amountPence).replace(/\.00$/, '')}
+                </span>
+              ),
+            },
+            {
+              id: 'due',
+              header: 'Due date',
+              cell: (row) => shortDate(row.dueDate),
+              hideMd: true,
+            },
+            {
+              id: 'paid',
+              header: 'Paid date',
+              mobile: 'secondary',
+              cell: (row) => (row.paidAt ? shortDate(row.paidAt) : '—'),
+            },
+            {
+              id: 'method',
+              header: 'Method',
+              cell: (row) => row.methodLabel,
+              hideMd: true,
+            },
+            {
+              id: 'ref',
+              header: 'Reference',
+              cell: (row) => <span className="text-[12px] text-ink-light">{row.reference}</span>,
+              hideMd: true,
+            },
+            {
+              id: 'status',
+              header: 'Status',
+              mobile: 'meta',
+              cell: (row) => <StatusBadge row={row} />,
+            },
+            {
+              id: 'receipt',
+              header: 'Receipt',
+              align: 'right',
+              cell: (row) =>
+                row.status === 'paid' || row.status === 'paid_late' ? (
+                  <button
+                    type="button"
+                    className="text-[12px] font-semibold text-forest-700 hover:underline"
+                  >
+                    Download
+                  </button>
+                ) : (
+                  <span className="text-[12px] text-ink-light">—</span>
+                ),
+            },
+          ]}
+        />
+      </SectionCard>
 
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Your rent</h1>
-        <p className="text-sm text-muted-foreground">
-          {property?.name ?? 'Your home'}
-          {room?.name ? ` — ${room.name}` : ''} · {formatMoney(tenancy.rent_pence)}{' '}
-          {tenancy.rent_frequency === 'weekly' ? 'pw' : 'pcm'}
+      {/* ── Direct Debit (optional) ─────────────────────────────────── */}
+      <SectionCard
+        title="Direct Debit"
+        subtitle="Set up free Direct Debit through GoCardless so rent is collected automatically each month."
+      >
+        <MandateStatusCard tenancyId={tenancyId} mandate={mandate} />
+        <p className="mt-3 text-[12px] text-ink-light">
+          Tenantly is <span className="font-semibold text-ink">free for tenants, forever</span>.
         </p>
-      </header>
-
-      <MandateStatusCard tenancyId={tenancyId} mandate={mandate} />
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Stat
-          label={detail.arrearsPence > 0 ? 'Outstanding' : 'Up to date'}
-          value={formatMoney(detail.arrearsPence)}
-          tone={detail.arrearsPence > 0 ? 'text-alert' : 'text-forest-600'}
-        />
-        <Stat label="Open charges" value={String(grouped.overdue.length + grouped.due.length)} />
-        <Stat
-          label="Recorded payments"
-          value={String(detail.payments.length)}
-          subtle="kept for your records"
-        />
-      </div>
-
-      {grouped.overdue.length > 0 ? (
-        <Section
-          title="Overdue"
-          subtitle="Past their due date — please pay these as soon as possible."
-          tone="border-alert/30"
-        >
-          {grouped.overdue.map((c) => (
-            <ChargeRow key={c.id} charge={c} />
-          ))}
-        </Section>
-      ) : null}
-
-      {grouped.due.length > 0 ? (
-        <Section
-          title="Due now"
-          subtitle="Currently due. Pay using the method your landlord has set up."
-          tone="border-amber/30"
-        >
-          {grouped.due.map((c) => (
-            <ChargeRow key={c.id} charge={c} />
-          ))}
-        </Section>
-      ) : null}
-
-      {grouped.upcoming.length > 0 ? (
-        <Section title="Upcoming" subtitle="Scheduled — these are your future charges.">
-          {grouped.upcoming.map((c) => (
-            <ChargeRow key={c.id} charge={c} />
-          ))}
-        </Section>
-      ) : null}
-
-      {grouped.paid.length > 0 ? (
-        <Section title="Paid" subtitle="Your payment history.">
-          {grouped.paid.slice(0, 12).map((c) => (
-            <ChargeRow key={c.id} charge={c} />
-          ))}
-        </Section>
-      ) : null}
-
-      {detail.charges.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            <Wallet className="mx-auto mb-2 h-6 w-6" />
-            No rent activity yet. Your landlord hasn&apos;t issued any charges — they&apos;ll appear
-            here automatically.
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {detail.payments.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Payment history</CardTitle>
-            <CardDescription>
-              Recorded by your landlord (or via Tenantly when you start paying in-app).
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {detail.payments.slice(0, 25).map((p) => {
-              const payment = {
-                id: p.id,
-                amount_pence: p.amount_pence,
-                method: p.method as Parameters<typeof PaymentRow>[0]['payment']['method'],
-                status: p.status as Parameters<typeof PaymentRow>[0]['payment']['status'],
-                paid_at: p.paid_at,
-                notes: p.notes,
-              };
-              return <PaymentRow key={p.id} payment={payment} />;
-            })}
-          </CardContent>
-        </Card>
-      ) : null}
+      </SectionCard>
 
       <TenancyDocumentsCard tenancyId={tenancyId} actorRole="tenant" />
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Tenantly is free for you, forever</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          We never charge tenants a platform fee. The rent shown here is exactly what your landlord
-          agreed with you — nothing on top.
-        </CardContent>
-      </Card>
     </div>
+  );
+}
+
+function YearFilter({
+  activeValue,
+  options,
+  tenancyId,
+}: {
+  activeValue: string;
+  options: { value: string; label: string }[];
+  tenancyId: string;
+}) {
+  return (
+    <div className="inline-flex flex-wrap items-center gap-1 rounded-card border border-border-soft bg-white p-1">
+      {options.map((opt) => {
+        const isActive = opt.value === activeValue;
+        const href =
+          opt.value === 'all'
+            ? `/tenant/rent/${tenancyId}`
+            : `/tenant/rent/${tenancyId}?year=${opt.value}`;
+        return (
+          <Link
+            key={opt.value}
+            href={href}
+            className={cn(
+              'rounded-button px-3 py-1 text-[12px] font-semibold transition-colors',
+              isActive
+                ? 'bg-forest-600 text-white'
+                : 'text-ink-light hover:bg-foam hover:text-forest-700',
+            )}
+          >
+            {opt.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+const STATUS_BADGE: Record<
+  TenantPaymentRow['status'],
+  { label: (r: TenantPaymentRow) => string; classes: string }
+> = {
+  paid: { label: () => 'Paid', classes: 'bg-forest-100 text-forest-700' },
+  paid_late: { label: (r) => `${r.daysLate}d late`, classes: 'bg-amber-bg text-amber' },
+  due: { label: () => 'Due', classes: 'bg-amber-bg text-amber' },
+  overdue: { label: () => 'Overdue', classes: 'bg-alert-bg text-alert' },
+  upcoming: { label: () => 'Upcoming', classes: 'bg-foam text-forest-700' },
+  cancelled: { label: () => 'Cancelled', classes: 'bg-foam text-ink-light' },
+  partial: { label: () => 'Partial', classes: 'bg-amber-bg text-amber' },
+};
+
+function StatusBadge({ row }: { row: TenantPaymentRow }) {
+  const status = STATUS_BADGE[row.status];
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wider',
+        status.classes,
+      )}
+    >
+      {status.label(row)}
+    </span>
   );
 }
 
@@ -195,46 +333,10 @@ function pickFirst<T>(value: unknown): T | null {
   return value as T;
 }
 
-function Section({
-  title,
-  subtitle,
-  tone,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  tone?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card className={tone}>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        {subtitle ? <CardDescription>{subtitle}</CardDescription> : null}
-      </CardHeader>
-      <CardContent className="space-y-2">{children}</CardContent>
-    </Card>
-  );
+function shortDate(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-  subtle,
-}: {
-  label: string;
-  value: string;
-  tone?: string;
-  subtle?: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="space-y-1 py-5">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-        <div className={`text-2xl font-semibold ${tone ?? ''}`}>{value}</div>
-        {subtle ? <div className="text-xs text-muted-foreground">{subtle}</div> : null}
-      </CardContent>
-    </Card>
-  );
+function longDate(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }

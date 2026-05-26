@@ -25,6 +25,16 @@ export type CurrentProfile = {
   theme: 'light' | 'dark' | 'system';
   marketing_opt_in: boolean;
   created_at: string;
+  /**
+   * Tenant next-of-kin block — `{ name, relationship, phone }`. Stored as
+   * a single JSONB column on `public.profiles` (see migration
+   * 20260526). `null` when not set.
+   */
+  emergency_contact: {
+    name: string | null;
+    relationship: string | null;
+    phone: string | null;
+  } | null;
 };
 
 export async function loadCurrentProfile(): Promise<CurrentProfile | null> {
@@ -37,11 +47,17 @@ export async function loadCurrentProfile(): Promise<CurrentProfile | null> {
   const { data, error } = await supabase
     .from('profiles')
     .select(
-      'id, full_name, preferred_name, contact_email, contact_phone, locale, timezone, theme, marketing_opt_in, created_at',
+      'id, full_name, preferred_name, contact_email, contact_phone, locale, timezone, theme, marketing_opt_in, created_at, emergency_contact',
     )
     .eq('id', user.id)
     .maybeSingle();
   if (error || !data) return null;
+
+  const ec = (data.emergency_contact ?? null) as {
+    name?: string | null;
+    relationship?: string | null;
+    phone?: string | null;
+  } | null;
 
   return {
     id: data.id,
@@ -55,5 +71,12 @@ export async function loadCurrentProfile(): Promise<CurrentProfile | null> {
     theme: data.theme as 'light' | 'dark' | 'system',
     marketing_opt_in: data.marketing_opt_in,
     created_at: data.created_at,
+    emergency_contact: ec
+      ? {
+          name: ec.name ?? null,
+          relationship: ec.relationship ?? null,
+          phone: ec.phone ?? null,
+        }
+      : null,
   };
 }

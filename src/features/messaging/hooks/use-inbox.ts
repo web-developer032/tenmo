@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { createClient } from "@/lib/supabase/client";
-import { freshRealtimeChannel } from "@/lib/supabase/realtime";
-import { fetchInbox, type InboxResponse } from "../api/client";
-import { subscribeMessagingRead } from "../events";
+import * as React from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { freshRealtimeChannel } from '@/lib/supabase/realtime';
+import { fetchInbox, type InboxResponse } from '../api/client';
+import { subscribeMessagingRead } from '../events';
 
 /**
  * Live inbox feed for the /messages page + the app-shell badge.
@@ -34,7 +34,7 @@ export function useInbox(options: UseInboxOptions) {
   const { userId, initial, pollIntervalMs = POLL_FALLBACK_MS } = options;
 
   const [data, setData] = React.useState<InboxResponse>(
-    initial ?? { conversations: [], unread_total: 0 }
+    initial ?? { conversations: [], unread_total: 0 },
   );
   const [loading, setLoading] = React.useState<boolean>(!initial);
   const [error, setError] = React.useState<string | null>(null);
@@ -46,7 +46,7 @@ export function useInbox(options: UseInboxOptions) {
       const next = await fetchInbox();
       setData(next);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load inbox");
+      setError(err instanceof Error ? err.message : 'Failed to load inbox');
     } finally {
       setLoading(false);
     }
@@ -79,34 +79,26 @@ export function useInbox(options: UseInboxOptions) {
     };
 
     const channel = freshRealtimeChannel(supabase, `inbox:${userId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+        debouncedRefresh();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, () => {
+        debouncedRefresh();
+      })
       .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        () => {
-          debouncedRefresh();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages" },
-        () => {
-          debouncedRefresh();
-        }
-      )
-      .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "UPDATE",
-          schema: "public",
-          table: "conversation_participants",
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'conversation_participants',
           filter: `user_id=eq.${userId}`,
         },
         () => {
           debouncedRefresh();
-        }
+        },
       )
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") realtimeOpen = true;
+        if (status === 'SUBSCRIBED') realtimeOpen = true;
       });
 
     const fallbackTimer = setInterval(() => {
@@ -122,10 +114,7 @@ export function useInbox(options: UseInboxOptions) {
 
   // Same-tab fast path: when the active thread marks itself read, refresh
   // immediately rather than waiting for the realtime UPDATE round-trip.
-  React.useEffect(
-    () => subscribeMessagingRead(() => void refresh()),
-    [refresh]
-  );
+  React.useEffect(() => subscribeMessagingRead(() => void refresh()), [refresh]);
 
   return { data, loading, error, refresh };
 }

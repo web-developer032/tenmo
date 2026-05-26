@@ -26,11 +26,11 @@ export interface ChoosableTenancy {
  * paperwork.
  */
 export const CHOOSABLE_TENANCY_STATUSES = [
-  "pending_invite",
-  "awaiting_signature",
-  "awaiting_deposit",
-  "active",
-  "ended",
+  'pending_invite',
+  'awaiting_signature',
+  'awaiting_deposit',
+  'active',
+  'ended',
 ] as const;
 
 /**
@@ -43,9 +43,9 @@ export const CHOOSABLE_TENANCY_STATUSES = [
  *                         desc so the most recent appears first).
  */
 export type TenancyChooserResult =
-  | { kind: "empty" }
-  | { kind: "one"; targetId: string }
-  | { kind: "multi"; tenancies: ChoosableTenancy[] };
+  | { kind: 'empty' }
+  | { kind: 'one'; targetId: string }
+  | { kind: 'multi'; tenancies: ChoosableTenancy[] };
 
 /**
  * Decide what the /tenant/rent or /tenant/documents index page should
@@ -54,15 +54,10 @@ export type TenancyChooserResult =
  * Sorting rule for the multi case: most recent `start_date` first, so
  * the currently-occupied tenancy bubbles to the top of the picker.
  */
-export function chooseTenancyTarget(
-  tenancies: readonly ChoosableTenancy[]
-): TenancyChooserResult {
-  if (tenancies.length === 0) return { kind: "empty" };
-  if (tenancies.length === 1)
-    return { kind: "one", targetId: tenancies[0]!.id };
+export function chooseTenancyTarget(tenancies: readonly ChoosableTenancy[]): TenancyChooserResult {
+  if (tenancies.length === 0) return { kind: 'empty' };
+  if (tenancies.length === 1) return { kind: 'one', targetId: tenancies[0]!.id };
 
-  const sorted = [...tenancies].sort((a, b) =>
-    b.start_date.localeCompare(a.start_date)
-  );
-  return { kind: "multi", tenancies: sorted };
+  const sorted = [...tenancies].sort((a, b) => b.start_date.localeCompare(a.start_date));
+  return { kind: 'multi', tenancies: sorted };
 }

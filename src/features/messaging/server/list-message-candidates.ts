@@ -1,5 +1,5 @@
-import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import 'server-only';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * "Who can I start a direct conversation with?" lookup.
@@ -17,7 +17,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * `auth.users.id`, not `profiles.id`).
  */
 
-export type MessageCandidateKind = "member" | "tenant";
+export type MessageCandidateKind = 'member' | 'tenant';
 
 export interface MessageCandidate {
   user_id: string;
@@ -29,30 +29,30 @@ export interface MessageCandidate {
 }
 
 const ACTIVE_TENANCY_STATUSES = [
-  "pending_invite",
-  "awaiting_signature",
-  "awaiting_deposit",
-  "active",
+  'pending_invite',
+  'awaiting_signature',
+  'awaiting_deposit',
+  'active',
 ];
 
 export async function listMessageCandidates(
   supabase: SupabaseClient,
-  options: { orgId: string; excludeUserId: string }
+  options: { orgId: string; excludeUserId: string },
 ): Promise<MessageCandidate[]> {
   const [membersRes, tenanciesRes] = await Promise.all([
     supabase
-      .from("org_memberships")
-      .select("user_id, role")
-      .eq("org_id", options.orgId)
-      .is("revoked_at", null)
-      .neq("user_id", options.excludeUserId),
+      .from('org_memberships')
+      .select('user_id, role')
+      .eq('org_id', options.orgId)
+      .is('revoked_at', null)
+      .neq('user_id', options.excludeUserId),
     supabase
-      .from("tenancies")
-      .select("tenant_user_id, status")
-      .eq("org_id", options.orgId)
-      .not("tenant_user_id", "is", null)
-      .in("status", ACTIVE_TENANCY_STATUSES)
-      .neq("tenant_user_id", options.excludeUserId),
+      .from('tenancies')
+      .select('tenant_user_id, status')
+      .eq('org_id', options.orgId)
+      .not('tenant_user_id', 'is', null)
+      .in('status', ACTIVE_TENANCY_STATUSES)
+      .neq('tenant_user_id', options.excludeUserId),
   ]);
 
   if (membersRes.error) throw membersRes.error;
@@ -67,7 +67,7 @@ export async function listMessageCandidates(
       user_id: row.user_id,
       full_name: null,
       contact_email: null,
-      kind: "member",
+      kind: 'member',
       detail: row.role,
     });
   }
@@ -80,7 +80,7 @@ export async function listMessageCandidates(
       user_id: row.tenant_user_id,
       full_name: null,
       contact_email: null,
-      kind: "tenant",
+      kind: 'tenant',
       detail: row.status,
     });
   }
@@ -89,9 +89,9 @@ export async function listMessageCandidates(
   if (userIds.length === 0) return [];
 
   const { data: profiles, error: profErr } = await supabase
-    .from("profiles")
-    .select("id, full_name, contact_email")
-    .in("id", userIds);
+    .from('profiles')
+    .select('id, full_name, contact_email')
+    .in('id', userIds);
   if (profErr) throw profErr;
 
   for (const p of (profiles ?? []) as Array<{
@@ -106,8 +106,8 @@ export async function listMessageCandidates(
   }
 
   return Array.from(byId.values()).sort((a, b) => {
-    const an = (a.full_name ?? a.contact_email ?? "").toLowerCase();
-    const bn = (b.full_name ?? b.contact_email ?? "").toLowerCase();
+    const an = (a.full_name ?? a.contact_email ?? '').toLowerCase();
+    const bn = (b.full_name ?? b.contact_email ?? '').toLowerCase();
     return an.localeCompare(bn);
   });
 }

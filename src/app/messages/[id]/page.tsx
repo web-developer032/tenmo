@@ -1,19 +1,12 @@
-import { redirect } from "next/navigation";
-import { readRememberedWorkspace } from "@/features/app-shell/server";
-import { MessagesView } from "@/features/messaging/components/messages-view";
-import {
-  loadConversationParticipants,
-  loadInbox,
-  loadThread,
-} from "@/features/messaging/loaders";
-import {
-  listMessageCandidates,
-  type MessageCandidate,
-} from "@/features/messaging/server";
-import { loadRoleAvailability } from "@/features/role-switcher/loader";
-import { createClient } from "@/lib/supabase/server";
+import { redirect } from 'next/navigation';
+import { readRememberedWorkspace } from '@/features/app-shell/server';
+import { MessagesView } from '@/features/messaging/components/messages-view';
+import { loadConversationParticipants, loadInbox, loadThread } from '@/features/messaging/loaders';
+import { listMessageCandidates, type MessageCandidate } from '@/features/messaging/server';
+import { loadRoleAvailability } from '@/features/role-switcher/loader';
+import { createClient } from '@/lib/supabase/server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 /**
  * `/messages/[id]` — inbox + the active thread. Server-renders inbox,
@@ -24,11 +17,7 @@ export const dynamic = "force-dynamic";
  * inside a landlord workspace so the compose button stays usable from
  * inside a thread.
  */
-export default async function ConversationPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const {
@@ -36,18 +25,17 @@ export default async function ConversationPage({
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?redirect=/messages/${id}`);
 
-  const [inbox, thread, participants, workspace, availability] =
-    await Promise.all([
-      loadInbox(),
-      loadThread(id),
-      loadConversationParticipants(id),
-      readRememberedWorkspace(),
-      loadRoleAvailability(),
-    ]);
+  const [inbox, thread, participants, workspace, availability] = await Promise.all([
+    loadInbox(),
+    loadThread(id),
+    loadConversationParticipants(id),
+    readRememberedWorkspace(),
+    loadRoleAvailability(),
+  ]);
 
   let composeOrgId: string | null = null;
   let composeCandidates: MessageCandidate[] = [];
-  if (workspace?.kind === "landlord") {
+  if (workspace?.kind === 'landlord') {
     const org = availability.orgs.find((o) => o.slug === workspace.slug);
     if (org) {
       composeOrgId = org.id;
