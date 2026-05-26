@@ -9,6 +9,7 @@ import { AdminListQuery } from '@/core/schemas/admin';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
 import { AdminBanner, AdminFilterRow, AdminTabBar } from '@/features/admin/components/ds';
+import { buildExportQuery, ExportCsvLink } from '@/features/admin/components/export-csv-link';
 import { FilterSelect } from '@/features/admin/components/filter-select';
 import { NotifyLandlordButton } from '@/features/admin/components/notify-landlord-button';
 import {
@@ -85,6 +86,15 @@ export default async function AdminCompliancePage({ searchParams }: PageProps) {
           <>
             {result.total} active alert{result.total === 1 ? '' : 's'} across every landlord.
           </>
+        }
+        actions={
+          <ExportCsvLink
+            href={`/api/admin/compliance/export.csv${buildExportQuery({
+              q: params.q,
+              severity,
+              kind,
+            })}`}
+          />
         }
       />
 

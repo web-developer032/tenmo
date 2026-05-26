@@ -6,6 +6,7 @@ export {
 } from './admin-team';
 export {
   type AdminAnalytics,
+  type AdminAnalyticsPeriod,
   type AnalyticsPoint,
   type FeatureAdoptionRow,
   getAdminAnalytics,
@@ -13,6 +14,7 @@ export {
   type RevenueRow,
 } from './analytics';
 export { assertAdmin } from './assert-admin';
+export { type CsvColumn, csvResponse, MAX_EXPORT_ROWS, rowsToCsv } from './csv';
 export {
   type AdminDashboardStats,
   getDashboardStats,
@@ -81,6 +83,23 @@ export {
   listUsers,
   listUsersWithClient,
 } from './list-users';
+export {
+  type AdminChurn,
+  type AdminCsat,
+  type AdminLtvCac,
+  type AdminMrrDeltas,
+  type AdminRetentionCohorts,
+  type AdminTicketResponseStats,
+  type HealthService,
+  type HealthStatus,
+  loadAdminChurn,
+  loadAdminCsat,
+  loadAdminLtvCac,
+  loadAdminMrrDeltas,
+  loadAdminRetentionCohorts,
+  loadAdminTicketResponseStats,
+  loadPlatformHealthProbes,
+} from './metrics';
 export { overrideSubscription } from './override-subscription';
 export {
   getPlatformSettingsWithClient,

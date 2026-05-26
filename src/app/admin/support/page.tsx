@@ -5,12 +5,12 @@ import { KpiCard } from '@/components/ds/kpi-card';
 import { PageHeader } from '@/components/ds/page-header';
 import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AdminListQuery } from '@/core/schemas/admin';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
 import { AdminFilterRow, AdminTabBar } from '@/features/admin/components/ds';
+import { buildExportQuery, ExportCsvLink } from '@/features/admin/components/export-csv-link';
 import { FilterSelect } from '@/features/admin/components/filter-select';
 import { TicketRowActions } from '@/features/admin/components/ticket-row-actions';
 import {
@@ -18,6 +18,8 @@ import {
   hasAdminRole,
   type ListSupportParams,
   listSupportTicketsWithClient,
+  loadAdminCsat,
+  loadAdminTicketResponseStats,
 } from '@/features/admin/server';
 import { createClient } from '@/lib/supabase/server';
 
@@ -69,15 +71,19 @@ export default async function AdminSupportPage({ searchParams }: PageProps) {
   const priority = (sp.priority as ListSupportParams['priority']) ?? 'all';
   const assignee = sp.assignee ?? 'all';
 
-  const result = await listSupportTicketsWithClient(supabase, {
-    q: params.q ?? null,
-    filter: tab,
-    priority,
-    assignee,
-    callerId: user.id,
-    page: params.page,
-    perPage: params.per_page,
-  });
+  const [result, csat, response] = await Promise.all([
+    listSupportTicketsWithClient(supabase, {
+      q: params.q ?? null,
+      filter: tab,
+      priority,
+      assignee,
+      callerId: user.id,
+      page: params.page,
+      perPage: params.per_page,
+    }),
+    loadAdminCsat(supabase),
+    loadAdminTicketResponseStats(supabase),
+  ]);
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -90,13 +96,19 @@ export default async function AdminSupportPage({ searchParams }: PageProps) {
           </>
         }
         actions={
-          <Button size="sm" variant="ghost" disabled>
-            Export
-          </Button>
+          <ExportCsvLink
+            href={`/api/admin/support/export.csv${buildExportQuery({
+              q: params.q,
+              tab,
+              priority,
+              assignee,
+            })}`}
+            label="Export"
+          />
         }
       />
 
-      <ResponsiveGrid preset="kpi">
+      <ResponsiveGrid preset="kpi-5">
         <KpiCard
           accent="red"
           icon={<AlertCircle />}
@@ -120,10 +132,28 @@ export default async function AdminSupportPage({ searchParams }: PageProps) {
         />
         <KpiCard
           accent="blue"
+          icon={<Clock />}
+          label="Avg first response"
+          value={formatResponse(response.avg_minutes)}
+          sublabel={
+            response.sample_size > 0
+              ? `${response.sample_size} replies in 30 days`
+              : 'No replies yet'
+          }
+        />
+        <KpiCard
+          accent="purple"
           icon={<Heart />}
           label="CSAT satisfaction"
-          value="94%"
-          delta={{ value: 'Score', tone: 'info' }}
+          value={csat.csat_pct !== null ? `${csat.csat_pct}%` : '—'}
+          delta={
+            csat.csat_pct !== null
+              ? csat.csat_pct >= 80
+                ? { value: 'Score', tone: 'up' }
+                : { value: 'Watch', tone: 'warn' }
+              : undefined
+          }
+          sublabel={csat.sample_size > 0 ? `${csat.sample_size} ratings` : 'Awaiting feedback'}
         />
       </ResponsiveGrid>
 
@@ -350,4 +380,12 @@ function formatAge(iso: string): string {
   const hours = Math.round(minutes / 60);
   if (hours < 48) return `${hours}h`;
   return `${Math.round(hours / 24)}d`;
+}
+
+function formatResponse(avgMinutes: number | null): string {
+  if (avgMinutes === null) return '—';
+  if (avgMinutes < 60) return `${avgMinutes}m`;
+  const hours = Math.floor(avgMinutes / 60);
+  const mins = avgMinutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
 }

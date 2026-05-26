@@ -10,6 +10,7 @@ type Props = {
   stripeCustomerId: string | null;
   canEdit: boolean;
   hasFailure: boolean;
+  isTrial?: boolean;
 };
 
 /**
@@ -17,7 +18,13 @@ type Props = {
  * reminder", "Manage in Stripe". Roles without billing write
  * permission see a single read-only "View" affordance.
  */
-export function BillingRowActions({ orgId, stripeCustomerId, canEdit, hasFailure }: Props) {
+export function BillingRowActions({
+  orgId,
+  stripeCustomerId,
+  canEdit,
+  hasFailure,
+  isTrial = false,
+}: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -63,10 +70,12 @@ export function BillingRowActions({ orgId, stripeCustomerId, canEdit, hasFailure
       <Button
         size="sm"
         variant="ghost"
-        onClick={() => post(`/api/admin/billing/${orgId}/remind`, 'Reminder')}
+        onClick={() =>
+          post(`/api/admin/billing/${orgId}/remind`, isTrial ? 'Card reminder' : 'Reminder')
+        }
         disabled={pending}
       >
-        Send reminder
+        {isTrial ? 'Send card reminder' : 'Send reminder'}
       </Button>
       {stripeCustomerId ? (
         <Button asChild size="sm" variant="outline">

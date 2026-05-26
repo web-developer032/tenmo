@@ -130,9 +130,7 @@ export async function getDashboardStatsWithClient(
       .limit(4),
     sb
       .from('platform_support_tickets')
-      .select(
-        'id, ref_number, title, category, priority, status, created_at, profiles:reporter_user_id(full_name)',
-      )
+      .select('id, ref_number, title, category, priority, status, created_at, reporter_user_id')
       .in('status', ['open', 'in_progress'])
       .order('priority', { ascending: false })
       .order('created_at', { ascending: false })
@@ -155,6 +153,26 @@ export async function getDashboardStatsWithClient(
   if (paid.error) throw new DbError(paid.error);
   if (overrides.error) throw new DbError(overrides.error);
   if (activity.error) throw new DbError(activity.error);
+
+  // Hydrate reporter names for the open-tickets list. Mirrors the approach
+  // in listSupportTicketsWithClient since PostgREST cannot embed across the
+  // `auth.users` schema boundary.
+  const openTicketsRows = (openTickets.data ?? []) as Array<Record<string, unknown>>;
+  const reporterIds = new Set<string>();
+  for (const r of openTicketsRows) {
+    const id = r.reporter_user_id as string | null;
+    if (id) reporterIds.add(id);
+  }
+  const reporterNamesById = new Map<string, string | null>();
+  if (reporterIds.size > 0) {
+    const { data: profileRows } = await sb
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', Array.from(reporterIds));
+    for (const p of (profileRows ?? []) as Array<{ id: string; full_name: string | null }>) {
+      reporterNamesById.set(p.id, p.full_name);
+    }
+  }
 
   const series: MrrPoint[] = (mrrSeries.data ?? []).map((row) => ({
     month_start: row.month_start as string,
@@ -203,8 +221,8 @@ export async function getDashboardStatsWithClient(
       property_count: Number(r.property_count ?? 0),
       created_at: r.created_at as string,
     })),
-    open_tickets: ((openTickets.data ?? []) as Array<Record<string, unknown>>).map((r) => {
-      const profile = r.profiles as { full_name: string | null } | null;
+    open_tickets: openTicketsRows.map((r) => {
+      const reporterId = (r.reporter_user_id as string | null) ?? null;
       return {
         id: r.id as string,
         ref_number: Number(r.ref_number ?? 0),
@@ -212,7 +230,7 @@ export async function getDashboardStatsWithClient(
         category: r.category as string,
         priority: r.priority as 'low' | 'med' | 'high',
         status: r.status as 'open' | 'in_progress' | 'resolved',
-        reporter_name: profile?.full_name ?? null,
+        reporter_name: reporterId ? (reporterNamesById.get(reporterId) ?? null) : null,
         created_at: r.created_at as string,
       };
     }),

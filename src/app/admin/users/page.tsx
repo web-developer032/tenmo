@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminMemberActions } from '@/features/admin/components/admin-member-actions';
 import { AllProfilesSearchPopover } from '@/features/admin/components/all-profiles-search-popover';
+import { DangerZoneCard } from '@/features/admin/components/danger-zone-card';
 import { InviteAdminDialog } from '@/features/admin/components/invite-admin-dialog';
+import { RevokeInviteButton } from '@/features/admin/components/revoke-invite-button';
 import {
   PERMISSIONS,
   type PermissionRow,
@@ -137,7 +139,7 @@ export default async function AdminUserManagementPage() {
                           {inv.invited_by_name ?? 'unknown'}
                         </div>
                       </div>
-                      <div>
+                      <div className="flex items-center gap-2">
                         {expired ? (
                           <Badge variant="urgent">Expired</Badge>
                         ) : (
@@ -145,6 +147,11 @@ export default async function AdminUserManagementPage() {
                             Expires {expiresAt.toLocaleDateString('en-GB')}
                           </Badge>
                         )}
+                        <RevokeInviteButton
+                          inviteId={inv.id}
+                          inviteEmail={inv.email}
+                          disabled={!canEdit}
+                        />
                       </div>
                     </div>
                   );
@@ -154,6 +161,9 @@ export default async function AdminUserManagementPage() {
           </CardContent>
         </Card>
       </ResponsiveGrid>
+
+      {/* Danger zone — super admin only */}
+      <DangerZoneCard disabled={!canEdit} />
 
       {/* Role / permission matrix */}
       <Card>

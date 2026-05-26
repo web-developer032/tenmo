@@ -23,6 +23,7 @@ export type PlatformSettings = {
   compliance_alert_epc_days: number;
   compliance_alert_r2r_days: number;
   compliance_alert_deposit_days: number;
+  assumed_cac_pence: number;
   updated_at: string;
   updated_by: string | null;
 };
@@ -43,6 +44,7 @@ const DEFAULTS: PlatformSettings = {
   compliance_alert_epc_days: 60,
   compliance_alert_r2r_days: 60,
   compliance_alert_deposit_days: 30,
+  assumed_cac_pence: 4000,
   updated_at: new Date(0).toISOString(),
   updated_by: null,
 };

@@ -5,7 +5,6 @@ import { KpiCard } from '@/components/ds/kpi-card';
 import { PageHeader } from '@/components/ds/page-header';
 import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { AdminListQuery } from '@/core/schemas/admin';
@@ -13,9 +12,11 @@ import { formatMoneyWhole } from '@/core/utils/money';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
 import { BillingRowActions } from '@/features/admin/components/billing-row-actions';
-import { AdminBanner, AdminFilterRow } from '@/features/admin/components/ds';
+import { DismissableBanner } from '@/features/admin/components/dismissable-banner';
+import { AdminFilterRow } from '@/features/admin/components/ds';
+import { buildExportQuery, ExportCsvLink } from '@/features/admin/components/export-csv-link';
 import { FilterSelect } from '@/features/admin/components/filter-select';
-import { getAdminSelf, hasAdminRole } from '@/features/admin/server';
+import { getAdminSelf, hasAdminRole, loadAdminMrrDeltas } from '@/features/admin/server';
 import { listOrgSummaryWithClient } from '@/features/admin/server/list-org-summary';
 import { createClient } from '@/lib/supabase/server';
 
@@ -69,10 +70,14 @@ export default async function AdminBillingPage({ searchParams }: PageProps) {
     perPage: params.per_page,
   });
 
-  // KPI calculations — also include a full-platform aggregate so the
-  // numbers don't shift when filters are applied. We're already
-  // hitting the view; one more query for totals is fine.
-  const totals = await getBillingTotals(supabase);
+  const [totals, deltas] = await Promise.all([
+    getBillingTotals(supabase),
+    loadAdminMrrDeltas(supabase),
+  ]);
+  const payingPct =
+    totals.total_landlords > 0
+      ? Math.round((totals.paying_landlords / totals.total_landlords) * 1000) / 10
+      : null;
 
   const failuresInView = result.rows.filter(
     (r) => r.last_payment_status === 'failed' || r.status === 'past_due' || r.status === 'unpaid',
@@ -85,14 +90,21 @@ export default async function AdminBillingPage({ searchParams }: PageProps) {
         title="Subscriptions & Billing"
         description="Stripe-powered · all amounts in GBP."
         actions={
-          <Button size="sm" variant="ghost" disabled>
-            Export billing report
-          </Button>
+          <ExportCsvLink
+            href={`/api/admin/billing/export.csv${buildExportQuery({
+              q: params.q,
+              tier,
+              status,
+              sort,
+            })}`}
+            label="Export billing report"
+          />
         }
       />
 
       {totals.failed_count > 0 ? (
-        <AdminBanner
+        <DismissableBanner
+          storageKey="tenantly:admin:billing:failures-banner"
           tone="alert"
           title={`${totals.failed_count} payment failure${totals.failed_count === 1 ? '' : 's'} — action required`}
           description="Stripe will retry automatically — manual outreach recommended after 3 failures."
@@ -105,14 +117,17 @@ export default async function AdminBillingPage({ searchParams }: PageProps) {
           icon={<CreditCard />}
           label="MRR"
           value={formatMoneyWhole(totals.mrr_pence)}
-          delta={{ value: '↑ 12%', tone: 'up' }}
+          delta={deltaPill(deltas.mrr_delta_pct)}
         />
         <KpiCard
           accent="forest"
           icon={<Users />}
           label="Paying landlords"
           value={totals.paying_landlords.toString()}
-          delta={{ value: '98.2%', tone: 'info' }}
+          delta={payingPct !== null ? { value: `${payingPct}%`, tone: 'info' } : undefined}
+          sublabel={
+            totals.total_landlords > 0 ? `${totals.total_landlords} total landlords` : undefined
+          }
         />
         <KpiCard
           accent="amber"
@@ -126,7 +141,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps) {
           icon={<ArrowUp />}
           label="Churn rate"
           value={`${totals.churn_pct.toFixed(1)}%`}
-          delta={{ value: 'Watch', tone: 'warn' }}
+          delta={totals.churn_pct > 5 ? { value: 'Watch', tone: 'warn' } : undefined}
         />
         <KpiCard
           accent="blue"
@@ -268,6 +283,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps) {
                             stripeCustomerId={o.stripe_customer_id}
                             canEdit={canEdit}
                             hasFailure={failed}
+                            isTrial={o.status === 'trialing'}
                           />
                         </td>
                       </tr>
@@ -325,6 +341,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps) {
                         stripeCustomerId={o.stripe_customer_id}
                         canEdit={canEdit}
                         hasFailure={failed}
+                        isTrial={o.status === 'trialing'}
                       />
                     </div>
                   </div>
@@ -354,6 +371,7 @@ export default async function AdminBillingPage({ searchParams }: PageProps) {
 type BillingTotals = {
   mrr_pence: number;
   paying_landlords: number;
+  total_landlords: number;
   failed_count: number;
   churn_pct: number;
 };
@@ -361,12 +379,11 @@ type BillingTotals = {
 async function getBillingTotals(
   supabase: Awaited<ReturnType<typeof createClient>>,
 ): Promise<BillingTotals> {
-  const [subs, breakdown, canceledMonth, totalActive] = await Promise.all([
+  const [subs, canceledMonth, totalActive, totalLandlords] = await Promise.all([
     supabase
       .from('org_subscriptions')
       .select('mrr_pence, status, last_payment_status', { count: 'exact', head: false })
       .gt('mrr_pence', 0),
-    supabase.from('admin_plan_breakdown').select('landlord_count'),
     supabase
       .from('org_subscriptions')
       .select('org_id', { count: 'exact', head: true })
@@ -376,6 +393,7 @@ async function getBillingTotals(
       .from('org_subscriptions')
       .select('org_id', { count: 'exact', head: true })
       .in('status', ['active', 'trialing', 'past_due']),
+    supabase.from('orgs').select('id', { count: 'exact', head: true }).is('deleted_at', null),
   ]);
 
   const rows = (subs.data ?? []) as Array<{
@@ -394,10 +412,22 @@ async function getBillingTotals(
   const active = totalActive.count ?? 0;
   const churn_pct = active > 0 ? (canceled / active) * 100 : 0;
 
-  // Suppress unused warning — breakdown is reserved for future split.
-  void breakdown;
+  return {
+    mrr_pence,
+    paying_landlords,
+    total_landlords: totalLandlords.count ?? 0,
+    failed_count,
+    churn_pct,
+  };
+}
 
-  return { mrr_pence, paying_landlords, failed_count, churn_pct };
+function deltaPill(value: number | null): { value: string; tone: 'up' | 'down' } | undefined {
+  if (value === null || value === 0) return undefined;
+  const arrow = value >= 0 ? '↑' : '↓';
+  return {
+    value: `${arrow} ${Math.abs(value)}%`,
+    tone: value >= 0 ? 'up' : 'down',
+  };
 }
 
 function TierPill({ tier, mrrPence }: { tier: string | null; mrrPence: number }) {

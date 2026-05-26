@@ -59,12 +59,14 @@ export async function listSupportTicketsWithClient(
 ): Promise<ListSupportResult> {
   const range = computePaginationRange(params.page, params.perPage);
 
+  // PostgREST cannot auto-embed reporter / assignee through `auth.users`
+  // because that schema is not exposed by default. We hydrate `profiles`
+  // for both columns in a follow-up query keyed by the returned IDs.
+  // `org` is in the public schema so we can embed it directly.
   let query = sb.from('platform_support_tickets').select(
     `id, ref_number, title, description, category, priority, status,
        reporter_user_id, org_id, assigned_to, resolved_at, created_at, updated_at,
-       reporter:reporter_user_id(full_name, contact_email),
-       assignee:assigned_to(full_name),
-       org:org_id(name)`,
+       org:orgs!org_id(name)`,
     { count: 'exact' },
   );
 
@@ -107,12 +109,42 @@ export async function listSupportTicketsWithClient(
   const { data, error, count } = await query.range(range.rangeStart, range.rangeEnd);
   if (error) throw new DbError(error);
 
-  const rows: AdminTicketRow[] = ((data ?? []) as Array<Record<string, unknown>>).map((r) => {
-    const reporter = r.reporter as {
+  // Collect the unique reporter/assignee IDs we still need to resolve, then
+  // hydrate `profiles` in a single roundtrip (PostgREST cannot auto-embed
+  // across the `auth.users` schema boundary).
+  const dataRows = (data ?? []) as Array<Record<string, unknown>>;
+  const profileIds = new Set<string>();
+  for (const r of dataRows) {
+    const reporter = r.reporter_user_id as string | null;
+    const assignee = r.assigned_to as string | null;
+    if (reporter) profileIds.add(reporter);
+    if (assignee) profileIds.add(assignee);
+  }
+
+  const profilesById = new Map<
+    string,
+    { full_name: string | null; contact_email: string | null }
+  >();
+  if (profileIds.size > 0) {
+    const { data: profileRows, error: profileErr } = await sb
+      .from('profiles')
+      .select('id, full_name, contact_email')
+      .in('id', Array.from(profileIds));
+    if (profileErr) throw new DbError(profileErr);
+    for (const p of (profileRows ?? []) as Array<{
+      id: string;
       full_name: string | null;
       contact_email: string | null;
-    } | null;
-    const assignee = r.assignee as { full_name: string | null } | null;
+    }>) {
+      profilesById.set(p.id, { full_name: p.full_name, contact_email: p.contact_email });
+    }
+  }
+
+  const rows: AdminTicketRow[] = dataRows.map((r) => {
+    const reporterId = (r.reporter_user_id as string | null) ?? null;
+    const assigneeId = (r.assigned_to as string | null) ?? null;
+    const reporter = reporterId ? (profilesById.get(reporterId) ?? null) : null;
+    const assignee = assigneeId ? (profilesById.get(assigneeId) ?? null) : null;
     const org = r.org as { name: string | null } | null;
     return {
       id: r.id as string,
@@ -122,12 +154,12 @@ export async function listSupportTicketsWithClient(
       category: r.category as AdminTicketRow['category'],
       priority: r.priority as AdminTicketRow['priority'],
       status: r.status as AdminTicketRow['status'],
-      reporter_user_id: (r.reporter_user_id as string | null) ?? null,
+      reporter_user_id: reporterId,
       reporter_name: reporter?.full_name ?? null,
       reporter_email: reporter?.contact_email ?? null,
       org_id: (r.org_id as string | null) ?? null,
       org_name: org?.name ?? null,
-      assigned_to: (r.assigned_to as string | null) ?? null,
+      assigned_to: assigneeId,
       assignee_name: assignee?.full_name ?? null,
       resolved_at: (r.resolved_at as string | null) ?? null,
       created_at: r.created_at as string,

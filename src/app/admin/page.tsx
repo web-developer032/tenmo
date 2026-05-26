@@ -1,10 +1,10 @@
 import {
-  AlertCircle,
-  ArrowUpRight,
   Building2,
+  Clock,
   CreditCard,
   LifeBuoy,
   LineChart,
+  TrendingDown,
   TrendingUp,
   UserPlus,
   Users,
@@ -19,28 +19,46 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { formatMoneyShort, formatMoneyWhole } from '@/core/utils/money';
+import { DashboardMonthPicker } from '@/features/admin/components/dashboard-month-picker';
 import { AdminBarChart } from '@/features/admin/components/ds';
 import { AdminPlatformHealth } from '@/features/admin/components/ds/admin-platform-health';
+import { ExportCsvLink } from '@/features/admin/components/export-csv-link';
 import { loadAdminDashboardStats } from '@/features/admin/loaders';
 import type { OpenTicketRow, RecentSignupRow } from '@/features/admin/server/dashboard-stats';
-import { getServerEnv } from '@/lib/env.server';
+import {
+  loadAdminChurn,
+  loadAdminMrrDeltas,
+  loadAdminTicketResponseStats,
+  loadPlatformHealthProbes,
+} from '@/features/admin/server/metrics';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
+
+interface PageProps {
+  searchParams: Promise<{
+    month?: string;
+  }>;
+}
 
 /**
  * /admin — Platform Dashboard.
  *
- * Two KPI rows (5-up + 4-up), an MRR bar chart paired with plan
- * breakdown + platform health, and a bottom row pairing recent
- * landlord signups with open support tickets.
- *
- * Data comes from the views + seed introduced by
- * `20260520000000_admin_platform.sql`. Platform health surfaces env
- * presence checks plus the payment-failure rollup — no live HTTP
- * probes yet (a "no creds → degraded" hint instead).
+ * Matches the HMOeez reference: two KPI rows (5-up + 4-up) backed by
+ * real MRR snapshots + churn / response-time / health probes, an MRR
+ * chart paired with plan breakdown + platform health, then a bottom
+ * row with recent signups and the open ticket queue.
  */
-export default async function AdminDashboardPage() {
-  const stats = await loadAdminDashboardStats();
+export default async function AdminDashboardPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const sb = await createClient();
+  const [stats, deltas, churn, response, healthProbes] = await Promise.all([
+    loadAdminDashboardStats(),
+    loadAdminMrrDeltas(sb),
+    loadAdminChurn(sb),
+    loadAdminTicketResponseStats(sb),
+    loadPlatformHealthProbes(),
+  ]);
 
   const monthLabels = stats.series.mrr.map((p) => monthLetter(new Date(p.month_start)));
   const mrrChart = stats.series.mrr.map((p, idx) => ({
@@ -50,11 +68,15 @@ export default async function AdminDashboardPage() {
     highlight: idx === stats.series.mrr.length - 1,
   }));
 
-  const mrrDelta = stats.mrr.delta_pct;
   const previousEntry = stats.series.mrr.at(-2);
   const previousLabel = previousEntry
     ? monthLetter(new Date(previousEntry.month_start))
     : 'last month';
+
+  const monthOptions = buildMonthOptions(stats.series.mrr.map((p) => p.month_start));
+  const currentMonth = sp.month ?? monthOptions[0]?.value ?? '';
+
+  const overallHealth = computeOverallHealth(healthProbes);
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -63,12 +85,16 @@ export default async function AdminDashboardPage() {
         title="Platform Dashboard"
         description="Live overview · last updated just now"
         actions={
-          <Link
-            href="/admin/analytics"
-            className="inline-flex items-center gap-1.5 rounded-button border border-border-soft bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-mid transition-colors hover:bg-foam hover:text-forest-700"
-          >
-            <LineChart className="h-3.5 w-3.5" /> Full analytics
-          </Link>
+          <>
+            <DashboardMonthPicker months={monthOptions} current={currentMonth} />
+            <ExportCsvLink href="/api/admin/dashboard/export.csv" label="Export report" />
+            <Link
+              href="/admin/analytics"
+              className="inline-flex items-center gap-1.5 rounded-button border border-border-soft bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-mid transition-colors hover:bg-foam hover:text-forest-700"
+            >
+              <LineChart className="h-3.5 w-3.5" /> Full analytics
+            </Link>
+          </>
         }
       />
 
@@ -79,20 +105,14 @@ export default async function AdminDashboardPage() {
           label={`MRR (${monthLong(new Date())})`}
           value={formatMoneyWhole(stats.mrr.current_pence)}
           icon={<CreditCard />}
-          delta={
-            mrrDelta !== null
-              ? {
-                  value: `${mrrDelta >= 0 ? '+' : ''}${mrrDelta}%`,
-                  tone: mrrDelta >= 0 ? 'up' : 'down',
-                }
-              : undefined
-          }
+          delta={deltaPill(deltas.mrr_delta_pct, 'percent')}
         />
         <KpiCard
           accent="forest"
           label="Active landlords"
           value={stats.counts.orgs.toLocaleString('en-GB')}
           icon={<Building2 />}
+          delta={deltaPill(deltas.paying_delta_pct, 'percent')}
         />
         <KpiCard
           accent="forest"
@@ -102,11 +122,14 @@ export default async function AdminDashboardPage() {
         />
         <KpiCard
           accent="amber"
-          label="Compliance alerts"
-          value={stats.counts.compliance_critical.toLocaleString('en-GB')}
-          icon={<AlertCircle />}
-          delta={
-            stats.counts.compliance_critical > 0 ? { value: 'Watch', tone: 'warn' } : undefined
+          label="Monthly churn"
+          value={churn.pct !== null ? `${churn.pct}%` : '—'}
+          icon={<TrendingDown />}
+          delta={churn.pct !== null && churn.pct > 5 ? { value: 'Watch', tone: 'warn' } : undefined}
+          sublabel={
+            churn.canceled_count > 0
+              ? `${churn.canceled_count} cancellations in 30 days`
+              : undefined
           }
         />
         <KpiCard
@@ -131,20 +154,22 @@ export default async function AdminDashboardPage() {
           label="Annual run rate"
           value={formatMoneyShort(stats.mrr.arr_pence)}
           icon={<TrendingUp />}
-          delta={{ value: 'ARR', tone: 'info' }}
+          delta={deltaPill(deltas.arr_delta_pct, 'percent') ?? { value: 'ARR', tone: 'info' }}
         />
         <KpiCard
           accent="forest"
           label="New signups today"
           value={stats.counts.signups_today.toLocaleString('en-GB')}
           icon={<UserPlus />}
+          delta={{ value: 'Today', tone: 'info' }}
         />
         <KpiCard
           accent="blue"
-          label="Active overrides"
-          value={stats.counts.overrides_active.toLocaleString('en-GB')}
-          icon={<ArrowUpRight />}
-          delta={stats.counts.overrides_active > 0 ? { value: 'Manual', tone: 'info' } : undefined}
+          label="Avg support response"
+          value={formatResponse(response.avg_minutes)}
+          icon={<Clock />}
+          delta={{ value: 'Avg', tone: 'info' }}
+          sublabel={response.pending > 0 ? `${response.pending} awaiting first reply` : undefined}
         />
       </ResponsiveGrid>
 
@@ -173,13 +198,16 @@ export default async function AdminDashboardPage() {
                 </div>
                 <p className="mt-1 text-[12px] text-ink-light">
                   {monthLong(new Date())} ·{' '}
-                  {mrrDelta !== null ? (
+                  {deltas.mrr_delta_pct !== null ? (
                     <span
                       className={
-                        mrrDelta >= 0 ? 'font-semibold text-forest-600' : 'font-semibold text-alert'
+                        deltas.mrr_delta_pct >= 0
+                          ? 'font-semibold text-forest-600'
+                          : 'font-semibold text-alert'
                       }
                     >
-                      {mrrDelta >= 0 ? '↑' : '↓'} {Math.abs(mrrDelta)}% vs {previousLabel}
+                      {deltas.mrr_delta_pct >= 0 ? '↑' : '↓'} {Math.abs(deltas.mrr_delta_pct)}% vs{' '}
+                      {previousLabel}
                     </span>
                   ) : (
                     <span className="text-ink-light">No prior comparison</span>
@@ -222,10 +250,16 @@ export default async function AdminDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Platform health</CardTitle>
-              <Badge variant="success">All systems</Badge>
+              <Badge variant={overallHealth.variant}>{overallHealth.label}</Badge>
             </CardHeader>
             <CardContent>
-              <AdminPlatformHealth services={platformHealth()} />
+              <AdminPlatformHealth
+                services={healthProbes.map((p) => ({
+                  name: p.name,
+                  status: p.status,
+                  detail: p.detail,
+                }))}
+              />
             </CardContent>
           </Card>
         </div>
@@ -417,28 +451,61 @@ function relativeTime(iso: string): string {
   return `${Math.round(months / 12)}y ago`;
 }
 
-function platformHealth() {
-  // Light heuristic — full health checks land with Inngest cron in v1.1.
-  // For now we read env presence and degrade gracefully when a vendor is
-  // not configured.
-  const env = getServerEnv();
-  return [
-    { name: 'API', status: 'operational' as const },
-    { name: 'Web app', status: 'operational' as const },
-    {
-      name: 'Email (Resend)',
-      status: env.RESEND_API_KEY ? ('operational' as const) : ('degraded' as const),
-      detail: env.RESEND_API_KEY ? 'Operational' : 'Sandbox',
-    },
-    {
-      name: 'Payments (Stripe)',
-      status: env.STRIPE_SECRET_KEY ? ('operational' as const) : ('degraded' as const),
-      detail: env.STRIPE_SECRET_KEY ? 'Operational' : 'Sandbox',
-    },
-    {
-      name: 'GoCardless',
-      status: env.GOCARDLESS_ACCESS_TOKEN ? ('operational' as const) : ('degraded' as const),
-      detail: env.GOCARDLESS_ACCESS_TOKEN ? 'Operational' : 'Sandbox',
-    },
-  ];
+function deltaPill(
+  value: number | null,
+  unit: 'percent' | 'absolute',
+): { value: string; tone: 'up' | 'down' } | undefined {
+  if (value === null) return undefined;
+  if (value === 0) return undefined;
+  const arrow = value >= 0 ? '↑' : '↓';
+  const suffix = unit === 'percent' ? '%' : '';
+  return {
+    value: `${arrow} ${Math.abs(value)}${suffix}`,
+    tone: value >= 0 ? 'up' : 'down',
+  };
+}
+
+function formatResponse(avgMinutes: number | null): string {
+  if (avgMinutes === null) return '—';
+  if (avgMinutes < 60) return `${avgMinutes}m`;
+  const hours = Math.floor(avgMinutes / 60);
+  const mins = avgMinutes % 60;
+  return mins === 0 ? `${hours}h` : `${hours}h ${mins}m`;
+}
+
+function buildMonthOptions(snapshotMonths: string[]): { value: string; label: string }[] {
+  const seen = new Set<string>();
+  const fmt = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleString('en-GB', { month: 'short', year: 'numeric' });
+  };
+  const sorted = [...snapshotMonths].sort((a, b) => b.localeCompare(a));
+  const options: { value: string; label: string }[] = [];
+  for (const iso of sorted) {
+    const key = iso.slice(0, 7);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    options.push({ value: key, label: fmt(iso) });
+  }
+  if (options.length === 0) {
+    const now = new Date();
+    options.push({ value: now.toISOString().slice(0, 7), label: fmt(now.toISOString()) });
+  }
+  return options;
+}
+
+function computeOverallHealth(
+  probes: Array<{ status: 'operational' | 'degraded' | 'outage' | 'unknown' }>,
+): { label: string; variant: 'success' | 'warning' | 'urgent' | 'neutral' } {
+  if (probes.length === 0) return { label: 'No probes', variant: 'neutral' };
+  if (probes.some((p) => p.status === 'outage')) {
+    return { label: 'Outage', variant: 'urgent' };
+  }
+  if (probes.some((p) => p.status === 'degraded')) {
+    return { label: 'Degraded', variant: 'warning' };
+  }
+  if (probes.every((p) => p.status === 'unknown')) {
+    return { label: 'Unknown', variant: 'neutral' };
+  }
+  return { label: 'All systems ok', variant: 'success' };
 }

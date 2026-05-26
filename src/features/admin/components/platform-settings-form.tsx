@@ -32,6 +32,7 @@ type FormState = Pick<
   | 'compliance_alert_epc_days'
   | 'compliance_alert_r2r_days'
   | 'compliance_alert_deposit_days'
+  | 'assumed_cac_pence'
 >;
 
 /**
@@ -59,7 +60,32 @@ export function PlatformSettingsForm({ initial, canEdit }: Props) {
     compliance_alert_epc_days: initial.compliance_alert_epc_days,
     compliance_alert_r2r_days: initial.compliance_alert_r2r_days,
     compliance_alert_deposit_days: initial.compliance_alert_deposit_days,
+    assumed_cac_pence: initial.assumed_cac_pence,
   });
+  const [testEmailPending, setTestEmailPending] = useState(false);
+  const sendTestEmail = () => {
+    setTestEmailPending(true);
+    fetch('/api/admin/settings/send-test-email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+      .then(async (res) => {
+        const j = (await res.json().catch(() => null)) as {
+          data?: { provider?: string; to?: string };
+          error?: { message?: string };
+        } | null;
+        if (!res.ok) {
+          toast.error(j?.error?.message ?? 'Could not send test email');
+          return;
+        }
+        toast.success(`Test email queued via ${j?.data?.provider ?? 'mail'} to ${j?.data?.to}`);
+      })
+      .catch((err) => {
+        toast.error(err instanceof Error ? err.message : 'Could not send test email');
+      })
+      .finally(() => setTestEmailPending(false));
+  };
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((s) => ({ ...s, [key]: value }));
@@ -142,6 +168,13 @@ export function PlatformSettingsForm({ initial, canEdit }: Props) {
               onChange={(v) => setField('pro_property_limit', v)}
               disabled={disabled}
             />
+            <MoneyField
+              id="cac"
+              label="Assumed CAC (£)"
+              valuePence={form.assumed_cac_pence}
+              onChange={(v) => setField('assumed_cac_pence', v)}
+              disabled={disabled}
+            />
           </CardContent>
         </Card>
 
@@ -178,6 +211,17 @@ export function PlatformSettingsForm({ initial, canEdit }: Props) {
                 onChange={(e) => setField('support_email', e.target.value)}
                 disabled={disabled}
               />
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={!canEdit || testEmailPending}
+                onClick={sendTestEmail}
+              >
+                {testEmailPending ? 'Sending…' : 'Send test email'}
+              </Button>
             </div>
           </CardContent>
         </Card>

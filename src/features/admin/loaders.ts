@@ -2,6 +2,7 @@ import 'server-only';
 import { createClient } from '@/lib/supabase/server';
 import {
   type AdminAnalytics,
+  type AdminAnalyticsPeriod,
   type AdminDashboardStats,
   type AdminOrgDetail,
   type AdminTeamData,
@@ -52,6 +53,12 @@ export async function loadAdminLandlords(
   return listOrgSummaryWithClient(sb, params);
 }
 
+/**
+ * Used by the impersonation start route + danger zone to find a
+ * landlord by slug or name without going through the paginated list.
+ */
+export type { AdminOrgSummaryRow } from './server';
+
 export async function loadAdminTenants(params: ListTenantsParams): Promise<ListTenantsResult> {
   const sb = await createClient();
   return listTenantsWithClient(sb, params);
@@ -77,9 +84,11 @@ export async function loadAdminAudit(params: ListAuditParams): Promise<ListAudit
   return listAuditWithClient(sb, params);
 }
 
-export async function loadAdminAnalytics(): Promise<AdminAnalytics> {
+export async function loadAdminAnalytics(
+  period: AdminAnalyticsPeriod = '12m',
+): Promise<AdminAnalytics> {
   const sb = await createClient();
-  return getAdminAnalyticsWithClient(sb);
+  return getAdminAnalyticsWithClient(sb, period);
 }
 
 export async function loadAdminTeam(): Promise<AdminTeamData> {

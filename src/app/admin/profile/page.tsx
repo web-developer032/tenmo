@@ -16,6 +16,7 @@ import {
 } from '@/features/admin/data/role-permissions';
 import { getAdminSelf } from '@/features/admin/server';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,9 +38,10 @@ export default async function AdminProfilePage() {
   } = await supabase.auth.getUser();
   if (!user || !session) redirect('/login?redirect=/admin/profile');
 
-  const [self, profile] = await Promise.all([
+  const [self, profile, lastIp] = await Promise.all([
     getAdminSelf(supabase, user.id),
     loadCurrentProfile(),
+    loadLastSignInIp(user.id),
   ]);
 
   if (!profile) redirect('/login?redirect=/admin/profile');
@@ -199,6 +201,7 @@ export default async function AdminProfilePage() {
                 label="Admin since"
                 value={self.last_active_at ? formatDate(self.last_active_at) : '—'}
               />
+              <Row label="Last sign-in IP" value={lastIp ?? '—'} />
             </dl>
           </CardContent>
         </Card>
@@ -222,4 +225,35 @@ function formatDate(iso: string | null | undefined): string {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
+}
+
+/**
+ * Pull the IP for the user's most recent successful login from
+ * `auth.audit_log_entries`. The table is in the protected `auth`
+ * schema so we route through the service-role client — fall back to
+ * null when the schema isn't exposed (local dev with anon-only).
+ */
+async function loadLastSignInIp(userId: string): Promise<string | null> {
+  try {
+    const service = createServiceClient();
+    const { data, error } = await service
+      .schema('auth')
+      .from('audit_log_entries')
+      .select('payload, created_at')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error || !Array.isArray(data)) return null;
+    for (const row of data as Array<{ payload: Record<string, unknown> | null }>) {
+      const p = row.payload ?? {};
+      const actor = (p as { actor_id?: string }).actor_id;
+      const action = (p as { action?: string }).action;
+      if (actor === userId && action === 'login') {
+        const ip = (p as { traits?: { remote_ip?: string } }).traits?.remote_ip;
+        if (typeof ip === 'string' && ip.length > 0) return ip;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

@@ -2,6 +2,7 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { NOTIFICATION_BELL_LIMIT } from '@/core/constants/notifications';
+import { readImpersonationContext } from '@/features/admin/impersonation';
 import { InboxIcon } from '@/features/messaging/components/inbox-icon';
 import { loadUnreadMessagesCount } from '@/features/messaging/loaders';
 import { NotificationBell } from '@/features/notifications/components/notification-bell';
@@ -9,6 +10,7 @@ import { loadNotificationFeed } from '@/features/notifications/loaders';
 import { loadRoleAvailability } from '@/features/role-switcher/loader';
 import { RoleSwitcher } from '@/features/role-switcher/role-switcher';
 import { createClient } from '@/lib/supabase/server';
+import { ImpersonationBanner } from './impersonation-banner';
 import { MobileDrawer, MobileDrawerProvider } from './mobile-drawer';
 import { Topbar, TopbarActions, TopbarSearch, TopbarTitle } from './topbar';
 import { UserMenu } from './user-menu';
@@ -43,12 +45,14 @@ export async function AppShell({ children, sidebar, pageTitle, pageSubtitle }: A
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const [availability, profileResp, notifications, unreadMessages] = await Promise.all([
-    loadRoleAvailability(),
-    supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).maybeSingle(),
-    loadNotificationFeed(NOTIFICATION_BELL_LIMIT),
-    loadUnreadMessagesCount(),
-  ]);
+  const [availability, profileResp, notifications, unreadMessages, impersonation] =
+    await Promise.all([
+      loadRoleAvailability(),
+      supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).maybeSingle(),
+      loadNotificationFeed(NOTIFICATION_BELL_LIMIT),
+      loadUnreadMessagesCount(),
+      readImpersonationContext(),
+    ]);
 
   const topbarRight = (
     <>
@@ -83,6 +87,12 @@ export async function AppShell({ children, sidebar, pageTitle, pageSubtitle }: A
         ) : null}
 
         <div className="flex min-w-0 flex-1 flex-col">
+          {impersonation ? (
+            <ImpersonationBanner
+              targetName={impersonation.name}
+              targetEmail={impersonation.email}
+            />
+          ) : null}
           <Topbar>
             <TopbarTitle title={pageTitle ?? 'Tenantly'} subtitle={pageSubtitle} />
             <TopbarActions>{topbarRight}</TopbarActions>

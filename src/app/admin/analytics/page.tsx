@@ -6,11 +6,19 @@ import { ResponsiveGrid } from '@/components/ds/responsive-grid';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { formatMoneyShort, formatMoneyWhole } from '@/core/utils/money';
+import { AnalyticsPeriodPicker } from '@/features/admin/components/analytics-period-picker';
 import { AdminBarChart } from '@/features/admin/components/ds';
 import { AdminFeatureBar } from '@/features/admin/components/ds/admin-feature-bar';
 import { loadAdminAnalytics } from '@/features/admin/loaders';
+import type { AdminAnalyticsPeriod } from '@/features/admin/server';
 
 export const dynamic = 'force-dynamic';
+
+const ALLOWED_PERIODS: ReadonlyArray<AdminAnalyticsPeriod> = ['3m', '6m', '12m', 'ytd'];
+
+interface PageProps {
+  searchParams: Promise<{ period?: string }>;
+}
 
 /**
  * /admin/analytics — growth + revenue + retention dashboard.
@@ -20,8 +28,12 @@ export const dynamic = 'force-dynamic';
  * dashboard, plus the `admin_signups_by_month` view and live counts
  * for feature adoption.
  */
-export default async function AdminAnalyticsPage() {
-  const analytics = await loadAdminAnalytics();
+export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const period: AdminAnalyticsPeriod = ALLOWED_PERIODS.includes(sp.period as AdminAnalyticsPeriod)
+    ? (sp.period as AdminAnalyticsPeriod)
+    : '12m';
+  const analytics = await loadAdminAnalytics(period);
 
   const mrrChart = analytics.series.mrr.map((p, idx) => ({
     label: monthShort(new Date(p.month_start)),
@@ -43,6 +55,7 @@ export default async function AdminAnalyticsPage() {
         breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Analytics' }]}
         title="Analytics"
         description="Growth, revenue and retention metrics."
+        actions={<AnalyticsPeriodPicker current={analytics.period} />}
       />
 
       <ResponsiveGrid preset="kpi">
@@ -91,7 +104,7 @@ export default async function AdminAnalyticsPage() {
       <ResponsiveGrid preset="cards-2">
         <Card>
           <CardHeader>
-            <CardTitle>MRR growth · 12 months</CardTitle>
+            <CardTitle>MRR growth · {periodLabel(analytics.period)}</CardTitle>
           </CardHeader>
           <CardContent>
             <AdminBarChart data={mrrChart} height={160} variant="forest" />
@@ -100,7 +113,7 @@ export default async function AdminAnalyticsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>New landlord signups · 12 months</CardTitle>
+            <CardTitle>New landlord signups · {periodLabel(analytics.period)}</CardTitle>
             <span className="text-[12px] text-ink-light">
               <UserPlus className="mr-1 inline h-3.5 w-3.5" />
               {analytics.series.signups.reduce((acc, p) => acc + p.signups, 0)} total
@@ -176,21 +189,35 @@ export default async function AdminAnalyticsPage() {
                   label="LTV : CAC ratio"
                   value={
                     <span className="text-forest-700">
-                      {analytics.cohort.ltv_cac_ratio.toFixed(1)}x
+                      {analytics.cohort.ltv_cac_ratio === null
+                        ? '—'
+                        : `${analytics.cohort.ltv_cac_ratio.toFixed(1)}x`}
                     </span>
                   }
                 />
                 <MiniStat
                   label="30-day retention"
-                  value={`${analytics.cohort.retention_30d_pct}%`}
+                  value={
+                    analytics.cohort.retention_30d_pct === null
+                      ? '—'
+                      : `${analytics.cohort.retention_30d_pct}%`
+                  }
                 />
                 <MiniStat
                   label="90-day retention"
-                  value={`${analytics.cohort.retention_90d_pct}%`}
+                  value={
+                    analytics.cohort.retention_90d_pct === null
+                      ? '—'
+                      : `${analytics.cohort.retention_90d_pct}%`
+                  }
                 />
                 <MiniStat
                   label="12-month retention"
-                  value={`${analytics.cohort.retention_12m_pct}%`}
+                  value={
+                    analytics.cohort.retention_12m_pct === null
+                      ? '—'
+                      : `${analytics.cohort.retention_12m_pct}%`
+                  }
                 />
               </MiniStatList>
             </CardContent>
@@ -211,4 +238,11 @@ function planLabel(tier: string): string {
 
 function formatPenceShort(pence: number): string {
   return pence === 0 ? '—' : `£${pence / 100}`;
+}
+
+function periodLabel(period: AdminAnalyticsPeriod): string {
+  if (period === '3m') return '3 months';
+  if (period === '6m') return '6 months';
+  if (period === 'ytd') return 'year to date';
+  return '12 months';
 }

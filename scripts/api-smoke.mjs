@@ -286,8 +286,7 @@ for (const route of filtered) {
     if (sess) headers.Cookie = `${COOKIE_NAME}=${sess.cookie}`;
   }
 
-  const body =
-    route.body !== undefined ? JSON.stringify(substituteDeep(route.body)) : undefined;
+  const body = route.body !== undefined ? JSON.stringify(substituteDeep(route.body)) : undefined;
 
   const started = Date.now();
   let status = 0;

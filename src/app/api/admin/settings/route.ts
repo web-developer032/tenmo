@@ -30,6 +30,7 @@ const Body = z
     compliance_alert_epc_days: z.number().int().min(0).max(365).optional(),
     compliance_alert_r2r_days: z.number().int().min(0).max(365).optional(),
     compliance_alert_deposit_days: z.number().int().min(0).max(365).optional(),
+    assumed_cac_pence: z.number().int().min(0).max(1_000_000).optional(),
   })
   .strict()
   .refine((v) => Object.keys(v).length > 0, { message: 'Provide at least one field' });

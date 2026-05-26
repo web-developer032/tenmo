@@ -24,7 +24,11 @@ export type AdminEventKind =
   | 'support_ticket_assigned'
   | 'support_ticket_resolved'
   | 'compliance_alert_sent'
-  | 'platform_settings_updated';
+  | 'platform_settings_updated'
+  | 'landlord_deleted'
+  | 'landlord_undeleted'
+  | 'csat_submitted'
+  | 'admin_invite_revoked';
 
 export const ADMIN_EVENT_KIND_VALUES: AdminEventKind[] = [
   'user_viewed',
@@ -46,6 +50,10 @@ export const ADMIN_EVENT_KIND_VALUES: AdminEventKind[] = [
   'support_ticket_resolved',
   'compliance_alert_sent',
   'platform_settings_updated',
+  'landlord_deleted',
+  'landlord_undeleted',
+  'csat_submitted',
+  'admin_invite_revoked',
 ];
 
 export const ADMIN_EVENT_LABEL: Record<AdminEventKind, string> = {
@@ -68,6 +76,10 @@ export const ADMIN_EVENT_LABEL: Record<AdminEventKind, string> = {
   support_ticket_resolved: 'Support ticket resolved',
   compliance_alert_sent: 'Compliance alert sent',
   platform_settings_updated: 'Platform settings updated',
+  landlord_deleted: 'Landlord deleted',
+  landlord_undeleted: 'Landlord reinstated (undeleted)',
+  csat_submitted: 'CSAT rating submitted',
+  admin_invite_revoked: 'Admin invite revoked',
 };
 
 export const ADMIN_EVENT_TONE: Record<AdminEventKind, string> = {
@@ -90,6 +102,10 @@ export const ADMIN_EVENT_TONE: Record<AdminEventKind, string> = {
   support_ticket_resolved: 'bg-foam text-forest-700',
   compliance_alert_sent: 'bg-amber-bg text-amber',
   platform_settings_updated: 'bg-purple-bg text-purple',
+  landlord_deleted: 'bg-alert-bg text-alert',
+  landlord_undeleted: 'bg-foam text-forest-700',
+  csat_submitted: 'bg-foam text-forest-700',
+  admin_invite_revoked: 'bg-amber-bg text-amber',
 };
 
 /** Default page size for admin list views. Trades scroll length

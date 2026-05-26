@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { DbError } from '@/lib/errors';
 import type { HandlerContext } from '@/lib/handler';
+import { loadAdminLtvCac } from './metrics/ltv';
+import { loadAdminRetentionCohorts } from './metrics/retention';
 
 /**
  * Aggregated data for the `/admin/analytics` page:
@@ -34,7 +36,10 @@ export type RevenueRow = {
   total_pence: number;
 };
 
+export type AdminAnalyticsPeriod = '3m' | '6m' | '12m' | 'ytd';
+
 export interface AdminAnalytics {
+  period: AdminAnalyticsPeriod;
   kpi: {
     mrr_pence: number;
     mrr_delta_pct: number | null;
@@ -51,14 +56,25 @@ export interface AdminAnalytics {
   revenue: RevenueRow[];
   cohort: {
     avg_ltv_pence: number;
-    ltv_cac_ratio: number;
-    retention_30d_pct: number;
-    retention_90d_pct: number;
-    retention_12m_pct: number;
+    ltv_cac_ratio: number | null;
+    retention_30d_pct: number | null;
+    retention_90d_pct: number | null;
+    retention_12m_pct: number | null;
   };
 }
 
-export async function getAdminAnalyticsWithClient(sb: SupabaseClient): Promise<AdminAnalytics> {
+function monthsForPeriod(period: AdminAnalyticsPeriod): number {
+  if (period === '3m') return 3;
+  if (period === '6m') return 6;
+  if (period === 'ytd') return new Date().getUTCMonth() + 1;
+  return 12;
+}
+
+export async function getAdminAnalyticsWithClient(
+  sb: SupabaseClient,
+  period: AdminAnalyticsPeriod = '12m',
+): Promise<AdminAnalytics> {
+  const seriesLimit = Math.max(1, monthsForPeriod(period));
   const [
     mrr,
     signupsByMonth,
@@ -76,13 +92,13 @@ export async function getAdminAnalyticsWithClient(sb: SupabaseClient): Promise<A
     sb
       .from('mrr_snapshots')
       .select('month_start, mrr_pence, paying_landlords, signups')
-      .order('month_start', { ascending: true })
-      .limit(12),
+      .order('month_start', { ascending: false })
+      .limit(seriesLimit),
     sb
       .from('admin_signups_by_month')
       .select('month_start, signups')
-      .order('month_start', { ascending: true })
-      .limit(12),
+      .order('month_start', { ascending: false })
+      .limit(seriesLimit),
     sb.from('admin_plan_breakdown').select('tier, status, landlord_count, mrr_pence'),
     sb.from('orgs').select('id', { count: 'exact', head: true }),
     sb.from('properties').select('id', { count: 'exact', head: true }).is('archived_at', null),
@@ -109,12 +125,15 @@ export async function getAdminAnalyticsWithClient(sb: SupabaseClient): Promise<A
 
   if (mrr.error) throw new DbError(mrr.error);
 
-  const mrrSeries: AnalyticsPoint[] = (mrr.data ?? []).map((r) => ({
-    month_start: r.month_start as string,
-    mrr_pence: Number(r.mrr_pence ?? 0),
-    paying_landlords: Number(r.paying_landlords ?? 0),
-    signups: Number(r.signups ?? 0),
-  }));
+  const mrrSeries: AnalyticsPoint[] = (mrr.data ?? [])
+    .slice()
+    .reverse()
+    .map((r) => ({
+      month_start: r.month_start as string,
+      mrr_pence: Number(r.mrr_pence ?? 0),
+      paying_landlords: Number(r.paying_landlords ?? 0),
+      signups: Number(r.signups ?? 0),
+    }));
 
   // Backfill signups from admin_signups_by_month for the same window so
   // both charts use a consistent 12-month axis.
@@ -205,13 +224,13 @@ export async function getAdminAnalyticsWithClient(sb: SupabaseClient): Promise<A
     .select('id', { count: 'exact', head: true })
     .gte('created_at', todayStartIso);
 
-  // Cohort metrics are placeholder values until we wire up the cancellation
-  // ledger; this keeps the page populated for the demo without inventing
-  // misleading numbers per row.
-  const avgLtvPence =
-    currentMrr === 0 ? 0 : Math.round((currentMrr * 12) / Math.max(totalOrgCount, 1));
+  // Real cohort retention + LTV/CAC. These return `null` when the
+  // cohort window has no orgs (or CAC is misconfigured); the UI
+  // displays `—` in that case.
+  const [ltv, retention] = await Promise.all([loadAdminLtvCac(sb), loadAdminRetentionCohorts(sb)]);
 
   return {
+    period,
     kpi: {
       mrr_pence: currentMrr,
       mrr_delta_pct: deltaPct,
@@ -224,15 +243,18 @@ export async function getAdminAnalyticsWithClient(sb: SupabaseClient): Promise<A
     feature_adoption: featureAdoption,
     revenue,
     cohort: {
-      avg_ltv_pence: avgLtvPence,
-      ltv_cac_ratio: 16.9,
-      retention_30d_pct: 88,
-      retention_90d_pct: 79,
-      retention_12m_pct: 64,
+      avg_ltv_pence: ltv.avg_ltv_pence,
+      ltv_cac_ratio: ltv.ltv_cac_ratio,
+      retention_30d_pct: retention.retention_30d_pct,
+      retention_90d_pct: retention.retention_90d_pct,
+      retention_12m_pct: retention.retention_12m_pct,
     },
   };
 }
 
-export function getAdminAnalytics(ctx: HandlerContext): Promise<AdminAnalytics> {
-  return getAdminAnalyticsWithClient(ctx.supabase);
+export function getAdminAnalytics(
+  ctx: HandlerContext,
+  period: AdminAnalyticsPeriod = '12m',
+): Promise<AdminAnalytics> {
+  return getAdminAnalyticsWithClient(ctx.supabase, period);
 }

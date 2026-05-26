@@ -1,8 +1,8 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { AvRow } from '@/components/ds/av-row';
 import { PageHeader } from '@/components/ds/page-header';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SUBSCRIPTION_PLANS } from '@/core/constants/billing';
 import { AdminListQuery } from '@/core/schemas/admin';
@@ -10,10 +10,15 @@ import { formatMoney } from '@/core/utils/money';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
 import { AdminFilterRow } from '@/features/admin/components/ds';
+import { buildExportQuery, ExportCsvLink } from '@/features/admin/components/export-csv-link';
 import { FilterSelect } from '@/features/admin/components/filter-select';
+import { ImpersonateButton } from '@/features/admin/components/impersonate-button';
 import { InviteLandlordDialog } from '@/features/admin/components/invite-landlord-dialog';
+import { LandlordDeleteButton } from '@/features/admin/components/landlord-delete-button';
 import { LandlordSuspendButton } from '@/features/admin/components/landlord-suspend-button';
 import { loadAdminLandlords } from '@/features/admin/loaders';
+import { getAdminSelf } from '@/features/admin/server';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +30,7 @@ interface PageProps {
     sort?: string;
     page?: string;
     per_page?: string;
+    show_deleted?: string;
   }>;
 }
 
@@ -45,6 +51,15 @@ export default async function AdminLandlordsPage({ searchParams }: PageProps) {
   const tier = sp.tier ?? 'all';
   const status = sp.status ?? 'all';
   const sort = (sp.sort as 'newest' | 'mrr' | 'properties' | 'name') ?? 'newest';
+  const showDeleted = sp.show_deleted === '1';
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect('/login?redirect=/admin/orgs');
+  const self = await getAdminSelf(supabase, user.id);
+  const isSuper = self.role === 'super';
 
   const result = await loadAdminLandlords({
     q: params.q ?? null,
@@ -53,6 +68,7 @@ export default async function AdminLandlordsPage({ searchParams }: PageProps) {
     sort,
     page: params.page,
     perPage: params.per_page,
+    showDeleted,
   });
 
   const trialCount = result.rows.filter((r) => r.status === 'trialing').length;
@@ -72,9 +88,15 @@ export default async function AdminLandlordsPage({ searchParams }: PageProps) {
         actions={
           <>
             <InviteLandlordDialog />
-            <Button size="sm" variant="ghost" disabled>
-              Export CSV
-            </Button>
+            <ExportCsvLink
+              href={`/api/admin/orgs/export.csv${buildExportQuery({
+                q: params.q,
+                tier,
+                status,
+                sort,
+                show_deleted: showDeleted ? '1' : undefined,
+              })}`}
+            />
           </>
         }
       />
@@ -124,6 +146,20 @@ export default async function AdminLandlordsPage({ searchParams }: PageProps) {
               <option value="properties">Sort: Properties ↓</option>
               <option value="name">Sort: Name A–Z</option>
             </FilterSelect>
+            <Link
+              href={
+                showDeleted
+                  ? buildOrgsHref({ q: params.q, tier, status, sort })
+                  : buildOrgsHref({ q: params.q, tier, status, sort, showDeleted: true })
+              }
+              className={`inline-flex h-9 items-center rounded-button border px-3 text-[12.5px] font-semibold transition-colors ${
+                showDeleted
+                  ? 'border-alert/40 bg-alert-bg text-alert hover:bg-alert-bg/80'
+                  : 'border-border-soft bg-white text-ink-mid hover:bg-foam hover:text-forest-700'
+              }`}
+            >
+              {showDeleted ? 'Hiding live landlords' : 'Show deleted'}
+            </Link>
           </AdminFilterRow>
 
           <div className="hidden overflow-x-auto lg:block">
@@ -187,9 +223,31 @@ export default async function AdminLandlordsPage({ searchParams }: PageProps) {
                           >
                             Open
                           </Link>
-                          <LandlordSuspendButton
+                          {o.deleted_at ? null : (
+                            <ImpersonateButton
+                              targetUserId={o.owner_user_id}
+                              targetLabel={o.owner_name ?? o.name}
+                              disabled={!isSuper || !o.owner_user_id}
+                              disabledReason={
+                                !isSuper
+                                  ? 'Super admin only'
+                                  : !o.owner_user_id
+                                    ? 'Org has no owner user'
+                                    : undefined
+                              }
+                            />
+                          )}
+                          {!o.deleted_at && (
+                            <LandlordSuspendButton
+                              orgId={o.org_id}
+                              isSuspended={o.status === 'canceled'}
+                            />
+                          )}
+                          <LandlordDeleteButton
                             orgId={o.org_id}
-                            isSuspended={o.status === 'canceled'}
+                            orgName={o.name}
+                            isDeleted={Boolean(o.deleted_at)}
+                            canDelete={isSuper && o.status === 'canceled'}
                           />
                         </div>
                       </td>
@@ -273,6 +331,29 @@ function StatusPill({ status }: { status: string | null }) {
   if (status === 'past_due' || status === 'unpaid') return <Badge variant="overdue">Failed</Badge>;
   if (status === 'canceled') return <Badge variant="urgent">Suspended</Badge>;
   return <Badge variant="neutral">{status}</Badge>;
+}
+
+function buildOrgsHref({
+  q,
+  tier,
+  status,
+  sort,
+  showDeleted,
+}: {
+  q?: string | null;
+  tier: string;
+  status: string;
+  sort: string;
+  showDeleted?: boolean;
+}): string {
+  const usp = new URLSearchParams();
+  if (q) usp.set('q', q);
+  if (tier && tier !== 'all') usp.set('tier', tier);
+  if (status && status !== 'all') usp.set('status', status);
+  if (sort && sort !== 'newest') usp.set('sort', sort);
+  if (showDeleted) usp.set('show_deleted', '1');
+  const qs = usp.toString();
+  return qs ? `/admin/orgs?${qs}` : '/admin/orgs';
 }
 
 function formatJoined(iso: string): string {

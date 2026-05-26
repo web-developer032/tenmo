@@ -11,8 +11,10 @@ import { formatMoney } from '@/core/utils/money';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
 import { AdminFilterRow } from '@/features/admin/components/ds';
+import { buildExportQuery, ExportCsvLink } from '@/features/admin/components/export-csv-link';
 import { FilterSelect } from '@/features/admin/components/filter-select';
 import { loadAdminTenants } from '@/features/admin/loaders';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,18 +45,32 @@ export default async function AdminTenantsPage({ searchParams }: PageProps) {
   const portal = sp.portal ?? 'all';
   const sort = (sp.sort as 'newest' | 'rent' | 'landlord') ?? 'newest';
 
-  const result = await loadAdminTenants({
-    q: params.q ?? null,
-    status: status === 'all' ? null : status,
-    portal: portal === 'all' ? null : portal,
-    sort,
-    page: params.page,
-    perPage: params.per_page,
-  });
+  const supabase = await createClient();
+  const monthStart = (() => {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCHours(0, 0, 0, 0);
+    return d.toISOString();
+  })();
+  const [result, newThisMonth] = await Promise.all([
+    loadAdminTenants({
+      q: params.q ?? null,
+      status: status === 'all' ? null : status,
+      portal: portal === 'all' ? null : portal,
+      sort,
+      page: params.page,
+      perPage: params.per_page,
+    }),
+    supabase
+      .from('tenancies')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', monthStart),
+  ]);
 
   const activeCount = result.rows.filter((r) => r.tenancy_status === 'active').length;
   const invitedCount = result.rows.filter((r) => r.portal_status === 'invited').length;
   const arrearsCount = result.rows.filter((r) => r.tenancy_status === 'ended').length;
+  const newCount = newThisMonth.count ?? 0;
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -67,6 +83,16 @@ export default async function AdminTenantsPage({ searchParams }: PageProps) {
             {result.total === 1 ? '' : 'ies'} across the platform.
           </>
         }
+        actions={
+          <ExportCsvLink
+            href={`/api/admin/tenants/export.csv${buildExportQuery({
+              q: params.q,
+              status,
+              portal,
+              sort,
+            })}`}
+          />
+        }
       />
 
       <ResponsiveGrid preset="kpi">
@@ -75,6 +101,7 @@ export default async function AdminTenantsPage({ searchParams }: PageProps) {
           label="Active tenants"
           value={activeCount.toLocaleString('en-GB')}
           icon={<Users />}
+          delta={newCount > 0 ? { value: `+${newCount} new this month`, tone: 'up' } : undefined}
         />
         <KpiCard
           accent="blue"

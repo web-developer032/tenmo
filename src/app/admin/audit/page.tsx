@@ -1,5 +1,4 @@
 import { PageHeader } from '@/components/ds/page-header';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   ADMIN_EVENT_KIND_VALUES,
@@ -11,6 +10,7 @@ import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { AdminSearchInput } from '@/features/admin/components/admin-search-input';
 import { AuditRow } from '@/features/admin/components/audit-row';
 import { AdminFilterRow } from '@/features/admin/components/ds';
+import { buildExportQuery, ExportCsvLink } from '@/features/admin/components/export-csv-link';
 import { FilterSelect } from '@/features/admin/components/filter-select';
 import { loadAdminAudit } from '@/features/admin/loaders';
 
@@ -83,9 +83,16 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
           </>
         }
         actions={
-          <Button size="sm" variant="ghost" disabled>
-            Export CSV
-          </Button>
+          <ExportCsvLink
+            href={`/api/admin/audit/export.csv${buildExportQuery({
+              q: params.q,
+              event,
+              actor_user_id: actorUserId,
+              target_org_id: sp.target_org_id,
+              target_user_id: sp.target_user_id,
+              since: since ? since.toISOString() : undefined,
+            })}`}
+          />
         }
       />
 
@@ -118,6 +125,7 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
               preserve={['q', 'event', 'range']}
             >
               <option value="all">Actor: all</option>
+              <option value="system">System (automated)</option>
               {result.actor_options.map((a) => (
                 <option key={a.user_id} value={a.user_id}>
                   {a.full_name ?? a.contact_email ?? a.user_id.slice(0, 8)}

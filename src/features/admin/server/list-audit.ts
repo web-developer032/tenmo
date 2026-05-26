@@ -62,7 +62,11 @@ export async function listAuditWithClient(
   if (params.event) query = query.eq('event', params.event);
   if (params.targetUserId) query = query.eq('target_user_id', params.targetUserId);
   if (params.targetOrgId) query = query.eq('target_org_id', params.targetOrgId);
-  if (params.actorUserId) query = query.eq('actor_user_id', params.actorUserId);
+  if (params.actorUserId === 'system') {
+    query = query.is('actor_user_id', null);
+  } else if (params.actorUserId) {
+    query = query.eq('actor_user_id', params.actorUserId);
+  }
   if (params.since) {
     const iso = typeof params.since === 'string' ? params.since : params.since.toISOString();
     query = query.gte('created_at', iso);

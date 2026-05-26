@@ -18,6 +18,7 @@ export type AdminOrgSummaryRow = {
   slug: string;
   contact_email: string | null;
   created_at: string;
+  deleted_at: string | null;
   owner_user_id: string | null;
   owner_name: string | null;
   owner_email: string | null;
@@ -43,6 +44,12 @@ export type ListOrgSummaryParams = {
   sort?: 'newest' | 'mrr' | 'properties' | 'name';
   page?: number;
   perPage?: number;
+  /**
+   * When false (default), soft-deleted orgs (deleted_at IS NOT NULL)
+   * are hidden. Pass true to include them — used by the
+   * `?show_deleted=1` toggle on /admin/orgs.
+   */
+  showDeleted?: boolean;
 };
 
 export type ListOrgSummaryResult = {
@@ -60,6 +67,10 @@ export async function listOrgSummaryWithClient(
   const range = computePaginationRange(params.page, params.perPage);
 
   let query = sb.from('admin_org_summary').select('*', { count: 'exact' });
+
+  if (!params.showDeleted) {
+    query = query.is('deleted_at', null);
+  }
 
   if (params.q && params.q.trim().length > 0) {
     const term = `%${params.q.trim()}%`;
@@ -108,6 +119,7 @@ export async function listOrgSummaryWithClient(
     slug: r.slug as string,
     contact_email: (r.contact_email as string | null) ?? null,
     created_at: r.created_at as string,
+    deleted_at: (r.deleted_at as string | null) ?? null,
     owner_user_id: (r.owner_user_id as string | null) ?? null,
     owner_name: (r.owner_name as string | null) ?? null,
     owner_email: (r.owner_email as string | null) ?? null,

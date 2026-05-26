@@ -205,7 +205,11 @@ const env = {
     { key: 'baseUrl', value: 'http://localhost:3000', enabled: true },
     { key: 'supabaseUrl', value: 'http://127.0.0.1:54321', enabled: true },
     // Local Supabase anon key. Safe to commit — it's the default for a fresh `supabase start`.
-    { key: 'supabaseAnonKey', value: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH', enabled: true },
+    {
+      key: 'supabaseAnonKey',
+      value: 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
+      enabled: true,
+    },
     { key: 'cronSecret', value: '', enabled: true, type: 'secret' },
 
     // Persona selector — change the value here, then re-run "Sign in".

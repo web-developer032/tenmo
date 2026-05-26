@@ -10,6 +10,7 @@ import {
   FileText,
   HardHat,
   LayoutDashboard,
+  LifeBuoy,
   MessageSquare,
   PiggyBank,
   ScrollText,
@@ -173,6 +174,7 @@ export function LandlordSidebar({
       <SidebarSection label="Account">
         <SidebarNavItem href={`${base}/profile`} label="My Profile" icon={UserCircle} />
         <SidebarNavItem href={`${base}/billing`} label="Billing" icon={CreditCard} />
+        <SidebarNavItem href={`${base}/support`} label="Support" icon={LifeBuoy} />
         <SidebarNavItem href={`${base}/settings`} label="Settings" icon={Settings} />
       </SidebarSection>
     </SidebarShell>
