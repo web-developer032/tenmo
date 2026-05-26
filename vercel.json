@@ -8,6 +8,14 @@
     {
       "path": "/api/cron/rent-charges",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/mrr-snapshot",
+      "schedule": "0 2 1 * *"
+    },
+    {
+      "path": "/api/cron/webhook-replay",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

@@ -52,7 +52,7 @@
       "description": "Run a Sign in request before any API call. It writes `sbCookie` to the collection variables; the collection pre-request script then attaches it to every request that hits a localhost API route.",
       "item": [
         {
-          "name": "Sign in as sara (sara@example.com)",
+          "name": "Sign in as sara (landlord@example.com)",
           "event": [
             {
               "listen": "test",
@@ -102,7 +102,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"sara@example.com\",\"password\":\"tenantly-dev\"}",
+              "raw": "{\"email\":\"landlord@example.com\",\"password\":\"tenantly-dev\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -111,8 +111,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -120,11 +126,11 @@
                 }
               ]
             },
-            "description": "Sign in as sara@example.com and store the SSR cookie + access token as collection variables."
+            "description": "Sign in as landlord@example.com and store the SSR cookie + access token as collection variables."
           }
         },
         {
-          "name": "Sign in as marcus (marcus@example.com)",
+          "name": "Sign in as marcus (landlord.pro@example.com)",
           "event": [
             {
               "listen": "test",
@@ -174,7 +180,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"marcus@example.com\",\"password\":\"tenantly-dev\"}",
+              "raw": "{\"email\":\"landlord.pro@example.com\",\"password\":\"tenantly-dev\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -183,8 +189,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -192,11 +204,11 @@
                 }
               ]
             },
-            "description": "Sign in as marcus@example.com and store the SSR cookie + access token as collection variables."
+            "description": "Sign in as landlord.pro@example.com and store the SSR cookie + access token as collection variables."
           }
         },
         {
-          "name": "Sign in as priya (priya@example.com)",
+          "name": "Sign in as priya (landlord.free@example.com)",
           "event": [
             {
               "listen": "test",
@@ -246,7 +258,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"priya@example.com\",\"password\":\"tenantly-dev\"}",
+              "raw": "{\"email\":\"landlord.free@example.com\",\"password\":\"tenantly-dev\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -255,8 +267,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -264,11 +282,11 @@
                 }
               ]
             },
-            "description": "Sign in as priya@example.com and store the SSR cookie + access token as collection variables."
+            "description": "Sign in as landlord.free@example.com and store the SSR cookie + access token as collection variables."
           }
         },
         {
-          "name": "Sign in as jordan (jordan@example.com)",
+          "name": "Sign in as jordan (tenant@example.com)",
           "event": [
             {
               "listen": "test",
@@ -318,7 +336,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"jordan@example.com\",\"password\":\"tenantly-dev\"}",
+              "raw": "{\"email\":\"tenant@example.com\",\"password\":\"tenantly-dev\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -327,8 +345,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -336,11 +360,11 @@
                 }
               ]
             },
-            "description": "Sign in as jordan@example.com and store the SSR cookie + access token as collection variables."
+            "description": "Sign in as tenant@example.com and store the SSR cookie + access token as collection variables."
           }
         },
         {
-          "name": "Sign in as alex (alex@example.com)",
+          "name": "Sign in as alex (landlord.dual@example.com)",
           "event": [
             {
               "listen": "test",
@@ -390,7 +414,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"alex@example.com\",\"password\":\"tenantly-dev\"}",
+              "raw": "{\"email\":\"landlord.dual@example.com\",\"password\":\"tenantly-dev\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -399,8 +423,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -408,11 +438,11 @@
                 }
               ]
             },
-            "description": "Sign in as alex@example.com and store the SSR cookie + access token as collection variables."
+            "description": "Sign in as landlord.dual@example.com and store the SSR cookie + access token as collection variables."
           }
         },
         {
-          "name": "Sign in as nina (nina@example.com)",
+          "name": "Sign in as nina (landlord.new@example.com)",
           "event": [
             {
               "listen": "test",
@@ -462,7 +492,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"nina@example.com\",\"password\":\"tenantly-dev\"}",
+              "raw": "{\"email\":\"landlord.new@example.com\",\"password\":\"tenantly-dev\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -471,8 +501,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -480,7 +516,7 @@
                 }
               ]
             },
-            "description": "Sign in as nina@example.com and store the SSR cookie + access token as collection variables."
+            "description": "Sign in as landlord.new@example.com and store the SSR cookie + access token as collection variables."
           }
         },
         {
@@ -543,8 +579,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -556,7 +598,7 @@
           }
         },
         {
-          "name": "Sign in as riley (riley@example.com)",
+          "name": "Sign in as riley (applicant@example.com)",
           "event": [
             {
               "listen": "test",
@@ -606,7 +648,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\":\"riley@example.com\",\"password\":\"tenantly-dev\"}",
+              "raw": "{\"email\":\"applicant@example.com\",\"password\":\"tenantly-dev\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -615,8 +657,14 @@
             },
             "url": {
               "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=password",
-              "host": ["{{supabaseUrl}}"],
-              "path": ["auth", "v1", "token"],
+              "host": [
+                "{{supabaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "v1",
+                "token"
+              ],
               "query": [
                 {
                   "key": "grant_type",
@@ -624,7 +672,7 @@
                 }
               ]
             },
-            "description": "Sign in as riley@example.com and store the SSR cookie + access token as collection variables."
+            "description": "Sign in as applicant@example.com and store the SSR cookie + access token as collection variables."
           }
         }
       ]
@@ -639,8 +687,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
             },
             "description": "Read the caller's profile"
           },
@@ -658,13 +711,51 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
             },
             "description": "Update the caller's profile",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"full_name\": \"Sara Khan (updated)\",\n  \"preferred_name\": \"Sara\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile"
+              ]
+            },
+            "description": "Update the caller's emergency contact (tenant JSONB field)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emergency_contact\": {\n    \"name\": \"Layla Lee\",\n    \"relationship\": \"Sister\",\n    \"phone\": \"+44 7700 900220\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -686,19 +777,79 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/profiles/lookup-by-email",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "profiles", "lookup-by-email"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profiles",
+                "lookup-by-email"
+              ]
             },
             "description": "Soft-warn check: does this email exist?",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"jordan@example.com\"\n}",
+              "raw": "{\n  \"email\": \"tenant@example.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/profile/avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "Request a signed avatar upload URL",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content_type\": \"image/png\",\n  \"size_bytes\": 4096\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/profile/avatar",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "Clear the caller’s avatar\n\nDestructive — clears the persisted avatar URL."
           },
           "response": []
         }
@@ -719,13 +870,18 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/orgs",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs"
+              ]
             },
             "description": "Create a new landlord org\n\nNina is a brand-new landlord with no orgs yet.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Smoke Test Lets\",\n  \"slug\": \"smoke-test-lets\",\n  \"business_address\": {\n    \"line1\": \"1 Smoke St\",\n    \"city\": \"Birmingham\",\n    \"postcode\": \"B1 1AA\",\n    \"country\": \"GB\"\n  },\n  \"contact_email\": \"nina@example.com\"\n}",
+              "raw": "{\n  \"name\": \"Smoke Test Lets\",\n  \"slug\": \"smoke-test-lets\",\n  \"business_address\": {\n    \"line1\": \"1 Smoke St\",\n    \"city\": \"Birmingham\",\n    \"postcode\": \"B1 1AA\",\n    \"country\": \"GB\"\n  },\n  \"contact_email\": \"landlord.new@example.com\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -742,8 +898,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/properties",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs", "{{saraOrgId}}", "properties"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "properties"
+              ]
             },
             "description": "List the org's properties"
           },
@@ -761,8 +924,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/properties",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs", "{{saraOrgId}}", "properties"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "properties"
+              ]
             },
             "description": "Create a property in the org",
             "body": {
@@ -784,8 +954,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/tenancies",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs", "{{saraOrgId}}", "tenancies"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "tenancies"
+              ]
             },
             "description": "List the org's tenancies"
           },
@@ -803,8 +980,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/tenancies",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs", "{{saraOrgId}}", "tenancies"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "tenancies"
+              ]
             },
             "description": "Invite a tenant to a room (creates a tenancy in pending_invite)",
             "body": {
@@ -826,8 +1010,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/compliance",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs", "{{saraOrgId}}", "compliance"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "compliance"
+              ]
             },
             "description": "List org compliance items"
           },
@@ -845,8 +1036,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/compliance",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs", "{{saraOrgId}}", "compliance"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "compliance"
+              ]
             },
             "description": "Create a compliance item",
             "body": {
@@ -873,8 +1071,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/orgs/{{saraOrgId}}/compliance/seed",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "orgs", "{{saraOrgId}}", "compliance", "seed"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orgs",
+                "{{saraOrgId}}",
+                "compliance",
+                "seed"
+              ]
             },
             "description": "Seed the standard required compliance set for a property",
             "body": {
@@ -901,8 +1107,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/properties/{{saraPropertyId}}/rooms",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "properties", "{{saraPropertyId}}", "rooms"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{saraPropertyId}}",
+                "rooms"
+              ]
             },
             "description": "List rooms in a property"
           },
@@ -920,8 +1133,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/properties/{{saraPropertyId}}/rooms",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "properties", "{{saraPropertyId}}", "rooms"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "properties",
+                "{{saraPropertyId}}",
+                "rooms"
+              ]
             },
             "description": "Add a room to a property",
             "body": {
@@ -948,8 +1168,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenancies", "{{jordanTenancyId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}"
+              ]
             },
             "description": "Get a single tenancy (tenant viewing their own)"
           },
@@ -962,8 +1188,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/charges",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenancies", "{{jordanTenancyId}}", "charges"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "charges"
+              ]
             },
             "description": "List rent charges for a tenancy"
           },
@@ -976,8 +1209,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/payments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenancies", "{{jordanTenancyId}}", "payments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "payments"
+              ]
             },
             "description": "List rent payments for a tenancy"
           },
@@ -995,8 +1235,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/payments",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenancies", "{{jordanTenancyId}}", "payments"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "payments"
+              ]
             },
             "description": "Record a manual rent payment\n\nSmoke uses tiny amount; cleanup deletes the row.",
             "body": {
@@ -1018,8 +1265,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tenancies/{{taylorInviteTenancyId}}/cancel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenancies", "{{taylorInviteTenancyId}}", "cancel"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{taylorInviteTenancyId}}",
+                "cancel"
+              ]
             },
             "description": "Cancel a pending tenancy invite\n\n422 on rerun: the invite is already cancelled."
           },
@@ -1037,8 +1291,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tenancies/{{jordanTenancyId}}/end",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenancies", "{{jordanTenancyId}}", "end"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenancies",
+                "{{jordanTenancyId}}",
+                "end"
+              ]
             },
             "description": "End an active tenancy (Renters Rights Bill notice rules apply)\n\nMutating end of seeded active tenancy disrupts other smokes.",
             "body": {
@@ -1065,8 +1326,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/invites/{{marcusInviteToken}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "invites", "{{marcusInviteToken}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invites",
+                "{{marcusInviteToken}}"
+              ]
             },
             "description": "Public invite preview (redacted)"
           },
@@ -1079,8 +1346,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/invites/{{marcusInviteToken}}/accept",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "invites", "{{marcusInviteToken}}", "accept"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "invites",
+                "{{marcusInviteToken}}",
+                "accept"
+              ]
             },
             "description": "Accept invite — requires auth as the invited email\n\nRequires a user matching the invite email; not idempotent."
           },
@@ -1098,8 +1372,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/listings",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "listings"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings"
+              ]
             },
             "description": "Search published listings (anon — redacted address)"
           },
@@ -1112,8 +1391,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/listings/{{publishedRoomId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "listings", "{{publishedRoomId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "{{publishedRoomId}}"
+              ]
             },
             "description": "Single published listing detail"
           },
@@ -1131,8 +1416,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/listings/{{publishedRoomId}}/apply",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "listings", "{{publishedRoomId}}", "apply"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "listings",
+                "{{publishedRoomId}}",
+                "apply"
+              ]
             },
             "description": "Submit a room application (tenant only)\n\nReturns 409 if the persona already applied to this room.",
             "body": {
@@ -1164,7 +1456,9 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/publish",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "landlord",
@@ -1199,8 +1493,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/pause",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "listings", "{{saraRoom4Id}}", "pause"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "listings",
+                "{{saraRoom4Id}}",
+                "pause"
+              ]
             },
             "description": "Pause a published listing\n\n422 on rerun: listing already closed.",
             "body": {
@@ -1227,8 +1530,17 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{saraRoom4Id}}/close",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "listings", "{{saraRoom4Id}}", "close"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "listings",
+                "{{saraRoom4Id}}",
+                "close"
+              ]
             },
             "description": "Close a listing\n\n422 on rerun: listing already closed.",
             "body": {
@@ -1250,7 +1562,9 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/listings/{{publishedRoomId}}/applications",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "landlord",
@@ -1281,7 +1595,9 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/applications/{{rileyApplicationId}}/reject",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "landlord",
@@ -1316,7 +1632,9 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/applications/{{rileyApplicationId}}/accept",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "landlord",
@@ -1351,8 +1669,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/expenses",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "expenses"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "expenses"
+              ]
             },
             "description": "List the org's expenses ledger"
           },
@@ -1370,8 +1695,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/expenses",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "expenses"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "expenses"
+              ]
             },
             "description": "Add an expense to the ledger",
             "body": {
@@ -1393,8 +1725,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/mtd-submissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "mtd-submissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "mtd-submissions"
+              ]
             },
             "description": "List quarterly MTD submissions"
           },
@@ -1412,8 +1751,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/mtd-submissions",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "mtd-submissions"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "mtd-submissions"
+              ]
             },
             "description": "Record / regenerate a quarterly MTD figure\n\nPOST is upsert keyed on (org_id, quarter), so reruns return 201 with the same row.",
             "body": {
@@ -1435,8 +1781,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/financials/export",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "financials", "export"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "financials",
+                "export"
+              ]
             },
             "description": "Export full-year income + expenses as CSV"
           },
@@ -1449,8 +1803,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/rent/export?month=2026-05",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "rent", "export"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "rent",
+                "export"
+              ],
               "query": [
                 {
                   "key": "month",
@@ -1479,7 +1841,9 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/deposit",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "landlord",
@@ -1519,7 +1883,9 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/tenancies/{{jordanTenancyId}}/rtr-check",
-              "host": ["{{baseUrl}}"],
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "api",
                 "landlord",
@@ -1559,8 +1925,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/inspections",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "inspections"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "inspections"
+              ]
             },
             "description": "Schedule a new inspection",
             "body": {
@@ -1587,8 +1960,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/contractors",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "contractors"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "contractors"
+              ]
             },
             "description": "List active contractors for the org"
           },
@@ -1606,8 +1986,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/contractors",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "contractors"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "contractors"
+              ]
             },
             "description": "Add a contractor to the directory",
             "body": {
@@ -1639,8 +2026,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/landlord/{{saraOrgSlug}}/org",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "landlord", "{{saraOrgSlug}}", "org"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "{{saraOrgSlug}}",
+                "org"
+              ]
             },
             "description": "Update business-level org fields (owner only)",
             "body": {
@@ -1667,8 +2061,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tenant/applications",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenant", "applications"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenant",
+                "applications"
+              ]
             },
             "description": "List the tenant's applications"
           },
@@ -1681,8 +2081,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tenant/applications/{{rileyApplicationId}}/withdraw",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tenant", "applications", "{{rileyApplicationId}}", "withdraw"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tenant",
+                "applications",
+                "{{rileyApplicationId}}",
+                "withdraw"
+              ]
             },
             "description": "Withdraw an application\n\nMutates the seeded pending application that other smokes rely on."
           },
@@ -1700,8 +2108,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/compliance/{{saraComplianceItemId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "compliance", "{{saraComplianceItemId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compliance",
+                "{{saraComplianceItemId}}"
+              ]
             },
             "description": "Get a compliance item"
           },
@@ -1719,8 +2133,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/compliance/{{saraComplianceItemId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "compliance", "{{saraComplianceItemId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compliance",
+                "{{saraComplianceItemId}}"
+              ]
             },
             "description": "Update a compliance item",
             "body": {
@@ -1742,8 +2162,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/compliance/{{saraComplianceItemId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "compliance", "{{saraComplianceItemId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compliance",
+                "{{saraComplianceItemId}}"
+              ]
             },
             "description": "Delete a compliance item\n\nMutates seeded compliance set; left for manual Postman drive."
           },
@@ -1766,8 +2192,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/ast/envelopes",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "ast", "envelopes"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ast",
+                "envelopes"
+              ]
             },
             "description": "Start an AST signing run\n\nHits DocuSeal; requires DOCUSEAL_API_URL + DOCUSEAL_API_TOKEN. 503 expected if not configured.",
             "body": {
@@ -1789,8 +2221,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/ast/envelopes/{{marcusCamden2AstId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "ast", "envelopes", "{{marcusCamden2AstId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ast",
+                "envelopes",
+                "{{marcusCamden2AstId}}"
+              ]
             },
             "description": "Get an envelope"
           },
@@ -1803,8 +2242,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/ast/envelopes/{{marcusCamden2AstId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "ast", "envelopes", "{{marcusCamden2AstId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ast",
+                "envelopes",
+                "{{marcusCamden2AstId}}"
+              ]
             },
             "description": "Cancel an open envelope\n\nMutates the only open envelope; left for manual Postman drive."
           },
@@ -1822,8 +2268,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/documents?property_id={{saraPropertyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "documents"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents"
+              ],
               "query": [
                 {
                   "key": "property_id",
@@ -1847,8 +2298,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/documents/upload-url",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "documents", "upload-url"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "upload-url"
+              ]
             },
             "description": "Mint a signed Storage upload URL",
             "body": {
@@ -1875,8 +2332,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/documents",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "documents"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents"
+              ]
             },
             "description": "Record an uploaded document\n\nStorage path uniqueness — script-side flag avoids the collision on rerun.",
             "body": {
@@ -1898,8 +2360,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/documents/{{saraDocumentId}}/url",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "documents", "{{saraDocumentId}}", "url"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{saraDocumentId}}",
+                "url"
+              ]
             },
             "description": "Mint a signed download URL\n\nStorage object is not actually uploaded in the seed, so signing may 404 — acceptable for smoke."
           },
@@ -1912,8 +2381,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/documents/{{saraDocumentId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "documents", "{{saraDocumentId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{saraDocumentId}}"
+              ]
             },
             "description": "Delete a document\n\nMutates seed; left for manual Postman drive."
           },
@@ -1931,8 +2406,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/notifications",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
             },
             "description": "List the caller's notifications"
           },
@@ -1945,8 +2425,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/notifications",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ]
             },
             "description": "Mark all notifications read"
           },
@@ -1964,8 +2449,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/notifications/mark-read",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "mark-read"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "mark-read"
+              ]
             },
             "description": "Mark specific notifications read\n\nSmoke does not assert the body — endpoint accepts unknown ids as a no-op.",
             "body": {
@@ -1987,8 +2478,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/notifications/preferences",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "preferences"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "preferences"
+              ]
             },
             "description": "Get notification preferences"
           },
@@ -2006,8 +2503,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/notifications/preferences",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "notifications", "preferences"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "preferences"
+              ]
             },
             "description": "Update notification preferences",
             "body": {
@@ -2034,8 +2537,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/conversations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "conversations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations"
+              ]
             },
             "description": "Inbox list"
           },
@@ -2053,8 +2561,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/conversations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "conversations"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations"
+              ]
             },
             "description": "Find or create a direct conversation\n\nCaller must be a member of the org; the other user can be a member or current tenant.",
             "body": {
@@ -2076,8 +2589,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/messages",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "conversations", "{{jordanConversationId}}", "messages"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "messages"
+              ]
             },
             "description": "List messages in a conversation"
           },
@@ -2095,8 +2615,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/messages",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "conversations", "{{jordanConversationId}}", "messages"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "messages"
+              ]
             },
             "description": "Send a message",
             "body": {
@@ -2118,8 +2645,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/participants",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "conversations", "{{jordanConversationId}}", "participants"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "participants"
+              ]
             },
             "description": "List participants"
           },
@@ -2132,8 +2666,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/conversations/{{jordanConversationId}}/read",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "conversations", "{{jordanConversationId}}", "read"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "conversations",
+                "{{jordanConversationId}}",
+                "read"
+              ]
             },
             "description": "Mark conversation read"
           },
@@ -2156,8 +2697,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tickets",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tickets"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets"
+              ]
             },
             "description": "Create a maintenance ticket",
             "body": {
@@ -2179,8 +2725,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tickets", "{{jordanTicketId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}"
+              ]
             },
             "description": "Get a ticket detail"
           },
@@ -2198,8 +2750,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/status",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tickets", "{{jordanTicketId}}", "status"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "status"
+              ]
             },
             "description": "Change a ticket status\n\n422 on rerun: status transitions are validated and a no-op transition is rejected.",
             "body": {
@@ -2226,8 +2785,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/assign",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tickets", "{{jordanTicketId}}", "assign"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "assign"
+              ]
             },
             "description": "Assign a ticket",
             "body": {
@@ -2254,8 +2820,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/messages",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tickets", "{{jordanTicketId}}", "messages"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "messages"
+              ]
             },
             "description": "Add a comment to a ticket",
             "body": {
@@ -2282,8 +2855,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/attachments/upload-url",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tickets", "{{jordanTicketId}}", "attachments", "upload-url"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "attachments",
+                "upload-url"
+              ]
             },
             "description": "Mint signed attachment upload URL",
             "body": {
@@ -2310,8 +2891,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/tickets/{{jordanTicketId}}/attachments/sign",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tickets", "{{jordanTicketId}}", "attachments", "sign"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tickets",
+                "{{jordanTicketId}}",
+                "attachments",
+                "sign"
+              ]
             },
             "description": "Mint a signed attachment download URL (404 expected for nonexistent path)",
             "body": {
@@ -2338,8 +2927,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/bills?property_id={{saraPropertyId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bills"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills"
+              ],
               "query": [
                 {
                   "key": "property_id",
@@ -2363,8 +2957,13 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/bills",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bills"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills"
+              ]
             },
             "description": "Create a bill with allocations",
             "body": {
@@ -2386,8 +2985,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/bills/{{saraBillId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bills", "{{saraBillId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills",
+                "{{saraBillId}}"
+              ]
             },
             "description": "Get a bill detail"
           },
@@ -2405,8 +3010,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/bills/{{saraBillId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bills", "{{saraBillId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills",
+                "{{saraBillId}}"
+              ]
             },
             "description": "Update a bill",
             "body": {
@@ -2428,8 +3039,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/bills/{{saraBillId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bills", "{{saraBillId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bills",
+                "{{saraBillId}}"
+              ]
             },
             "description": "Delete a bill\n\nMutates seed; left for manual Postman drive."
           },
@@ -2452,8 +3069,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/billing/checkout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "billing", "checkout"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "checkout"
+              ]
             },
             "description": "Create a Stripe Checkout session\n\nRequires STRIPE_SECRET_KEY + STRIPE_PRICE_PRO_MONTHLY. 4xx/5xx expected if Stripe not configured.",
             "body": {
@@ -2480,8 +3103,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/billing/portal",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "billing", "portal"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "billing",
+                "portal"
+              ]
             },
             "description": "Create a Stripe Customer Portal session\n\nRequires STRIPE_SECRET_KEY + an existing Stripe customer (400 expected on a fresh org).",
             "body": {
@@ -2513,8 +3142,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/payments/mandates",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "mandates"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "mandates"
+              ]
             },
             "description": "Start a Direct Debit mandate setup\n\nHits GoCardless. 5xx expected if GOCARDLESS_ACCESS_TOKEN not set.",
             "body": {
@@ -2541,8 +3176,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/payments/mandates/{{jordanMandateId}}/complete",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "mandates", "{{jordanMandateId}}", "complete"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "mandates",
+                "{{jordanMandateId}}",
+                "complete"
+              ]
             },
             "description": "Complete a DD mandate after GoCardless redirect\n\nRequires a real GoCardless redirect flow id; otherwise 4xx/5xx.",
             "body": {
@@ -2564,8 +3207,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/payments/mandates/{{jordanMandateId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "mandates", "{{jordanMandateId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "mandates",
+                "{{jordanMandateId}}"
+              ]
             },
             "description": "Cancel a mandate\n\nMutates seeded mandate; left for manual Postman drive."
           },
@@ -2583,8 +3233,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/payments/charges/{{jordanChargeId}}/collect",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "payments", "charges", "{{jordanChargeId}}", "collect"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "charges",
+                "{{jordanChargeId}}",
+                "collect"
+              ]
             },
             "description": "Trigger a one-off Direct Debit collection\n\nTier-gated (rent_collection_dd). 202 expected if no active mandate (Stripe/GC unconfigured).",
             "body": {
@@ -2596,6 +3254,69 @@
                 }
               }
             }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/payments/charges/{{jordanChargeId}}/truelayer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/charges/{{jordanChargeId}}/truelayer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "charges",
+                "{{jordanChargeId}}",
+                "truelayer"
+              ]
+            },
+            "description": "Initiate a TrueLayer Open Banking payment for a rent charge\n\n503 when TRUELAYER_CLIENT_ID / SECRET unset. 422 when the charge already has a pending payment (smoke runs leave a DD row). 400 / 502 when creds are set but TrueLayer rejects the synthetic beneficiary (sandbox is picky about account-holder names + sort codes — this is fine for smoke).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount_pence\": 72000,\n  \"return_uri\": \"http://localhost:3000/tenant/rent\",\n  \"beneficiary_name\": \"Tenantly Holding\",\n  \"beneficiary_sort_code\": \"040004\",\n  \"beneficiary_account_number\": \"12345678\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/payments/truelayer/return?payment_id=tl_demo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/truelayer/return?payment_id=tl_demo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "truelayer",
+                "return"
+              ],
+              "query": [
+                {
+                  "key": "payment_id",
+                  "value": "tl_demo"
+                }
+              ]
+            },
+            "description": "Poll a TrueLayer payment after the bank redirect\n\n503 acceptable when not configured; demo id will 404 on real call."
           },
           "response": []
         }
@@ -2611,8 +3332,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/passport",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "passport"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passport"
+              ]
             },
             "description": "Assemble the Rental Passport JSON"
           },
@@ -2630,8 +3356,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/passport/pdf",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "passport", "pdf"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "passport",
+                "pdf"
+              ]
             },
             "description": "Generate a PDF and store it\n\nPDF render + Storage upload. 5xx OK if PDF worker not configured.",
             "body": {
@@ -2658,8 +3390,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/audit?page=1&per_page=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "audit"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -2682,8 +3420,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/orgs?page=1&per_page=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "orgs"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -2706,8 +3450,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/orgs/{{saraOrgId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "orgs", "{{saraOrgId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{saraOrgId}}"
+              ]
             },
             "description": "Org detail"
           },
@@ -2725,8 +3476,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/orgs/{{saraOrgId}}/subscription-override",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "orgs", "{{saraOrgId}}", "subscription-override"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{saraOrgId}}",
+                "subscription-override"
+              ]
             },
             "description": "Set or clear a manual tier override",
             "body": {
@@ -2753,8 +3512,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/orgs/{{saraOrgId}}/suspend",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "orgs", "{{saraOrgId}}", "suspend"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{saraOrgId}}",
+                "suspend"
+              ]
             },
             "description": "Suspend / reinstate an org",
             "body": {
@@ -2781,13 +3548,20 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/orgs/invite",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "orgs", "invite"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "invite"
+              ]
             },
-            "description": "Invite a landlord org (audit-only MVP)",
+            "description": "Invite a landlord org (sends email via Resend when configured)",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"org_name\": \"Smoke Org\",\n  \"email\": \"invited-landlord@example.com\",\n  \"tier\": \"starter\"\n}",
+              "raw": "{\n  \"org_name\": \"Smoke Org\",\n  \"email\": \"landlord.invited@example.com\",\n  \"tier\": \"starter\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2804,8 +3578,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/users?page=1&per_page=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "users"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ],
               "query": [
                 {
                   "key": "page",
@@ -2828,8 +3608,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/users/{{jordanId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "users", "{{jordanId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{jordanId}}"
+              ]
             },
             "description": "User profile detail"
           },
@@ -2842,8 +3629,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/profiles/search?q=sara",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "profiles", "search"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "profiles",
+                "search"
+              ],
               "query": [
                 {
                   "key": "q",
@@ -2867,8 +3661,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/settings",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "settings"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings"
+              ]
             },
             "description": "Update platform settings (super only)",
             "body": {
@@ -2895,13 +3695,20 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/team/invite",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "team", "invite"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "team",
+                "invite"
+              ]
             },
-            "description": "Invite a platform admin (super only)\n\n409 on rerun: the invitee email is already an admin row.",
+            "description": "Invite a platform admin (sends email via Resend when configured)\n\n409 on rerun: the invitee email is already an admin row.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"new-admin@example.com\",\n  \"role\": \"support\"\n}",
+              "raw": "{\n  \"email\": \"admin.invitee.smoke@example.com\",\n  \"role\": \"support\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2923,8 +3730,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/team/{{supportAdminId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "team", "{{supportAdminId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "team",
+                "{{supportAdminId}}"
+              ]
             },
             "description": "Update an admin role (super only)",
             "body": {
@@ -2946,8 +3760,15 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/team/{{supportAdminId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "team", "{{supportAdminId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "team",
+                "{{supportAdminId}}"
+              ]
             },
             "description": "Revoke a platform admin\n\nMutates the seeded support admin."
           },
@@ -2960,8 +3781,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/support/{{platformSupportTicketId}}/assign-me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "support", "{{platformSupportTicketId}}", "assign-me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "support",
+                "{{platformSupportTicketId}}",
+                "assign-me"
+              ]
             },
             "description": "Self-assign a platform support ticket"
           },
@@ -2979,8 +3808,16 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/support/{{platformSupportTicketId}}/resolve",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "support", "{{platformSupportTicketId}}", "resolve"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "support",
+                "{{platformSupportTicketId}}",
+                "resolve"
+              ]
             },
             "description": "Resolve a platform support ticket\n\n422 on rerun: ticket already resolved.",
             "body": {
@@ -3007,8 +3844,15 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/compliance/notify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "compliance", "notify"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "compliance",
+                "notify"
+              ]
             },
             "description": "Notify a landlord of a compliance violation",
             "body": {
@@ -3030,10 +3874,18 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/billing/{{saraOrgId}}/retry",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "billing", "{{saraOrgId}}", "retry"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "billing",
+                "{{saraOrgId}}",
+                "retry"
+              ]
             },
-            "description": "Retry a failed Stripe invoice (stub)\n\n501 acceptable until wired to live Stripe API."
+            "description": "Retry a failed Stripe invoice (real call when configured)\n\n200 + status=not_configured when STRIPE_SECRET_KEY is absent (dev). 200 + status=no_subscription when the org has no Stripe IDs yet. 422 when Stripe rejects (e.g. no open invoice)."
           },
           "response": []
         },
@@ -3041,13 +3893,430 @@
           "name": "POST /api/admin/billing/{{saraOrgId}}/remind",
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/billing/{{saraOrgId}}/remind",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "billing", "{{saraOrgId}}", "remind"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "billing",
+                "{{saraOrgId}}",
+                "remind"
+              ]
             },
-            "description": "Send a card-update reminder"
+            "description": "Send a card-update reminder (Resend or console transport)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"card_failed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/impersonate/start",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/impersonate/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "impersonate",
+                "start"
+              ]
+            },
+            "description": "Start impersonating a landlord (super only)\n\nMutates the admin auth cookies — drive from a dedicated browser session.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_user_id\": \"{{saraId}}\",\n  \"reason\": \"Smoke test impersonation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/impersonate/stop",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/impersonate/stop",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "impersonate",
+                "stop"
+              ]
+            },
+            "description": "Stop the active impersonation (no-op if none)"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/orgs/{{rajOrgId}}/delete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs/{{rajOrgId}}/delete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{rajOrgId}}",
+                "delete"
+              ]
+            },
+            "description": "Soft-delete a landlord org\n\nHides the org from the default list view — pair with undelete to re-run.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Smoke test soft-delete (Raj is canceled)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/orgs/{{rajOrgId}}/undelete",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs/{{rajOrgId}}/undelete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "{{rajOrgId}}",
+                "undelete"
+              ]
+            },
+            "description": "Reinstate a soft-deleted landlord org"
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/admin/team/invites/{{pendingInviteId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/team/invites/{{pendingInviteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "team",
+                "invites",
+                "{{pendingInviteId}}"
+              ]
+            },
+            "description": "Revoke a pending admin invite\n\nSingle-use: 404 once the seeded invite has been revoked."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/admin/settings/send-test-email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/settings/send-test-email",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings",
+                "send-test-email"
+              ]
+            },
+            "description": "Send a Resend test email (falls back to console in dev)",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/audit/export.csv?per_page=1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/audit/export.csv?per_page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "audit",
+                "export.csv"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Export admin audit log CSV"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/orgs/export.csv?per_page=1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orgs/export.csv?per_page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "orgs",
+                "export.csv"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Export landlords list CSV"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/tenants/export.csv?per_page=1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/tenants/export.csv?per_page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "tenants",
+                "export.csv"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Export tenants list CSV"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/billing/export.csv?per_page=1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/billing/export.csv?per_page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "billing",
+                "export.csv"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Export billing summary CSV"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/support/export.csv?per_page=1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/support/export.csv?per_page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "support",
+                "export.csv"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Export support tickets CSV"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/compliance/export.csv?per_page=1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/compliance/export.csv?per_page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "compliance",
+                "export.csv"
+              ],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Export compliance violations CSV"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/admin/dashboard/export.csv",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard/export.csv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "dashboard",
+                "export.csv"
+              ]
+            },
+            "description": "Export dashboard KPI snapshot CSV"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "support",
+      "item": [
+        {
+          "name": "POST /api/landlord/support/{{landlordResolvedTicketId}}/csat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/landlord/support/{{landlordResolvedTicketId}}/csat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "landlord",
+                "support",
+                "{{landlordResolvedTicketId}}",
+                "csat"
+              ]
+            },
+            "description": "Rate a resolved platform support ticket\n\nSeeded ticket reporter is Oluwaseun (not in personas); test asserts the 422 reporter-mismatch path.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Smoke test CSAT.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
           "response": []
         }
@@ -3068,8 +4337,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/cron/rent-charges",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "cron", "rent-charges"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "rent-charges"
+              ]
             },
             "description": "Generate rent charges (dry-run on GET)"
           },
@@ -3087,8 +4362,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/cron/rent-charges",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "cron", "rent-charges"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "rent-charges"
+              ]
             },
             "description": "Generate rent charges + optionally collect via DD"
           },
@@ -3106,8 +4387,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/cron/compliance-reminders",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "cron", "compliance-reminders"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "compliance-reminders"
+              ]
             },
             "description": "Compliance reminders cron (dry-run on GET)"
           },
@@ -3125,10 +4412,97 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/cron/compliance-reminders",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "cron", "compliance-reminders"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "compliance-reminders"
+              ]
             },
             "description": "Send compliance reminder emails"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/cron/mrr-snapshot",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/mrr-snapshot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "mrr-snapshot"
+              ]
+            },
+            "description": "Write the current month MRR snapshot"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cron/mrr-snapshot?backfill=12",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/mrr-snapshot?backfill=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "mrr-snapshot"
+              ],
+              "query": [
+                {
+                  "key": "backfill",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Backfill 12 months of MRR snapshots"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/cron/webhook-replay",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{cronSecret}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cron/webhook-replay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cron",
+                "webhook-replay"
+              ]
+            },
+            "description": "Replay unprocessed webhook_events (≤25 per run)"
           },
           "response": []
         }
@@ -3153,8 +4527,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/webhooks/stripe",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "webhooks", "stripe"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "stripe"
+              ]
             },
             "description": "Stripe webhook (signed)\n\nUse `stripe trigger` for real events.",
             "body": {
@@ -3185,13 +4565,57 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/webhooks/gocardless",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "webhooks", "gocardless"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "gocardless"
+              ]
             },
             "description": "GoCardless webhook (signed)\n\nSign with GOCARDLESS_WEBHOOK_SECRET to test.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"events\": [\n    {\n      \"id\": \"EV_demo\",\n      \"action\": \"created\",\n      \"resource_type\": \"mandates\",\n      \"links\": {}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/webhooks/truelayer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "tl-signature",
+                "value": "demo"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/webhooks/truelayer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "truelayer"
+              ]
+            },
+            "description": "TrueLayer webhook (signed)\n\nSign with TRUELAYER_WEBHOOK_SECRET to test.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_id\": \"evt_demo_tl\",\n  \"type\": \"payment_executed\",\n  \"payment_id\": \"tl_demo_payment\",\n  \"status\": \"executed\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3217,8 +4641,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/webhooks/docuseal",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "webhooks", "docuseal"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "webhooks",
+                "docuseal"
+              ]
             },
             "description": "DocuSeal webhook (signed)\n\nSign with DOCUSEAL_WEBHOOK_SECRET to test.",
             "body": {

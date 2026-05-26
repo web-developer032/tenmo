@@ -47,16 +47,40 @@ const PROBES: Probe[] = [
     id: 'stripe',
     name: 'Stripe',
     url: 'https://api.stripe.com/healthcheck',
+    precondition: () => {
+      const v = process.env.STRIPE_SECRET_KEY;
+      return v && v.length > 0
+        ? { ok: true }
+        : { ok: false, reason: 'STRIPE_SECRET_KEY missing' };
+    },
   },
   {
     id: 'gocardless',
     name: 'GoCardless',
-    url: 'https://api.gocardless.com/',
+    url:
+      process.env.GOCARDLESS_ENVIRONMENT === 'live'
+        ? 'https://api.gocardless.com/'
+        : 'https://api-sandbox.gocardless.com/',
+    precondition: () => {
+      const v = process.env.GOCARDLESS_ACCESS_TOKEN;
+      return v && v.length > 0
+        ? { ok: true }
+        : { ok: false, reason: 'GOCARDLESS_ACCESS_TOKEN missing' };
+    },
   },
   {
     id: 'truelayer',
     name: 'TrueLayer',
-    url: 'https://auth.truelayer.com/',
+    url: (process.env.TRUELAYER_CLIENT_ID ?? '').startsWith('sandbox-')
+      ? 'https://auth.truelayer-sandbox.com/'
+      : 'https://auth.truelayer.com/',
+    precondition: () => {
+      const id = process.env.TRUELAYER_CLIENT_ID;
+      const sec = process.env.TRUELAYER_CLIENT_SECRET;
+      return id && id.length > 0 && sec && sec.length > 0
+        ? { ok: true }
+        : { ok: false, reason: 'TRUELAYER credentials missing' };
+    },
   },
   {
     id: 'resend',
@@ -68,9 +92,20 @@ const PROBES: Probe[] = [
     },
   },
   {
+    id: 'docuseal',
+    name: 'DocuSeal',
+    url: process.env.DOCUSEAL_API_URL ?? 'http://localhost:3030',
+    precondition: () => {
+      const v = process.env.DOCUSEAL_API_URL;
+      return v && v.startsWith('http')
+        ? { ok: true }
+        : { ok: false, reason: 'DOCUSEAL_API_URL missing' };
+    },
+  },
+  {
     id: 'supabase',
     name: 'Supabase',
-    url: (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '') + '/auth/v1/health',
+    url: `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/auth/v1/health`,
     precondition: () => {
       const v = process.env.NEXT_PUBLIC_SUPABASE_URL;
       return v && v.startsWith('http')

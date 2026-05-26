@@ -7,6 +7,11 @@ export {
   createRentPaymentForCharge,
 } from './create-rent-payment';
 export {
+  type CreateTlPaymentResult,
+  type CreateTrueLayerPaymentInput,
+  createTrueLayerPaymentForCharge,
+} from './create-truelayer-payment';
+export {
   getActiveMandateForTenancy,
   getMandateByGcMandateIdService,
   getMandateByTenancyService,
@@ -19,3 +24,8 @@ export {
 } from './notify-payment';
 export { startMandateFlow } from './start-mandate-flow';
 export { applyGoCardlessEvents, type EventApplyResult } from './sync-from-webhook';
+export {
+  applyTrueLayerStatus,
+  pollAndApplyTrueLayerPayment,
+  type TruelayerApplyResult,
+} from './truelayer-sync';

@@ -70,6 +70,12 @@ const ServerEnvSchema = z.object({
   TRUELAYER_CLIENT_ID: optionalString(),
   TRUELAYER_CLIENT_SECRET: optionalString(),
   TRUELAYER_WEBHOOK_SECRET: optionalString(),
+  /**
+   * Optional explicit override — defaults are picked from
+   * `TRUELAYER_CLIENT_ID` ("sandbox-" prefix → sandbox). Set to `live`
+   * when you're using a non-prefixed live client id.
+   */
+  TRUELAYER_ENVIRONMENT: optionalEnum(['sandbox', 'live']),
   TWILIO_ACCOUNT_SID: optionalString(),
   TWILIO_AUTH_TOKEN: optionalString(),
   TWILIO_FROM_NUMBER: optionalString(),

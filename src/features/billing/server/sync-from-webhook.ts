@@ -56,6 +56,11 @@ export async function applyStripeWebhookEvent(event: Stripe.Event): Promise<Webh
       return handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
     case 'invoice.payment_succeeded':
       return handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+    case 'payment_method.attached':
+    case 'payment_method.updated':
+      return handlePaymentMethodEvent(event.data.object as Stripe.PaymentMethod);
+    case 'customer.updated':
+      return handleCustomerUpdated(event.data.object as Stripe.Customer);
     default:
       log().debug({ type: event.type }, 'event type ignored');
       return { applied: false, kind: 'noop', org_id: null };
@@ -118,13 +123,19 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<Webh
     return { applied: false, kind: 'noop', org_id: null };
   }
 
+  const update: Record<string, unknown> = {
+    last_payment_status: 'failed',
+    last_payment_failure_at: new Date().toISOString(),
+    last_synced_at: new Date().toISOString(),
+  };
   if (existing.status !== 'past_due') {
-    const { error: upErr } = await sb
-      .from('org_subscriptions')
-      .update({ status: 'past_due', last_synced_at: new Date().toISOString() })
-      .eq('org_id', existing.org_id);
-    if (upErr) throw upErr;
+    update.status = 'past_due';
   }
+  const { error: upErr } = await sb
+    .from('org_subscriptions')
+    .update(update)
+    .eq('org_id', existing.org_id);
+  if (upErr) throw upErr;
   await notifyOrgPastDue(existing.org_id);
   return { applied: true, kind: 'past_due_marked', org_id: existing.org_id };
 }
@@ -135,21 +146,122 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice): Promise<W
     return { applied: false, kind: 'noop', org_id: null };
   }
   // The follow-up `customer.subscription.updated` event will carry the
-  // refreshed period_end + status, so we don't need to mutate here.
-  // We just stamp last_synced_at so the dashboard reflects the
-  // most-recent successful billing event.
+  // refreshed period_end + status, so we don't need to mutate those here.
+  // We still record the successful payment + MRR so the admin dashboard's
+  // billing column shows the most recent state without round-tripping
+  // Stripe.
+  const sb = createServiceClient();
+  const { data: existing } = await sb
+    .from('org_subscriptions')
+    .select('org_id, mrr_pence')
+    .eq('stripe_subscription_id', subscriptionId)
+    .maybeSingle();
+  if (!existing) return { applied: false, kind: 'noop', org_id: null };
+
+  const amountPaid = (invoice.amount_paid ?? 0) as number;
+  const update: Record<string, unknown> = {
+    last_payment_status: 'paid',
+    last_synced_at: new Date().toISOString(),
+  };
+  // `amount_paid` is the line-item total in pence for the period. We
+  // surface it as `mrr_pence` for monthly invoices; annual invoices
+  // would distort the dashboard so we only update if the invoice
+  // billing_reason was a recurring monthly cycle.
+  const firstLine = invoice.lines?.data?.[0];
+  const pricing = (firstLine as unknown as { pricing?: { price_details?: { type?: string } } })
+    ?.pricing;
+  const interval =
+    (firstLine as unknown as { price?: { recurring?: { interval?: string } } })?.price?.recurring
+      ?.interval ?? null;
+  if (
+    invoice.billing_reason === 'subscription_cycle' &&
+    (interval === 'month' || pricing?.price_details?.type === 'recurring') &&
+    amountPaid > 0
+  ) {
+    update.mrr_pence = amountPaid;
+  }
+  await sb.from('org_subscriptions').update(update).eq('org_id', existing.org_id);
+  return { applied: true, kind: 'subscription_upserted', org_id: existing.org_id };
+}
+
+/**
+ * Update `payment_method_*` columns when Stripe attaches or updates a
+ * card on the customer. We resolve the org via the customer id (set
+ * during checkout). Best-effort — if the customer isn't on file we
+ * just log + skip.
+ */
+async function handlePaymentMethodEvent(
+  pm: Stripe.PaymentMethod,
+): Promise<WebhookSyncResult> {
+  if (pm.type !== 'card' || !pm.card) {
+    return { applied: false, kind: 'noop', org_id: null };
+  }
+  const customerId =
+    typeof pm.customer === 'string' ? pm.customer : (pm.customer?.id ?? null);
+  if (!customerId) {
+    return { applied: false, kind: 'noop', org_id: null };
+  }
   const sb = createServiceClient();
   const { data: existing } = await sb
     .from('org_subscriptions')
     .select('org_id')
-    .eq('stripe_subscription_id', subscriptionId)
+    .eq('stripe_customer_id', customerId)
     .maybeSingle();
-  if (!existing) return { applied: false, kind: 'noop', org_id: null };
+  if (!existing) {
+    log().info({ customerId }, 'payment_method event for unknown customer — ignoring');
+    return { applied: false, kind: 'noop', org_id: null };
+  }
   await sb
     .from('org_subscriptions')
-    .update({ last_synced_at: new Date().toISOString() })
+    .update({
+      payment_method_brand: pm.card.brand,
+      payment_method_last4: pm.card.last4,
+      last_synced_at: new Date().toISOString(),
+    })
     .eq('org_id', existing.org_id);
   return { applied: true, kind: 'subscription_upserted', org_id: existing.org_id };
+}
+
+/**
+ * Mirror the customer's default invoice card back onto the row. Triggered
+ * when the customer updates their default payment method in the Stripe
+ * portal (which doesn't fire a `payment_method.updated` event reliably).
+ */
+async function handleCustomerUpdated(
+  customer: Stripe.Customer,
+): Promise<WebhookSyncResult> {
+  const defaultPm = customer.invoice_settings?.default_payment_method;
+  if (!defaultPm) {
+    return { applied: false, kind: 'noop', org_id: null };
+  }
+  const sb = createServiceClient();
+  const { data: existing } = await sb
+    .from('org_subscriptions')
+    .select('org_id')
+    .eq('stripe_customer_id', customer.id)
+    .maybeSingle();
+  if (!existing) {
+    return { applied: false, kind: 'noop', org_id: null };
+  }
+  try {
+    const { getStripeClient } = await import('@/lib/stripe/client');
+    const pmId = typeof defaultPm === 'string' ? defaultPm : defaultPm.id;
+    const pm = await getStripeClient().paymentMethods.retrieve(pmId);
+    if (pm.type === 'card' && pm.card) {
+      await sb
+        .from('org_subscriptions')
+        .update({
+          payment_method_brand: pm.card.brand,
+          payment_method_last4: pm.card.last4,
+          last_synced_at: new Date().toISOString(),
+        })
+        .eq('org_id', existing.org_id);
+      return { applied: true, kind: 'subscription_upserted', org_id: existing.org_id };
+    }
+  } catch (err) {
+    log().warn({ err, customerId: customer.id }, 'payment-method retrieve failed');
+  }
+  return { applied: false, kind: 'noop', org_id: existing.org_id };
 }
 
 async function upsertSubscriptionRow(args: {

@@ -2,15 +2,17 @@
 // script. Each route lists method, path, who should call it, an example
 // body where applicable, and the expected baseline outcome.
 //
-// `persona` selects which seeded user the request runs as in smoke mode:
-//   sara     — solo HMO landlord (org `sara-lets`)
-//   marcus   — portfolio landlord (org `reid-properties`)
-//   priya    — live-in landlord  (org `priya-spare-room`)
-//   jordan   — tenant (active in Sara's HMO Room 1)
-//   alex     — dual-role (landlord + tenant)
-//   nina     — onboarding-from-zero landlord
-//   admin    — platform admin
-//   riley    — applicant (pending application on Sara's Room 3)
+// `persona` selects which seeded user the request runs as in smoke mode.
+// Login emails are scenario-based — each persona keyword maps to a
+// fixed account in `personas` (see bottom of this file):
+//   sara     — landlord@example.com           Solo HMO landlord (Starter)
+//   marcus   — landlord.pro@example.com        Portfolio landlord (Pro)
+//   priya    — landlord.free@example.com       Live-in landlord (Free)
+//   jordan   — tenant@example.com              Pure tenant
+//   alex     — landlord.dual@example.com       Dual-role
+//   nina     — landlord.new@example.com        Brand-new landlord
+//   admin    — admin@example.com               Platform super admin
+//   riley    — applicant@example.com           Applicant (pending on Sara R3)
 //   public   — no auth at all
 //   webhook  — HMAC-signed by integration provider
 //   cron     — Bearer CRON_SECRET
@@ -57,7 +59,7 @@ export const routes = [
     method: 'POST',
     path: '/api/profiles/lookup-by-email',
     expect: [200],
-    body: { email: 'jordan@example.com' },
+    body: { email: 'tenant@example.com' },
     summary: 'Soft-warn check: does this email exist?',
   },
 
@@ -79,7 +81,7 @@ export const routes = [
         postcode: 'B1 1AA',
         country: 'GB',
       },
-      contact_email: 'nina@example.com',
+      contact_email: 'landlord.new@example.com',
     },
     summary: 'Create a new landlord org',
     notes: 'Nina is a brand-new landlord with no orgs yet.',
@@ -1048,8 +1050,12 @@ export const routes = [
     method: 'POST',
     path: '/api/admin/orgs/invite',
     expect: [200, 201],
-    body: { org_name: 'Smoke Org', email: 'invited-landlord@example.com', tier: 'starter' },
-    summary: 'Invite a landlord org (audit-only MVP)',
+    body: {
+      org_name: 'Smoke Org',
+      email: 'landlord.invited@example.com',
+      tier: 'starter',
+    },
+    summary: 'Invite a landlord org (sends email via Resend when configured)',
   },
   {
     group: 'admin',
@@ -1090,8 +1096,8 @@ export const routes = [
     method: 'POST',
     path: '/api/admin/team/invite',
     expect: [200, 201, 409],
-    body: { email: 'new-admin@example.com', role: 'support' },
-    summary: 'Invite a platform admin (super only)',
+    body: { email: 'admin.invitee.smoke@example.com', role: 'support' },
+    summary: 'Invite a platform admin (sends email via Resend when configured)',
     notes: '409 on rerun: the invitee email is already an admin row.',
   },
   {
@@ -1150,9 +1156,12 @@ export const routes = [
     persona: 'admin',
     method: 'POST',
     path: '/api/admin/billing/{{saraOrgId}}/retry',
-    expect: [200, 201, 501],
-    summary: 'Retry a failed Stripe invoice (stub)',
-    notes: '501 acceptable until wired to live Stripe API.',
+    expect: [200, 422],
+    summary: 'Retry a failed Stripe invoice (real call when configured)',
+    notes:
+      '200 + status=not_configured when STRIPE_SECRET_KEY is absent (dev). ' +
+      '200 + status=no_subscription when the org has no Stripe IDs yet. ' +
+      '422 when Stripe rejects (e.g. no open invoice).',
   },
   {
     group: 'admin',
@@ -1160,7 +1169,8 @@ export const routes = [
     method: 'POST',
     path: '/api/admin/billing/{{saraOrgId}}/remind',
     expect: [200, 201],
-    summary: 'Send a card-update reminder',
+    body: { reason: 'card_failed' },
+    summary: 'Send a card-update reminder (Resend or console transport)',
   },
   {
     group: 'admin',
@@ -1330,6 +1340,88 @@ export const routes = [
     expect: [200, 201],
     summary: 'Send compliance reminder emails',
   },
+  {
+    group: 'cron',
+    persona: 'cron',
+    method: 'GET',
+    path: '/api/cron/mrr-snapshot',
+    expect: [200],
+    summary: 'Write the current month MRR snapshot',
+  },
+  {
+    group: 'cron',
+    persona: 'cron',
+    method: 'POST',
+    path: '/api/cron/mrr-snapshot?backfill=12',
+    expect: [200],
+    summary: 'Backfill 12 months of MRR snapshots',
+  },
+  {
+    group: 'cron',
+    persona: 'cron',
+    method: 'GET',
+    path: '/api/cron/webhook-replay',
+    expect: [200],
+    summary: 'Replay unprocessed webhook_events (≤25 per run)',
+  },
+
+  // ============================================================
+  // Profile avatar (signed upload + persistence)
+  // ============================================================
+  {
+    group: 'profile',
+    persona: 'sara',
+    method: 'POST',
+    path: '/api/profile/avatar',
+    expect: [200, 201],
+    body: { content_type: 'image/png', size_bytes: 4096 },
+    summary: 'Request a signed avatar upload URL',
+  },
+  {
+    group: 'profile',
+    persona: 'sara',
+    method: 'DELETE',
+    path: '/api/profile/avatar',
+    expect: [200, 204],
+    summary: 'Clear the caller’s avatar',
+    skipInSmoke: true,
+    notes: 'Destructive — clears the persisted avatar URL.',
+  },
+
+  // ============================================================
+  // TrueLayer Open Banking (one-off bank payment)
+  // ============================================================
+  {
+    group: 'payments',
+    persona: 'sara',
+    method: 'POST',
+    path: '/api/payments/charges/{{jordanChargeId}}/truelayer',
+    expect: [201, 202, 400, 422, 502, 503],
+    body: {
+      amount_pence: 72000,
+      return_uri: 'http://localhost:3000/tenant/rent',
+      beneficiary_name: 'Tenantly Holding',
+      beneficiary_sort_code: '040004',
+      beneficiary_account_number: '12345678',
+    },
+    summary: 'Initiate a TrueLayer Open Banking payment for a rent charge',
+    notes:
+      [
+        '503 when TRUELAYER_CLIENT_ID / SECRET unset.',
+        '422 when the charge already has a pending payment (smoke runs leave a DD row).',
+        '400 / 502 when creds are set but TrueLayer rejects the synthetic beneficiary',
+        '(sandbox is picky about account-holder names + sort codes — this is fine for smoke).',
+      ].join(' '),
+  },
+  {
+    group: 'payments',
+    persona: 'sara',
+    method: 'GET',
+    path: '/api/payments/truelayer/return?payment_id=tl_demo',
+    expect: [200, 503],
+    summary: 'Poll a TrueLayer payment after the bank redirect',
+    notes: '503 acceptable when not configured; demo id will 404 on real call.',
+  },
 
   // ============================================================
   // Webhooks (HMAC-signed; manual via Postman, opt-in for smoke)
@@ -1366,6 +1458,23 @@ export const routes = [
     group: 'webhooks',
     persona: 'webhook',
     method: 'POST',
+    path: '/api/webhooks/truelayer',
+    expect: [200, 400, 503],
+    headers: { 'tl-signature': 'demo' },
+    body: {
+      event_id: 'evt_demo_tl',
+      type: 'payment_executed',
+      payment_id: 'tl_demo_payment',
+      status: 'executed',
+    },
+    summary: 'TrueLayer webhook (signed)',
+    skipInSmoke: true,
+    notes: 'Sign with TRUELAYER_WEBHOOK_SECRET to test.',
+  },
+  {
+    group: 'webhooks',
+    persona: 'webhook',
+    method: 'POST',
     path: '/api/webhooks/docuseal',
     expect: [200, 400],
     headers: { 'x-docuseal-signature': 'demo' },
@@ -1377,14 +1486,14 @@ export const routes = [
 ];
 
 export const personas = {
-  sara: { email: 'sara@example.com', password: 'tenantly-dev' },
-  marcus: { email: 'marcus@example.com', password: 'tenantly-dev' },
-  priya: { email: 'priya@example.com', password: 'tenantly-dev' },
-  jordan: { email: 'jordan@example.com', password: 'tenantly-dev' },
-  alex: { email: 'alex@example.com', password: 'tenantly-dev' },
-  nina: { email: 'nina@example.com', password: 'tenantly-dev' },
+  sara: { email: 'landlord@example.com', password: 'tenantly-dev' },
+  marcus: { email: 'landlord.pro@example.com', password: 'tenantly-dev' },
+  priya: { email: 'landlord.free@example.com', password: 'tenantly-dev' },
+  jordan: { email: 'tenant@example.com', password: 'tenantly-dev' },
+  alex: { email: 'landlord.dual@example.com', password: 'tenantly-dev' },
+  nina: { email: 'landlord.new@example.com', password: 'tenantly-dev' },
   admin: { email: 'admin@example.com', password: 'tenantly-dev' },
-  riley: { email: 'riley@example.com', password: 'tenantly-dev' },
+  riley: { email: 'applicant@example.com', password: 'tenantly-dev' },
 };
 
 // Seeded UUIDs / slugs used by routes. Keep aligned with backend/supabase/seed.sql.

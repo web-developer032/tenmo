@@ -1,5 +1,8 @@
 import { z } from 'zod';
 import { assertAdmin, getAdminSelf } from '@/features/admin/server';
+import { sendEmail } from '@/lib/email';
+import { renderComplianceAlertEmail } from '@/lib/email/templates/compliance-alert';
+import { getServerEnv } from '@/lib/env.server';
 import { BusinessRuleError, DbError } from '@/lib/errors';
 import { handler } from '@/lib/handler';
 
@@ -8,15 +11,15 @@ import { handler } from '@/lib/handler';
  *
  * Allowed roles: super, support.
  *
- * Records the action in `admin_audit_log` so the customer success
- * trail stays auditable even when SMTP isn't wired. When the email
- * helper is configured the actual send is fire-and-forget.
+ * Always:
+ *   1. Resolves the org owner email (orgs.contact_email → owner profile).
+ *   2. Records the action in `admin_audit_log`.
+ *
+ * If Resend is configured the templated compliance alert email is sent;
+ * otherwise the message is logged via the console transport. The audit
+ * row is always written so the customer-success trail is consistent.
  */
 
-// Use the looser GUID validator (zod 4 `z.guid()`) — the project's seeded
-// UUIDs are not strict RFC-4122 v4 (no '4' in the version nibble), and we
-// pass them through cookies, route params, and bodies interchangeably.
-// See frontend/src/core/schemas/common.ts (`export const uuid = z.guid()`).
 const Body = z
   .object({
     org_id: z.guid(),
@@ -41,7 +44,7 @@ export const POST = handler(
 
     const { data: org, error } = await supabase
       .from('orgs')
-      .select('id, name, contact_email, created_by')
+      .select('id, name, slug, contact_email, created_by')
       .eq('id', input.org_id)
       .maybeSingle();
     if (error) throw new DbError(error);
@@ -65,6 +68,33 @@ export const POST = handler(
       throw new BusinessRuleError('No email on file for this org owner');
     }
 
+    const env = getServerEnv();
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      process.env.VERCEL_URL ??
+      'http://localhost:3000';
+    const base = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
+    const complianceUrl = `${base}/landlord/${encodeURIComponent(org.slug ?? '')}/compliance`;
+
+    const rendered = renderComplianceAlertEmail({
+      recipientEmail: recipient,
+      orgName: org.name,
+      kind: input.kind,
+      note: input.note ?? null,
+      complianceUrl,
+      contactedByName: self.display_name ?? user.email ?? null,
+    });
+    const sendResult = await sendEmail({
+      to: recipient,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+      tags: [
+        { name: 'kind', value: 'compliance_alert' },
+        { name: 'violation', value: input.kind },
+      ],
+    });
+
     await supabase.from('admin_audit_log').insert({
       actor_user_id: user.id,
       event: 'compliance_alert_sent',
@@ -74,11 +104,28 @@ export const POST = handler(
         kind: input.kind,
         recipient,
         note: input.note ?? null,
+        provider: sendResult.ok ? sendResult.provider : 'error',
+        provider_id: sendResult.ok ? sendResult.id : null,
+        configured: Boolean(env.RESEND_API_KEY),
       },
     });
-    log.info({ orgId: input.org_id, recipient }, 'compliance alert dispatched');
+    log.info(
+      {
+        orgId: input.org_id,
+        recipient,
+        provider: sendResult.ok ? sendResult.provider : 'error',
+      },
+      'compliance alert dispatched',
+    );
 
-    return Response.json({ data: { recipient } });
+    return Response.json({
+      data: {
+        recipient,
+        delivery: sendResult.ok
+          ? { provider: sendResult.provider, id: sendResult.id }
+          : { provider: 'error', error: sendResult.error },
+      },
+    });
   },
   { requireAuth: true },
 );

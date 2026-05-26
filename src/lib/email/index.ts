@@ -1,8 +1,16 @@
 export type { EmailMessage, SendEmailResult } from './client';
 export { sendEmail } from './client';
 export type { RenderedEmail } from './templates/_base';
+export type { AdminInviteEmailInput } from './templates/admin-invite';
+export { renderAdminInviteEmail } from './templates/admin-invite';
+export type { BillingReminderEmailInput } from './templates/billing-reminder';
+export { renderBillingReminderEmail } from './templates/billing-reminder';
+export type { ComplianceAlertEmailInput } from './templates/compliance-alert';
+export { renderComplianceAlertEmail } from './templates/compliance-alert';
 export type { ComplianceReminderEmailInput } from './templates/compliance-reminder';
 export { renderComplianceReminderEmail } from './templates/compliance-reminder';
+export type { LandlordInviteEmailInput } from './templates/landlord-invite';
+export { renderLandlordInviteEmail } from './templates/landlord-invite';
 export type { RentChargeIssuedEmailInput } from './templates/rent-charge-issued';
 export { renderRentChargeIssuedEmail } from './templates/rent-charge-issued';
 export type { RentPaymentRecordedEmailInput } from './templates/rent-payment-recorded';
