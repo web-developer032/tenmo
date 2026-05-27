@@ -1,5 +1,6 @@
-import { ArrowLeft, MailQuestion } from 'lucide-react';
+import { MailQuestion } from 'lucide-react';
 import Link from 'next/link';
+import { BackLink } from '@/components/common/back-button';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -7,12 +8,7 @@ export default function TenantWaitingPage() {
   return (
     <Card>
       <CardHeader className="space-y-2">
-        <Link
-          href="/onboarding"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back
-        </Link>
+        <BackLink fallbackHref="/dispatch" />
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <MailQuestion className="h-6 w-6" />
         </div>
