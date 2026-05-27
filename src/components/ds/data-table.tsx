@@ -1,7 +1,7 @@
-import { ChevronRight } from 'lucide-react';
-import Link from 'next/link';
-import type * as React from 'react';
-import { cn } from '@/lib/cn';
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import type * as React from "react";
+import { cn } from "@/lib/cn";
 
 /*
  * Responsive data-table from the mock's `.data-table` pattern.
@@ -25,8 +25,8 @@ import { cn } from '@/lib/cn';
  * pre-builds the row markup and passes plain data + `rowHref` instead.
  */
 
-export type ColumnAlign = 'left' | 'right' | 'center';
-export type MobileSlot = 'primary' | 'secondary' | 'meta';
+export type ColumnAlign = "left" | "right" | "center";
+export type MobileSlot = "primary" | "secondary" | "meta";
 
 export type Column<T> = {
   id: string;
@@ -65,12 +65,15 @@ export type DataTableProps<T> = {
 };
 
 const ALIGN: Record<ColumnAlign, string> = {
-  left: 'text-left',
-  right: 'text-right',
-  center: 'text-center',
+  left: "text-left",
+  right: "text-right",
+  center: "text-center",
 };
 
-function findSlot<T>(columns: Column<T>[], slot: MobileSlot): Column<T> | undefined {
+function findSlot<T>(
+  columns: Column<T>[],
+  slot: MobileSlot
+): Column<T> | undefined {
   return columns.find((c) => c.mobile === slot);
 }
 
@@ -87,26 +90,28 @@ export function DataTable<T>({
     return (
       <div
         className={cn(
-          'flex flex-col items-center justify-center gap-2 rounded-card border border-dashed border-border-soft bg-white p-8 text-center',
-          className,
+          "flex flex-col items-center justify-center gap-2 rounded-card border border-dashed border-border-soft bg-white p-8 text-center",
+          className
         )}
       >
-        {emptyState ?? <p className="text-[13px] text-ink-light">No records to show yet.</p>}
+        {emptyState ?? (
+          <p className="text-[13px] text-ink-light">No records to show yet.</p>
+        )}
       </div>
     );
   }
 
-  const primaryCol = findSlot(columns, 'primary');
-  const secondaryCol = findSlot(columns, 'secondary');
-  const metaCol = findSlot(columns, 'meta');
+  const primaryCol = findSlot(columns, "primary");
+  const secondaryCol = findSlot(columns, "secondary");
+  const metaCol = findSlot(columns, "meta");
 
   return (
     <>
       {/* Desktop: full table */}
       <div
         className={cn(
-          'hidden overflow-hidden rounded-card border border-border-soft bg-white lg:block',
-          className,
+          "hidden overflow-hidden rounded-card border border-border-soft bg-white lg:block",
+          className
         )}
       >
         <div className="overflow-x-auto">
@@ -124,9 +129,9 @@ export function DataTable<T>({
                     scope="col"
                     style={col.width ? { width: col.width } : undefined}
                     className={cn(
-                      'px-4 py-2.5 font-bold',
-                      ALIGN[col.align ?? 'left'],
-                      col.hideMd && 'hidden xl:table-cell',
+                      "px-4 py-2.5 font-bold",
+                      ALIGN[col.align ?? "left"],
+                      col.hideMd && "hidden xl:table-cell"
                     )}
                   >
                     {col.header}
@@ -152,9 +157,9 @@ export function DataTable<T>({
                             <td
                               key={col.id}
                               className={cn(
-                                'px-4 py-3 align-middle text-ink',
-                                ALIGN[col.align ?? 'left'],
-                                col.hideMd && 'hidden xl:table-cell',
+                                "px-4 py-3 align-middle text-ink",
+                                ALIGN[col.align ?? "left"],
+                                col.hideMd && "hidden xl:table-cell"
                               )}
                             >
                               {col.cell(row, i)}
@@ -166,9 +171,9 @@ export function DataTable<T>({
                             <Link
                               href={rowHref(row)}
                               className={cn(
-                                'block px-4 py-3 align-middle text-ink hover:text-forest-700',
-                                ALIGN[col.align ?? 'left'],
-                                col.hideMd && 'hidden xl:block',
+                                "block px-4 py-3 align-middle text-ink hover:text-forest-700",
+                                ALIGN[col.align ?? "left"],
+                                col.hideMd && "hidden xl:block"
                               )}
                             >
                               {col.cell(row, i)}
@@ -188,9 +193,9 @@ export function DataTable<T>({
                       <td
                         key={col.id}
                         className={cn(
-                          'px-4 py-3 align-middle text-ink',
-                          ALIGN[col.align ?? 'left'],
-                          col.hideMd && 'hidden xl:table-cell',
+                          "px-4 py-3 align-middle text-ink",
+                          ALIGN[col.align ?? "left"],
+                          col.hideMd && "hidden xl:table-cell"
                         )}
                       >
                         {col.cell(row, i)}
@@ -205,7 +210,7 @@ export function DataTable<T>({
       </div>
 
       {/* Mobile / tablet: card stack */}
-      <div className={cn('flex flex-col gap-2 lg:hidden', className)}>
+      <div className={cn("flex flex-col gap-2 lg:hidden", className)}>
         {rows.map((row, i) => {
           const primary = primaryCol?.cell(row, i);
           const secondary = secondaryCol?.cell(row, i);
@@ -219,7 +224,9 @@ export function DataTable<T>({
                   </div>
                 ) : null}
                 {secondary ? (
-                  <div className="mt-1 text-[12.5px] text-ink-light">{secondary}</div>
+                  <div className="mt-1 text-[12.5px] text-ink-light">
+                    {secondary}
+                  </div>
                 ) : null}
               </div>
               {meta ? (
@@ -227,7 +234,9 @@ export function DataTable<T>({
                   {meta}
                 </div>
               ) : null}
-              {rowHref ? <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-ink-light" /> : null}
+              {rowHref ? (
+                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-ink-light" />
+              ) : null}
             </div>
           );
           if (rowHref) {
