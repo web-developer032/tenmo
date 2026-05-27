@@ -7,7 +7,10 @@ import { getLogger } from '@/lib/logger';
  * Webhook replay cron — sweeps `webhook_events` rows that never got a
  * `processed_at` and re-applies them.
  *
- * Schedule (configured in `vercel.json`): every 15 minutes.
+ * Trigger: GitHub Actions scheduled workflow at
+ * `.github/workflows/webhook-replay-cron.yml` (every 15 minutes).
+ * Lives outside Vercel because Vercel Hobby caps cron jobs at once per
+ * day. See `docs/05-backend/background-jobs.md`.
  *
  * Behaviour:
  *   - Picks up to 25 rows per run with attempts < 5.
