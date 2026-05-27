@@ -8,6 +8,7 @@ import {
   summariseTickets,
   type TicketStats,
 } from '@/core/utils/ticket-rules';
+import { loadProfilesByUserIds } from '@/features/profile/server';
 import { createClient } from '@/lib/supabase/server';
 
 /** Tenancy "places I can raise an issue against" — used by the new-ticket form. */
@@ -51,7 +52,7 @@ export async function loadOrgAssignmentMembers(orgId: string): Promise<OrgAssign
 
   const rows = memberships ?? [];
   const userIds = unique(rows.map((r) => r.user_id));
-  const profiles = await loadProfiles(supabase, userIds);
+  const profiles = await loadProfilesByUserIds(supabase, userIds);
 
   return rows.map((row) => {
     const profile = profiles.get(row.user_id);
@@ -148,7 +149,7 @@ export async function loadOrgTicketsBoard(orgId: string): Promise<TicketBoardDat
   const tenantUserIds = unique(
     tickets.map((t) => t.__tenantUserId).filter((id): id is string => Boolean(id)),
   );
-  const profiles = await loadProfiles(supabase, tenantUserIds);
+  const profiles = await loadProfilesByUserIds(supabase, tenantUserIds);
   const decorated: TicketWithContext[] = tickets.map((t) => {
     const profile = t.__tenantUserId ? profiles.get(t.__tenantUserId) : undefined;
     return {
@@ -243,7 +244,7 @@ export async function loadTicketPage(ticketId: string): Promise<TicketDetailData
   if (!row) return null;
 
   const hydrated = hydrateTicket(row);
-  const profiles = await loadProfiles(
+  const profiles = await loadProfilesByUserIds(
     supabase,
     hydrated.__tenantUserId ? [hydrated.__tenantUserId] : [],
   );
@@ -260,9 +261,11 @@ export async function loadTicketPage(ticketId: string): Promise<TicketDetailData
   const authorIds = unique(
     messages.map((m) => m.author_user_id).filter((id): id is string => Boolean(id)),
   );
-  const authorProfiles = await loadProfiles(supabase, authorIds);
+  const authorProfiles = await loadProfilesByUserIds(supabase, authorIds);
   const authors: TicketDetailData['authors'] = {};
-  for (const [id, p] of authorProfiles) authors[id] = p;
+  for (const [id, p] of authorProfiles) {
+    authors[id] = { full_name: p.full_name, contact_email: p.contact_email };
+  }
 
   return {
     ticket: {
@@ -312,26 +315,6 @@ function hydrateTicket(raw: unknown): HydratedTicket {
     inviteEmail: tenancy?.invite_email ?? null,
     __tenantUserId: tenancy?.tenant_user_id ?? null,
   };
-}
-
-async function loadProfiles(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userIds: string[],
-): Promise<Map<string, { full_name: string | null; contact_email: string | null }>> {
-  const map = new Map<string, { full_name: string | null; contact_email: string | null }>();
-  if (userIds.length === 0) return map;
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, contact_email')
-    .in('id', userIds);
-  if (error) return map; // best-effort; UI falls back to email or anon
-  for (const row of data ?? []) {
-    map.set(row.id, {
-      full_name: row.full_name ?? null,
-      contact_email: row.contact_email ?? null,
-    });
-  }
-  return map;
 }
 
 function pickFirst<T>(value: unknown): T | null {

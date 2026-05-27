@@ -1,5 +1,6 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { loadProfilesByUserIds } from '@/features/profile/server';
 
 /**
  * Loader for the /landlord/[slug]/tenancies page (the design titles it
@@ -47,14 +48,18 @@ export async function loadLandlordTenants(
   const periodStart = formatISODate(startOfMonth(now));
   const periodEnd = formatISODate(endOfMonth(now));
 
+  // `tenancies.tenant_user_id` FKs into `auth.users(id)`, not directly into
+  // `public.profiles`, so PostgREST can't auto-embed `profiles:tenant_user_id`.
+  // We fetch tenancies first, then resolve the matching profile rows by
+  // their primary key in a second round-trip and join in app code. Same
+  // pattern the properties page uses for rooms / tickets / compliance.
   const { data: tenancies, error } = await supabase
     .from('tenancies')
     .select(
       `id, status, start_date, end_date, rent_pence, rent_frequency, deposit_pence, deposit_scheme,
        tenant_user_id, invite_email,
        properties:property_id (name),
-       rooms:room_id (name),
-       profiles:tenant_user_id (full_name, contact_phone, contact_email)`,
+       rooms:room_id (name)`,
     )
     .eq('org_id', orgId)
     .in('status', ['active', 'pending_invite', 'awaiting_signature', 'awaiting_deposit'])
@@ -62,18 +67,23 @@ export async function loadLandlordTenants(
   if (error) throw error;
 
   const ids = (tenancies ?? []).map((t) => t.id as string);
-  const { data: charges, error: chargesError } = ids.length
-    ? await supabase
-        .from('rent_charges')
-        .select('tenancy_id, due_date, status, period_start')
-        .in('tenancy_id', ids)
-        .gte('period_start', periodStart)
-        .lte('period_start', periodEnd)
-    : { data: [], error: null };
-  if (chargesError) throw chargesError;
+  const tenantUserIds = (tenancies ?? []).map((t) => t.tenant_user_id as string | null);
+
+  const [chargesResp, profileByUserId] = await Promise.all([
+    ids.length
+      ? supabase
+          .from('rent_charges')
+          .select('tenancy_id, due_date, status, period_start')
+          .in('tenancy_id', ids)
+          .gte('period_start', periodStart)
+          .lte('period_start', periodEnd)
+      : Promise.resolve({ data: [], error: null } as const),
+    loadProfilesByUserIds(supabase, tenantUserIds),
+  ]);
+  if (chargesResp.error) throw chargesResp.error;
 
   const chargeByTenancy = new Map<string, { dueDate: string; status: string }>();
-  for (const c of charges ?? []) {
+  for (const c of chargesResp.data ?? []) {
     chargeByTenancy.set(c.tenancy_id as string, {
       dueDate: c.due_date as string,
       status: c.status as string,
@@ -83,11 +93,9 @@ export async function loadLandlordTenants(
   return (tenancies ?? []).map((t): TenantRow => {
     const property = pickFirst<{ name: string }>(t.properties);
     const room = pickFirst<{ name: string }>(t.rooms);
-    const profile = pickFirst<{
-      full_name: string | null;
-      contact_phone: string | null;
-      contact_email: string | null;
-    }>(t.profiles);
+    const profile = t.tenant_user_id
+      ? (profileByUserId.get(t.tenant_user_id as string) ?? null)
+      : null;
     const charge = chargeByTenancy.get(t.id as string);
     let paymentStatus: TenantRow['paymentStatus'] = 'no_charge';
     let paymentDaysFromDue = 0;
