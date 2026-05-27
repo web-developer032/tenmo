@@ -23,6 +23,7 @@
     "test:e2e:ui": "playwright test --ui",
     "db:types": "node scripts/gen-db-types.mjs",
     "db:reset": "cd ../backend && npx supabase db reset",
+    "db:seed:remote": "cd ../backend && node scripts/seed-remote.mjs",
     "db:diff": "cd ../backend && npx supabase db diff -f",
     "api:smoke": "node scripts/api-smoke.mjs",
     "api:smoke:verbose": "node scripts/api-smoke.mjs --verbose",

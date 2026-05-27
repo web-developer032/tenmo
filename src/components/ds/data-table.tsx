@@ -1,5 +1,3 @@
-'use client';
-
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import type * as React from 'react';
@@ -19,6 +17,12 @@ import { cn } from '@/lib/cn';
  * which column becomes the card's primary/secondary/meta slot — anything
  * with no hint is desktop-only. This keeps page-level code from having to
  * duplicate desktop + mobile markup (per the user's "no duplication" rule).
+ *
+ * Server-renderable. `columns[].cell`, `rowKey`, and `rowHref` are
+ * invoked at render time, so callers can be Server Components (no need
+ * to serialize the callbacks across the RSC boundary). For imperative
+ * row clicks, wrap this table in a thin `'use client'` component that
+ * pre-builds the row markup and passes plain data + `rowHref` instead.
  */
 
 export type ColumnAlign = 'left' | 'right' | 'center';
@@ -46,8 +50,6 @@ export type DataTableProps<T> = {
   rowKey: (row: T, index: number) => string;
   /** Optional href factory — turns each row into a navigable card / link. */
   rowHref?: (row: T) => string;
-  /** Optional click handler when not using href. */
-  onRowClick?: (row: T) => void;
   emptyState?: React.ReactNode;
   /** Optional caption rendered above the desktop table (and stripped on mobile). */
   caption?: React.ReactNode;
@@ -69,7 +71,6 @@ export function DataTable<T>({
   rows,
   rowKey,
   rowHref,
-  onRowClick,
   emptyState,
   caption,
   className,
@@ -165,11 +166,7 @@ export function DataTable<T>({
                 return (
                   <tr
                     key={rowKey(row, i)}
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={cn(
-                      'border-b border-border-soft transition-colors last:border-b-0',
-                      onRowClick && 'cursor-pointer hover:bg-foam/60',
-                    )}
+                    className="border-b border-border-soft transition-colors last:border-b-0"
                   >
                     {cells}
                   </tr>
@@ -215,18 +212,6 @@ export function DataTable<T>({
               >
                 {inner}
               </Link>
-            );
-          }
-          if (onRowClick) {
-            return (
-              <button
-                key={rowKey(row, i)}
-                type="button"
-                onClick={() => onRowClick(row)}
-                className="cursor-pointer rounded-card border border-border-soft bg-white p-3.5 text-left transition-colors hover:bg-foam/60"
-              >
-                {inner}
-              </button>
             );
           }
           return (
