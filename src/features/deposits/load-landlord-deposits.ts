@@ -87,13 +87,10 @@ export async function loadLandlordDeposits(
        rooms:room_id (id, name)`,
     )
     .eq('org_id', orgId)
-    .in('status', [
-      'pending_invite',
-      'awaiting_signature',
-      'awaiting_deposit',
-      'active',
-      'ending_soon',
-    ])
+    // 'ending_soon' is a derived UI bucket (active tenancy with end_date
+    // within 60 days), computed below from `endingThresholdIso`. It is
+    // NOT a tenancy_status enum value, so do not put it in this filter.
+    .in('status', ['pending_invite', 'awaiting_signature', 'awaiting_deposit', 'active'])
     .order('deposit_protected_at', { ascending: false, nullsFirst: false });
 
   if (error) throw error;

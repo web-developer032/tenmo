@@ -42,6 +42,14 @@ export type Column<T> = {
   width?: string;
   /** Hide on very narrow desktops (e.g. ≤ md). Defaults to false. */
   hideMd?: boolean;
+  /**
+   * Opt-out of the row-level `<Link>` wrapper that `rowHref` produces.
+   * Use this for cells whose content is itself interactive (an inner
+   * `<Link>`, `<button>`, action menu, etc.) so we don't render nested
+   * `<a>` tags. The cell still occupies its column on desktop; on the
+   * mobile card view it shows only via its `mobile` slot like any other.
+   */
+  interactive?: boolean;
 };
 
 export type DataTableProps<T> = {
@@ -128,38 +136,46 @@ export function DataTable<T>({
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                const cells = columns.map((col) => (
-                  <td
-                    key={col.id}
-                    className={cn(
-                      'px-4 py-3 align-middle text-ink',
-                      ALIGN[col.align ?? 'left'],
-                      col.hideMd && 'hidden xl:table-cell',
-                    )}
-                  >
-                    {col.cell(row, i)}
-                  </td>
-                ));
                 if (rowHref) {
                   return (
                     <tr
                       key={rowKey(row, i)}
                       className="border-b border-border-soft transition-colors last:border-b-0 hover:bg-foam/60"
                     >
-                      {cells.map((cell, idx) => (
-                        <td key={columns[idx]?.id ?? idx} className="p-0">
-                          <Link
-                            href={rowHref(row)}
-                            className={cn(
-                              'block px-4 py-3 align-middle text-ink hover:text-forest-700',
-                              ALIGN[columns[idx]?.align ?? 'left'],
-                              columns[idx]?.hideMd && 'hidden xl:block',
-                            )}
-                          >
-                            {columns[idx]?.cell(row, i)}
-                          </Link>
-                        </td>
-                      ))}
+                      {columns.map((col) => {
+                        // Interactive cells opt out of the row-link wrapper so
+                        // their own <Link>/<button> isn't nested inside the
+                        // row's <a>. They render as a plain padded <td> and
+                        // are responsible for their own interactivity.
+                        if (col.interactive) {
+                          return (
+                            <td
+                              key={col.id}
+                              className={cn(
+                                'px-4 py-3 align-middle text-ink',
+                                ALIGN[col.align ?? 'left'],
+                                col.hideMd && 'hidden xl:table-cell',
+                              )}
+                            >
+                              {col.cell(row, i)}
+                            </td>
+                          );
+                        }
+                        return (
+                          <td key={col.id} className="p-0">
+                            <Link
+                              href={rowHref(row)}
+                              className={cn(
+                                'block px-4 py-3 align-middle text-ink hover:text-forest-700',
+                                ALIGN[col.align ?? 'left'],
+                                col.hideMd && 'hidden xl:block',
+                              )}
+                            >
+                              {col.cell(row, i)}
+                            </Link>
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 }
@@ -168,7 +184,18 @@ export function DataTable<T>({
                     key={rowKey(row, i)}
                     className="border-b border-border-soft transition-colors last:border-b-0"
                   >
-                    {cells}
+                    {columns.map((col) => (
+                      <td
+                        key={col.id}
+                        className={cn(
+                          'px-4 py-3 align-middle text-ink',
+                          ALIGN[col.align ?? 'left'],
+                          col.hideMd && 'hidden xl:table-cell',
+                        )}
+                      >
+                        {col.cell(row, i)}
+                      </td>
+                    ))}
                   </tr>
                 );
               })}

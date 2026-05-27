@@ -113,6 +113,7 @@ export default async function ComplianceDashboardPage({
       id: 'actions',
       header: '',
       align: 'right',
+      interactive: true,
       cell: (i) => (
         <Link
           href={`/landlord/${slug}/compliance/${i.id}`}

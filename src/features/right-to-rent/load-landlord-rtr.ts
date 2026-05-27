@@ -88,13 +88,9 @@ export async function loadLandlordRtr(
        rooms:room_id (id, name)`,
     )
     .eq('org_id', orgId)
-    .in('status', [
-      'pending_invite',
-      'awaiting_signature',
-      'awaiting_deposit',
-      'active',
-      'ending_soon',
-    ])
+    // 'ending_soon' is a derived UI bucket, not a tenancy_status enum
+    // value — filter on the real DB states only.
+    .in('status', ['pending_invite', 'awaiting_signature', 'awaiting_deposit', 'active'])
     .order('rtr_expires_at', { ascending: true, nullsFirst: false });
 
   if (error) throw error;

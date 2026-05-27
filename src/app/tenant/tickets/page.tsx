@@ -253,6 +253,7 @@ export default async function TenantMaintenancePage({
               id: 'view',
               header: '',
               align: 'right',
+              interactive: true,
               cell: () => (
                 <Link
                   href="#"
