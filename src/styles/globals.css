@@ -227,4 +227,17 @@
     background: var(--primary);
     color: var(--primary-foreground);
   }
+
+  /*
+   * Tailwind v4 reverted the Preflight default that forced `cursor: pointer`
+   * on buttons. We want the v3 behaviour back — every interactive control
+   * should signal it's clickable. Disabled controls keep the default
+   * cursor (correct UX — they aren't actionable).
+   * https://tailwindcss.com/docs/upgrade-guide#buttons-use-the-default-cursor
+   */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
 }
