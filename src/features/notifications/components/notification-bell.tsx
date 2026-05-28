@@ -64,10 +64,22 @@ export function NotificationBell({ userId, initial }: NotificationBellProps) {
       setOpen(false);
       if (!n.read_at) {
         applyLocalRead([n.id]);
-        markNotificationsReadApi([n.id]).catch((err) => {
-          toast.error(err instanceof Error ? err.message : 'Could not mark as read');
-          void refresh();
-        });
+        // Fire-and-forget so navigation feels instant. Once the PATCH
+        // commits we call `router.refresh()` to invalidate any server
+        // component on the destination page (notably the AppShell, which
+        // server-renders the bell's initial unread count). Without this,
+        // navigating before the PATCH completes lets the destination
+        // hydrate with a stale `unread.total` and the badge keeps
+        // showing the just-clicked notification as unread — the realtime
+        // UPDATE that would normally correct it is often dropped because
+        // the old bell's channel was torn down by the navigation before
+        // the event fired.
+        markNotificationsReadApi([n.id])
+          .then(() => router.refresh())
+          .catch((err) => {
+            toast.error(err instanceof Error ? err.message : 'Could not mark as read');
+            void refresh();
+          });
       }
       if (n.link_url) router.push(n.link_url);
     },
